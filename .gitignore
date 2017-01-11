@@ -1,0 +1,6 @@
+*.o
+*.so
+.tags
+.tags1
+build.*/
+*.pch
