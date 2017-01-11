@@ -1,10 +1,11 @@
 cmake_minimum_required(VERSION 2.6)
 project(libcutil)
 
-option(BUILD_LIBCUTIL "build c utility library" ON)
-option(BUILD_LIBLOG "build log library" ON)
+include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/configure.cmake)
 
-list (APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
+option(BUILD_LIBCUTIL "build c utility library" ON)
+option(BUILD_LOGUTIL "build log library" ON)
+
 
 set(LIBCUTIL_INSTALL_PREFIX ${libcutil_BINARY_DIR}/usr)
 
@@ -16,7 +17,8 @@ message(STATUS "This is BINARY dir" ${libcutil_BINARY_DIR})
 message(STATUS "This is SOURCE dir" ${libcutil_SOURCE_DIR})
 message(STATUS "This is Cmake current source dir" ${CMAKE_CURRENT_SOURCE_DIR})
 
-
+#call configure first
+Configure()
 
 if(BUILD_LIBCUTIL)
   # Platform (not compiler) specific settings
@@ -28,9 +30,9 @@ if(BUILD_LIBCUTIL)
     include_directories(${LIBCUTIL_INSTALL_PREFIX}/include)
     option(BUILD_SHARED_LIBS "Build shared Libraries." ON)
 
-    if(BUILD_LIBLOG)
-      set(LOG_LIBRARY logutil)
-      include_directories(include/asterisk include/log)
+    if(BUILD_LOGUTIL)
+      set(LOGUTIL_LIBRARY logutil)
+      include_directories(include)
       add_subdirectory(src/log)
     endif()
   elseif(WIN32)
