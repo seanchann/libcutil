@@ -37,5 +37,108 @@
 /* Define to 1 if you have the Stack Backtrace library. */
 #define HAVE_BKTR 1
 
+/* Define to 1 if you have the <> header file. */
+/* #undef HAVE_WINSOCK_H */
+
+/* Define to 1 if you have the <arpa/inet.h> header file. */
+#define HAVE_ARPA_INET_H 1
+
+/* Define to 1 if you have the <winsock2.h> header file. */
+/* #undef HAVE_WINSOCK2_H */
+
+/* Define to 1 if you have the `inet_aton' function. */
+#define HAVE_INET_ATON 1
+
+/* Define to 1 if your system defines the locale_t type in locale.h */
+#define HAVE_LOCALE_T_IN_LOCALE_H
+
+/* Define to 1 if your system defines the locale_t type in xlocale.h */
+#define HAVE_LOCALE_T_IN_XLOCALE_H
+
+/* Define to 1 if you have the <limits.h> header file. */
+#define HAVE_LIMITS_H 1
+
+
+  /* Define to 1 if you have the <stddef.h> header file. */
+#define HAVE_STDDEF_H 1
+
+/* Define to 1 if you have <alloca.h> and it should be used (not on Ultrix).
+   */
+#define HAVE_ALLOCA_H 1
+
+/* Define to 1 if you have the <string.h> header file. */
+#define HAVE_STRING_H 1
+
+
+/* Define if your system has the GLOB_NOMAGIC headers. */
+/* #undef HAVE_GLOB_NOMAGIC */
+
+/* Define if your system has the GLOB_BRACE headers. */
+/* #undef HAVE_GLOB_BRACE */
+
+/* Define to 1 if internal poll should be used. */
+/* #undef AST_POLL_COMPAT */
+
+
+/* Define to 1 if limits.h includes a LLONG_MAX definition. */
+#define HAVE_LLONG_MAX 1
+
+/* Define to 1 if you have the `closefrom' function. */
+/* #undef HAVE_CLOSEFROM */
+
+/* Define to 1 if you have the `roundl' function. */
+#define HAVE_ROUNDL 1
+
+/* Define to 1 if you have the `round' function. */
+#define HAVE_ROUND 1
+
+/* Define to 1 if you have the `roundf' function. */
+#define HAVE_ROUNDF 1
+
+/* Define to 1 if your system defines timersub. */
+#define HAVE_TIMERSUB 1
+
+
+/* Define to 1 if arpa/inet.h includes a htonll definition. */
+/* #undef HAVE_HTONLL */
+/* Define to 1 if arpa/inet.h includes a ntohll definition. */
+/* #undef HAVE_NTOHLL */
+
+
+/* Define to 1 if you have the `asprintf' function. */
+#define HAVE_ASPRINTF 1
+
+
+/* Define to 1 if you have the `ffsll' function. */
+#define HAVE_FFSLL 1
+
+/* Define to 1 if you have the `getloadavg' function. */
+#define HAVE_GETLOADAVG 1
+
+/* Define to 1 if you have the `mkdtemp' function. */
+#define HAVE_MKDTEMP 1
+
+
+
+/* Define to 1 if you have the `setenv' function. */
+#define HAVE_SETENV 1
+
+/* Define to 1 if you have the `strcasestr' function. */
+#define HAVE_STRCASESTR 1
+
+/* Define to 1 if you have the `strndup' function. */
+#define HAVE_STRNDUP 1
+
+/* Define to 1 if you have the `strnlen' function. */
+#define HAVE_STRNLEN 1
+
+/* Define to 1 if you have the `strsep' function. */
+#define HAVE_STRSEP 1
+
+/* Define to 1 if you have the `unsetenv' function. */
+#define HAVE_UNSETENV 1
+
+/* Define to 1 if you have the `vasprintf' function. */
+#define HAVE_VASPRINTF 1
 
 #endif

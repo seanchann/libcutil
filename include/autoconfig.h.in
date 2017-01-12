@@ -37,5 +37,108 @@
 /* Define to 1 if you have the Stack Backtrace library. */
 #cmakedefine HAVE_BKTR @HAVE_BKTR@
 
+/* Define to 1 if you have the <> header file. */
+#cmakedefine HAVE_WINSOCK_H @HAVE_WINSOCK_H@
+
+/* Define to 1 if you have the <arpa/inet.h> header file. */
+#cmakedefine HAVE_ARPA_INET_H @HAVE_ARPA_INET_H@
+
+/* Define to 1 if you have the <winsock2.h> header file. */
+#cmakedefine HAVE_WINSOCK2_H @HAVE_WINSOCK2_H@
+
+/* Define to 1 if you have the `inet_aton' function. */
+#cmakedefine HAVE_INET_ATON @HAVE_INET_ATON@
+
+/* Define to 1 if your system defines the locale_t type in locale.h */
+#cmakedefine HAVE_LOCALE_T_IN_LOCALE_H
+
+/* Define to 1 if your system defines the locale_t type in xlocale.h */
+#cmakedefine HAVE_LOCALE_T_IN_XLOCALE_H
+
+/* Define to 1 if you have the <limits.h> header file. */
+#cmakedefine HAVE_LIMITS_H @HAVE_LIMITS_H@
+
+
+  /* Define to 1 if you have the <stddef.h> header file. */
+#cmakedefine HAVE_STDDEF_H @HAVE_STDDEF_H@
+
+/* Define to 1 if you have <alloca.h> and it should be used (not on Ultrix).
+   */
+#cmakedefine HAVE_ALLOCA_H @HAVE_ALLOCA_H@
+
+/* Define to 1 if you have the <string.h> header file. */
+#cmakedefine HAVE_STRING_H @HAVE_STRING_H@
+
+
+/* Define if your system has the GLOB_NOMAGIC headers. */
+#cmakedefine HAVE_GLOB_NOMAGIC @HAVE_GLOB_NOMAGIC@
+
+/* Define if your system has the GLOB_BRACE headers. */
+#cmakedefine HAVE_GLOB_BRACE @HAVE_GLOB_BRACE@
+
+/* Define to 1 if internal poll should be used. */
+#cmakedefine AST_POLL_COMPAT @AST_POLL_COMPAT@
+
+
+/* Define to 1 if limits.h includes a LLONG_MAX definition. */
+#cmakedefine HAVE_LLONG_MAX @HAVE_LLONG_MAX@
+
+/* Define to 1 if you have the `closefrom' function. */
+#cmakedefine HAVE_CLOSEFROM @HAVE_CLOSEFROM@
+
+/* Define to 1 if you have the `roundl' function. */
+#cmakedefine HAVE_ROUNDL @HAVE_ROUNDL@
+
+/* Define to 1 if you have the `round' function. */
+#cmakedefine HAVE_ROUND @HAVE_ROUND@
+
+/* Define to 1 if you have the `roundf' function. */
+#cmakedefine HAVE_ROUNDF @HAVE_ROUNDF@
+
+/* Define to 1 if your system defines timersub. */
+#cmakedefine HAVE_TIMERSUB @HAVE_TIMERSUB@
+
+
+/* Define to 1 if arpa/inet.h includes a htonll definition. */
+#cmakedefine HAVE_HTONLL @HAVE_HTONLL@
+/* Define to 1 if arpa/inet.h includes a ntohll definition. */
+#cmakedefine HAVE_NTOHLL @HAVE_NTOHLL@
+
+
+/* Define to 1 if you have the `asprintf' function. */
+#cmakedefine HAVE_ASPRINTF @HAVE_ASPRINTF@
+
+
+/* Define to 1 if you have the `ffsll' function. */
+#cmakedefine HAVE_FFSLL @HAVE_FFSLL@
+
+/* Define to 1 if you have the `getloadavg' function. */
+#cmakedefine HAVE_GETLOADAVG @HAVE_GETLOADAVG@
+
+/* Define to 1 if you have the `mkdtemp' function. */
+#cmakedefine HAVE_MKDTEMP @HAVE_MKDTEMP@
+
+
+
+/* Define to 1 if you have the `setenv' function. */
+#cmakedefine HAVE_SETENV @HAVE_SETENV@
+
+/* Define to 1 if you have the `strcasestr' function. */
+#cmakedefine HAVE_STRCASESTR @HAVE_STRCASESTR@
+
+/* Define to 1 if you have the `strndup' function. */
+#cmakedefine HAVE_STRNDUP @HAVE_STRNDUP@
+
+/* Define to 1 if you have the `strnlen' function. */
+#cmakedefine HAVE_STRNLEN @HAVE_STRNLEN@
+
+/* Define to 1 if you have the `strsep' function. */
+#cmakedefine HAVE_STRSEP @HAVE_STRSEP@
+
+/* Define to 1 if you have the `unsetenv' function. */
+#cmakedefine HAVE_UNSETENV @HAVE_UNSETENV@
+
+/* Define to 1 if you have the `vasprintf' function. */
+#cmakedefine HAVE_VASPRINTF @HAVE_VASPRINTF@
 
 #endif

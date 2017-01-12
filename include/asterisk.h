@@ -201,6 +201,7 @@ struct ast_sched_context;
 #define __stringify_1(x)	#x
 #define __stringify(x)		__stringify_1(x)
 
+
 #if 0
 #if defined(AST_IN_CORE) \
 	|| (!defined(AST_MODULE_SELF_SYM) \
@@ -222,6 +223,8 @@ struct ast_module *AST_MODULE_SELF_SYM(void);
 #error "Externally compiled modules must declare AST_MODULE_SELF_SYM."
 
 #endif
+#else
+#define AST_MODULE_SELF NULL
 #endif
 
 /*!

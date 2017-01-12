@@ -1,14 +1,19 @@
 /*
- * libcutil -- An utility toolkit.
+ * Asterisk -- An open source telephony toolkit.
  *
- * Copyright (C) 2016 - 2017, JYD, Inc.
+ * Copyright (C) 1999 - 2005, Digium, Inc.
  *
- * seanchann <seanchann@foxmail.com>
+ * Mark Spencer <markster@digium.com>
  *
- * See docs/ for more information about
- * the libcutil project.
+ * See http://www.asterisk.org for more information about
+ * the Asterisk project. Please do not directly contact
+ * any of the maintainers of this project for assistance;
+ * the project provides a web site, mailing lists and IRC
+ * channels for your use.
  *
- * This program belongs to JYD, Inc. JYD, Inc reserves all rights
+ * This program is free software, distributed under the terms of
+ * the GNU General Public License Version 2. See the LICENSE file
+ * at the top of the source tree.
  */
 
 /*!
@@ -20,8 +25,7 @@
 #ifndef _ASTERISK_LOGGER_H
 #define _ASTERISK_LOGGER_H
 
-#include "log/options.h"	/* need option_debug */
-
+#include "cutil/options.h"	/* need option_debug */
 
 #if defined(__cplusplus) || defined(c_plusplus)
 extern "C" {
@@ -40,6 +44,13 @@ extern "C" {
 #define VERBOSE_PREFIX_4 "       > "
 
 #define AST_CALLID_BUFFER_LENGTH 13
+
+enum ast_logger_results {
+	AST_LOGGER_SUCCESS = 0, /*!< Log channel was created or deleted successfully*/
+	AST_LOGGER_FAILURE = 1, /*!< Log channel already exists for create or doesn't exist for deletion of log channel */
+	AST_LOGGER_DECLINE = -1, /*!< Log channel request was not accepted */
+	AST_LOGGER_ALLOC_ERROR = -2 /*!< filename allocation error */
+};
 
 /*! \brief Used for sending a log message
 	This is the standard logger function.  Probably the only way you will invoke it would be something like this:
@@ -70,7 +81,7 @@ void ast_log_safe(int level, const char *file, int line, const char *function, c
 	__attribute__((format(printf, 5, 6)));
 
 /* XXX needs documentation */
-struct ast_callid;
+typedef unsigned int ast_callid;
 
 /*! \brief Used for sending a log message with a known call_id
 	This is a modified logger function which is functionally identical to the above logger function,
@@ -84,8 +95,38 @@ struct ast_callid;
 	\param callid	This is the ast_callid that is associated with the log message. May be NULL.
 	\param fmt	This is what is important.  The format is the same as your favorite breed of printf.  You know how that works, right? :-)
 */
-void ast_log_callid(int level, const char *file, int line, const char *function, struct ast_callid *callid, const char *fmt, ...)
+void ast_log_callid(int level, const char *file, int line, const char *function, ast_callid callid, const char *fmt, ...)
 	__attribute__((format(printf, 6, 7)));
+
+/*!
+ * \brief Retrieve the existing log channels
+ * \param logentry A callback to an updater function
+ * \param data Data passed into the callback for manipulation
+ *
+ * For each of the logging channels, logentry will be executed with the
+ * channel file name, log type, status of the log, and configuration levels.
+ *
+ * \retval 0 on success
+ * \retval 1 on failure
+ * \retval -2 on allocation error
+ */
+int ast_logger_get_channels(int (*logentry)(const char *channel, const char *type,
+	const char *status, const char *configuration, void *data), void *data);
+
+/*!
+ * \brief Create a log channel
+ *
+ * \param log_channel Log channel to create
+ * \param components Logging config levels to add to the log channel
+ */
+int ast_logger_create_channel(const char *log_channel, const char *components);
+
+/*!
+ * \brief Delete the specified log channel
+ *
+ * \param log_channel The log channel to delete
+ */
+int ast_logger_remove_channel(const char *log_channel);
 
 /*!
  * \brief Log a backtrace of the current thread's execution stack to the Asterisk log
@@ -97,6 +138,13 @@ int logger_reload(void);
 
 /*! \brief Reload logger while rotating log files */
 int ast_logger_rotate(void);
+
+/*!
+ * \brief Rotate the specified log channel.
+ *
+ * \param log_channel The log channel to rotate
+ */
+int ast_logger_rotate_channel(const char *log_channel);
 
 void __attribute__((format(printf, 5, 6))) ast_queue_log(const char *queuename, const char *callid, const char *agent, const char *event, const char *fmt, ...);
 
@@ -124,12 +172,12 @@ void __attribute__((format(printf, 5, 6))) __ast_verbose(const char *file, int l
  * allow you to specify that a log will never display a call id even when there is a call id bound to the
  * thread.
  */
-void __attribute__((format(printf, 6, 7))) __ast_verbose_callid(const char *file, int line, const char *func, int level, struct ast_callid *callid, const char *fmt, ...);
+void __attribute__((format(printf, 6, 7))) __ast_verbose_callid(const char *file, int line, const char *func, int level, ast_callid callid, const char *fmt, ...);
 
 #define ast_verbose(...) __ast_verbose(__FILE__, __LINE__, __PRETTY_FUNCTION__, -1, __VA_ARGS__)
 #define ast_verbose_callid(callid, ...) __ast_verbose_callid(__FILE__, __LINE__, __PRETTY_FUNCTION__, -1, callid, __VA_ARGS__)
 
-void __attribute__((format(printf, 6, 0))) __ast_verbose_ap(const char *file, int line, const char *func, int level, struct ast_callid *callid, const char *fmt, va_list ap);
+void __attribute__((format(printf, 6, 0))) __ast_verbose_ap(const char *file, int line, const char *func, int level, ast_callid callid, const char *fmt, va_list ap);
 
 void __attribute__((format(printf, 2, 3))) ast_child_verbose(int level, const char *fmt, ...);
 
@@ -147,11 +195,25 @@ int ast_unregister_verbose(void (*verboser)(const char *string)) attribute_warn_
 void ast_console_puts(const char *string);
 
 /*!
- * \brief log the string to the console, and all attached
- * console clients
+ * \brief log the string to the console, and all attached console clients
+ *
+ * \param string The message to write to the console
+ * \param level The log level of the message
+ *
  * \version 1.6.1 added level parameter
  */
 void ast_console_puts_mutable(const char *string, int level);
+
+/*!
+ * \brief log the string to the console, and all attached console clients
+ * \since 14.0.0
+ *
+ * \param message The message to write to the console
+ * \param sublevel If the log level supports it, the sub-level of the message
+ * \param level The log level of the message
+ */
+void ast_console_puts_mutable_full(const char *message, int level, int sublevel);
+
 void ast_console_toggle_mute(int fd, int silent);
 
 /*!
@@ -284,49 +346,17 @@ const char *ast_logger_get_dateformat(void);
 /*!
  * \brief factory function to create a new uniquely identifying callid.
  *
- * \retval ast_callid struct pointer containing the call id
- *
- * \note The newly created callid will be referenced upon creation and this function should be
- * paired with a call to ast_callid_unref()
+ * \retval The call id
  */
-struct ast_callid *ast_create_callid(void);
+ast_callid ast_create_callid(void);
 
 /*!
  * \brief extracts the callerid from the thread
  *
- * \retval ast_callid reference to call_id related to the thread
- * \retval NULL if no call_id is present in the thread
- *
- * This reference must be unreffed before it loses scope to prevent memory leaks.
+ * \retval Non-zero Call id related to the thread
+ * \retval 0 if no call_id is present in the thread
  */
-struct ast_callid *ast_read_threadstorage_callid(void);
-
-/*!
- * \brief Increase callid reference count
- *
- * \param c the ast_callid
- *
- * \retval c always
- */
-#define ast_callid_ref(c) ({ ao2_ref(c, +1); (c); })
-
-/*!
- * \brief Decrease callid reference count
- *
- * \param c the ast_callid
- *
- * \retval NULL always
- */
-#define ast_callid_unref(c) ({ ao2_ref(c, -1); (struct ast_callid *) (NULL); })
-
-/*!
- * \brief Cleanup a callid reference (NULL safe ao2 unreference)
- *
- * \param c the ast_callid
- *
- * \retval NULL always
- */
-#define ast_callid_cleanup(c) ({ ao2_cleanup(c); (struct ast_callid *) (NULL); })
+ast_callid ast_read_threadstorage_callid(void);
 
 /*!
  * \brief Sets what is stored in the thread storage to the given
@@ -335,7 +365,7 @@ struct ast_callid *ast_read_threadstorage_callid(void);
  * \retval 0 - success
  * \retval non-zero - failure
  */
-int ast_callid_threadassoc_change(struct ast_callid *callid);
+int ast_callid_threadassoc_change(ast_callid callid);
 
 /*!
  * \brief Adds a known callid to thread storage of the calling thread
@@ -343,7 +373,7 @@ int ast_callid_threadassoc_change(struct ast_callid *callid);
  * \retval 0 - success
  * \retval non-zero - failure
  */
-int ast_callid_threadassoc_add(struct ast_callid *callid);
+int ast_callid_threadassoc_add(ast_callid callid);
 
 /*!
  * \brief Removes callid from thread storage of the calling thread
@@ -358,12 +388,12 @@ int ast_callid_threadassoc_remove(void);
  *        If not, then a new one will be created, bound to the thread, and a reference
  *        to it will be stored.
  *
- * \param callid pointer to struct pointer used to store the referenced callid
+ * \param callid pointer to store the callid
  * \retval 0 - callid was found
  * \retval 1 - callid was created
  * \retval -1 - the function failed somehow (presumably memory problems)
  */
-int ast_callid_threadstorage_auto(struct ast_callid **callid);
+int ast_callid_threadstorage_auto(ast_callid *callid);
 
 /*!
  * \brief Use in conjunction with ast_callid_threadstorage_auto. Cleans up the
@@ -372,7 +402,7 @@ int ast_callid_threadstorage_auto(struct ast_callid **callid);
  * \param callid The callid set by ast_callid_threadstorage_auto
  * \param callid_created The integer returned through ast_callid_threadstorage_auto
  */
-void ast_callid_threadstorage_auto_clean(struct ast_callid *callid, int callid_created);
+void ast_callid_threadstorage_auto_clean(ast_callid callid, int callid_created);
 
 /*!
  * \brief copy a string representation of the callid into a target string
@@ -381,7 +411,7 @@ void ast_callid_threadstorage_auto_clean(struct ast_callid *callid, int callid_c
  * \param buffer_size maximum writable length of the string (Less than 13 will result in truncation)
  * \param callid Callid for which string is being requested
  */
-void ast_callid_strnprint(char *buffer, size_t buffer_size, struct ast_callid *callid);
+void ast_callid_strnprint(char *buffer, size_t buffer_size, ast_callid callid);
 
 /*!
  * \brief Send a log message to a dynamically registered log level
@@ -397,9 +427,14 @@ void ast_callid_strnprint(char *buffer, size_t buffer_size, struct ast_callid *c
 
 #define ast_log_dynamic_level(level, ...) ast_log(level, __FILE__, __LINE__, __PRETTY_FUNCTION__, __VA_ARGS__)
 
+#if 0
 #define DEBUG_ATLEAST(level) \
 	(option_debug >= (level) \
 		|| (ast_opt_dbg_module && (int)ast_debug_get_by_module(AST_MODULE) >= (level)))
+#else
+#define DEBUG_ATLEAST(level) \
+	(option_debug >= (level))
+#endif
 
 /*!
  * \brief Log a DEBUG message

@@ -11,7 +11,7 @@ if(UNIX)
   else()
   endif()
   #set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${WARNINGS} -Werror -pedantic")
-  set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${WARNINGS} -pedantic")
+  set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${WARNINGS} -w")
 
 
 elseif(WIN32)

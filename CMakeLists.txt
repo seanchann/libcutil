@@ -6,6 +6,8 @@ include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/configure.cmake)
 option(BUILD_LIBCUTIL "build c utility library" ON)
 option(BUILD_LOGUTIL "build log library" ON)
 
+option(BUILD_TEST "build test binary" ON)
+
 
 set(LIBCUTIL_INSTALL_PREFIX ${libcutil_BINARY_DIR}/usr)
 
@@ -34,6 +36,10 @@ if(BUILD_LIBCUTIL)
       set(LOGUTIL_LIBRARY logutil)
       include_directories(include)
       add_subdirectory(src/log)
+    endif()
+
+    if(BUILD_TEST)
+      add_subdirectory(test)
     endif()
   elseif(WIN32)
     message(STATUS "This is on win32 platform, Not supported!")

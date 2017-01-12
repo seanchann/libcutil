@@ -23,19 +23,20 @@
 
 /*#include "asterisk/_private.h"*/
 /*#include "asterisk/paths.h"	/* use ast_config_AST_LOG_DIR */
-#include "asterisk/logger.h"
+#include "cutil/paths.h"	/* use ast_config_AST_LOG_DIR*/
+#include "log/logger.h"
 #include "asterisk/lock.h"
-#include "asterisk/channel.h"
+/*#include "asterisk/channel.h"*/
 #include "asterisk/config.h"
 #include "asterisk/term.h"
 #include "asterisk/cli.h"
 #include "asterisk/utils.h"
-#include "asterisk/manager.h"
+/*#include "asterisk/manager.h"*/
 #include "asterisk/astobj2.h"
 #include "asterisk/threadstorage.h"
 #include "asterisk/strings.h"
-#include "asterisk/pbx.h"
-#include "asterisk/app.h"
+/*#include "asterisk/pbx.h"*/
+/*#include "asterisk/app.h"*/
 #include "asterisk/syslog.h"
 #include "asterisk/buildinfo.h"
 #include "asterisk/ast_version.h"
@@ -779,6 +780,8 @@ void ast_queue_log(const char *queuename, const char *callid, const char *agent,
 		logger_queue_start();
 	}
 
+/*disable realtime queue_log*/
+#if 0
 	if (ast_check_realtime("queue_log")) {
 		tv = ast_tvnow();
 		ast_localtime(&tv, &tm, logfiles.queue_log_realtime_use_gmt ? "GMT" : NULL);
@@ -826,6 +829,7 @@ void ast_queue_log(const char *queuename, const char *callid, const char *agent,
 			return;
 		}
 	}
+#endif
 
 	if (qlog) {
 		va_start(ap, fmt);
@@ -1048,7 +1052,7 @@ static int reload_logger(int rotate, const char *altconf)
 					</syntax>
 				</managerEventInstance>
 			***/
-			manager_event(EVENT_FLAG_SYSTEM, "LogChannel", "Channel: %s\r\nEnabled: Yes\r\n", f->filename);
+			/*manager_event(EVENT_FLAG_SYSTEM, "LogChannel", "Channel: %s\r\nEnabled: Yes\r\n", f->filename);*/
 		}
 		if (f->fileptr && (f->fileptr != stdout) && (f->fileptr != stderr)) {
 			int rotate_this = 0;
@@ -1151,8 +1155,8 @@ int ast_logger_rotate_channel(const char *log_channel)
 	AST_RWLIST_TRAVERSE(&logchannels, f, list) {
 		if (f->disabled) {
 			f->disabled = 0;	/* Re-enable logging at reload */
-			manager_event(EVENT_FLAG_SYSTEM, "LogChannel", "Channel: %s\r\nEnabled: Yes\r\n",
-				f->filename);
+			/*manager_event(EVENT_FLAG_SYSTEM, "LogChannel", "Channel: %s\r\nEnabled: Yes\r\n",
+				f->filename);*/
 		}
 		if (f->fileptr && (f->fileptr != stdout) && (f->fileptr != stderr)) {
 			fclose(f->fileptr);	/* Close file */
@@ -1536,7 +1540,7 @@ static void logger_print_normal(struct logmsg *logmsg)
 								</syntax>
 							</managerEventInstance>
 						***/
-						manager_event(EVENT_FLAG_SYSTEM, "LogChannel", "Channel: %s\r\nEnabled: No\r\nReason: %d - %s\r\n", chan->filename, errno, strerror(errno));
+						/*manager_event(EVENT_FLAG_SYSTEM, "LogChannel", "Channel: %s\r\nEnabled: No\r\nReason: %d - %s\r\n", chan->filename, errno, strerror(errno));*/
 						chan->disabled = 1;
 					}
 				}
@@ -1826,6 +1830,7 @@ void ast_callid_threadstorage_auto_clean(ast_callid callid, int callid_created)
 	}
 }
 
+typedef struct logmsg LOGMSG;
 /*!
  * \brief send log messages to syslog and/or the console
  */
@@ -1870,9 +1875,15 @@ static void __attribute__((format(printf, 7, 0))) ast_log_full(int level, int su
 	if (res == AST_DYNSTR_BUILD_FAILED)
 		return;
 
+//#if 0
 	/* Create a new logging message */
-	if (!(logmsg = ast_calloc_with_stringfields(1, struct logmsg, res + 128)))
+	unsigned int num_structs = 1;
+
+	if (!(logmsg = ast_calloc_with_stringfields(num_structs, struct logmsg, res + 128)))
 		return;
+//#endif
+	// __ast_calloc_with_stringfields(1, sizeof(struct logmsg), offsetof(struct logmsg, __field_mgr), offsetof(struct logmsg, __field_mgr_pool),
+	// 						 res + 128, __FILE__, __LINE__, __PRETTY_FUNCTION__)
 
 	/* Copy string over */
 	ast_string_field_set(logmsg, message, ast_str_buffer(buf));
