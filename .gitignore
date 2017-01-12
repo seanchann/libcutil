@@ -4,3 +4,4 @@
 .tags1
 build.*/
 *.pch
+autoconfig.h
