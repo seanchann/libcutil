@@ -141,4 +141,26 @@
 /* Define to 1 if you have the `vasprintf' function. */
 #cmakedefine HAVE_VASPRINTF @HAVE_VASPRINTF@
 
+/* Define to 1 if you have the <sys/thr.h> header file. */
+#cmakedefine HAVE_SYS_THR_H @HAVE_SYS_THR_H@
+
+
+/* The size of `char *', as computed by sizeof. */
+#cmakedefine SIZEOF_CHAR_P @SIZEOF_CHAR_P@
+
+/* The size of `fd_set.fds_bits', as computed by sizeof. */
+#cmakedefine SIZEOF_FD_SET_FDS_BITS @SIZEOF_FD_SET_FDS_BITS@
+
+/* The size of `int', as computed by sizeof. */
+#cmakedefine SIZEOF_INT @SIZEOF_INT@
+
+/* The size of `long', as computed by sizeof. */
+#cmakedefine SIZEOF_LONG @SIZEOF_LONG@
+
+/* The size of `long long', as computed by sizeof. */
+#cmakedefine SIZEOF_LONG_LONG @SIZEOF_LONG_LONG@
+
+/* Define to a type of the same size as fd_set.fds_bits[[0]] */
+#cmakedefine TYPEOF_FD_SET_FDS_BITS @TYPEOF_FD_SET_FDS_BITS@
+
 #endif

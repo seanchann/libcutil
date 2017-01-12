@@ -1,29 +1,18 @@
 /*
- * Asterisk -- An open source telephony toolkit.
+ * libcutil -- An utility toolkit.
  *
- * Copyright (C) 1999 - 2005, Digium, Inc.
+ * Copyright (C) 2016 - 2017, JYD, Inc.
  *
- * Mark Spencer <markster@digium.com>
+ * seanchann <seanchann@foxmail.com>
  *
- * See http://www.asterisk.org for more information about
- * the Asterisk project. Please do not directly contact
- * any of the maintainers of this project for assistance;
- * the project provides a web site, mailing lists and IRC
- * channels for your use.
+ * See docs/ for more information about
+ * the libcutil project.
  *
- * This program is free software, distributed under the terms of
- * the GNU General Public License Version 2. See the LICENSE file
- * at the top of the source tree.
+ * This program belongs to JYD, Inc. JYD, Inc reserves all rights
  */
 
-/*!
-  \file logger.h
-  \brief Support for logging to various files, console and syslog
-	Configuration in file logger.conf
-*/
-
-#ifndef _ASTERISK_LOGGER_H
-#define _ASTERISK_LOGGER_H
+#ifndef _CUTIL_LOGGER_H
+#define _CUTIL_LOGGER_H
 
 #include "cutil/options.h"	/* need option_debug */
 
@@ -509,4 +498,4 @@ void ast_verb_console_set(int verb_level);
 }
 #endif
 
-#endif /* _ASTERISK_LOGGER_H */
+#endif /* _CUTIL_LOGGER_H */

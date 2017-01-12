@@ -12,7 +12,7 @@
  */
 
 #include "asterisk.h"
-#include "asterisk/logger.h"
+#include "log/logger.h"
 
 
 int main()

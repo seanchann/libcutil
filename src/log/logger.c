@@ -23,13 +23,11 @@
 
 /*#include "asterisk/_private.h"*/
 /*#include "asterisk/paths.h"	/* use ast_config_AST_LOG_DIR */
-#include "cutil/paths.h"	/* use ast_config_AST_LOG_DIR*/
 #include "log/logger.h"
 #include "asterisk/lock.h"
 /*#include "asterisk/channel.h"*/
 #include "asterisk/config.h"
 #include "asterisk/term.h"
-#include "asterisk/cli.h"
 #include "asterisk/utils.h"
 /*#include "asterisk/manager.h"*/
 #include "asterisk/astobj2.h"
@@ -42,6 +40,9 @@
 #include "asterisk/ast_version.h"
 #include "asterisk/backtrace.h"
 #include "asterisk/json.h"
+
+#include "cli/cli.h"
+#include "cutil/paths.h"	/* use ast_config_AST_LOG_DIR*/
 
 /*** DOCUMENTATION
  ***/
@@ -672,9 +673,11 @@ static int init_logger_chain(const char *altconf)
 	if ((s = ast_variable_retrieve(cfg, "general", "queue_log_realtime_use_gmt"))) {
 		logfiles.queue_log_realtime_use_gmt = ast_true(s);
 	}
+#if 0
 	if ((s = ast_variable_retrieve(cfg, "general", "exec_after_rotate"))) {
 		ast_copy_string(exec_after_rotate, s, sizeof(exec_after_rotate));
 	}
+#endif
 	if ((s = ast_variable_retrieve(cfg, "general", "rotatestrategy"))) {
 		if (strcasecmp(s, "timestamp") == 0) {
 			rotatestrategy = TIMESTAMP;
@@ -927,6 +930,7 @@ static int rotate_file(const char *filename)
 		}
 	}
 
+#if 0
 	if (!ast_strlen_zero(exec_after_rotate)) {
 		struct ast_channel *c = ast_dummy_channel_alloc();
 		char buf[512];
@@ -940,6 +944,7 @@ static int rotate_file(const char *filename)
 			ast_log(LOG_WARNING, "error executing '%s'\n", buf);
 		}
 	}
+#endif
 	return res;
 }
 

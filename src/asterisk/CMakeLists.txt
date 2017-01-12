@@ -1,5 +1,9 @@
 set(SOURCES
-  logger.c
+  syslog.c
+  term.c
+  lock.c
+  uuid.c
+  utils.c
 )
 
 
@@ -12,7 +16,7 @@ if(UNIX)
   endif()
   #set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${WARNINGS} -Werror -pedantic")
   set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${WARNINGS} -w")
-  option(BUILD_SHARED_LIBS "Build shared Libraries." ON)
+
 
 elseif(WIN32)
   message(STATUS "on win32 platform")
@@ -20,16 +24,21 @@ endif()
 
 message(STATUS "source list " ${SOURCES})
 
+add_library(${AST_CORE_LIBRARY}  ${SOURCES})
 
-add_library(${LOGUTIL_LIBRARY}  ${SOURCES})
-target_link_libraries(${LOGUTIL_LIBRARY}
-  ${AST_CORE_LIBRARY}
-  )
+if(THREADS_HAVE_PTHREAD_ARG)
+  target_compile_options(PUBLIC my_app "-pthread")
+endif()
+
+if(CMAKE_THREAD_LIBS_INIT)
+  target_link_libraries(${AST_CORE_LIBRARY}
+    ${CMAKE_THREAD_LIBS_INIT})
+endif()
 
 # Portions specific to cpprest binary versioning.
-set (LOGUTIL_VERSION_MAJOR 1)
-set (LOGUTIL_VERSION_MINOR 0)
-set (LOGUTIL_VERSION_REVISION 0)
+set (AST_CORE_VERSION_MAJOR 1)
+set (AST_CORE_VERSION_MINOR 0)
+set (AST_CORE_VERSION_REVISION 0)
 
 
 
@@ -39,11 +48,11 @@ elseif(ANDROID)
   # Do not use SOVERSION on android. It is completely unsupported (and causes problems).
   # Perhaps revisit in the future? (NDK r9d, 8/7/14)
 else()
-  set_target_properties(${LOGUTIL_LIBRARY} PROPERTIES
-  SOVERSION ${LOGUTIL_VERSION_MAJOR}.${LOGUTIL_VERSION_MINOR}.${LOGUTIL_VERSION_REVISION})
+  set_target_properties(${AST_CORE_LIBRARY} PROPERTIES
+  SOVERSION ${AST_CORE_VERSION_MAJOR}.${AST_CORE_VERSION_MINOR}.${AST_CORE_VERSION_REVISION})
 
   install(
-    TARGETS ${LOGUTIL_LIBRARY}
+    TARGETS ${AST_CORE_LIBRARY}
     LIBRARY DESTINATION lib
     ARCHIVE DESTINATION lib
     )

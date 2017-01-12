@@ -30,11 +30,17 @@ if(BUILD_LIBCUTIL)
     message(STATUS "This is on android platform, Not supported!")
   elseif(UNIX)
     include_directories(${LIBCUTIL_INSTALL_PREFIX}/include)
-    option(BUILD_SHARED_LIBS "Build shared Libraries." ON)
+
+    find_package(Threads REQUIRED)
+
+    #first build astcore.a
+    set(AST_CORE_LIBRARY astcore)
+    include_directories(include)
+    add_subdirectory(src/asterisk)
+
 
     if(BUILD_LOGUTIL)
       set(LOGUTIL_LIBRARY logutil)
-      include_directories(include)
       add_subdirectory(src/log)
     endif()
 

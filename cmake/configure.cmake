@@ -19,7 +19,7 @@ macro(Configure)
   CHECK_INCLUDE_FILES ("alloca.h" HAVE_ALLOCA_H)
   CHECK_INCLUDE_FILES ("string.h" HAVE_STRING_H)
   CHECK_INCLUDE_FILES ("string.h" HAVE_STRING_H)
-
+  CHECK_INCLUDE_FILES ("sys/thr.h" HAVE_SYS_THR_H)
   #newwork
   CHECK_INCLUDE_FILES ("arpa/inet.h" HAVE_ARPA_INET_H)
   CHECK_INCLUDE_FILES ("winsock.h" HAVE_WINSOCK_H)
@@ -77,6 +77,42 @@ macro(Configure)
     IF(!{HAVE_POLL_H})
       SET (AST_POLL_COMPAT 1)
     ENDIF()
+  ENDIF()
+
+
+  INCLUDE(CheckTypeSize)
+  CHECK_TYPE_SIZE("char *" SIZEOF_CHAR_P)
+  CHECK_TYPE_SIZE("int" SIZEOF_INT)
+  CHECK_TYPE_SIZE("long" SIZEOF_LONG)
+  CHECK_TYPE_SIZE("long long" SIZEOF_LONG_LONG)
+  #CHECK_TYPE_SIZE("fd_set.__fds_bits" SIZEOF_FD_SET_FDS_BITS)
+
+
+  #try_run(RUN_RESULT COMPILE_RESULT {CMAKE_CURRENT_BINARY_DIR}
+  #  ${CMAKE_CURRENT_SOURCE_DIR}/cmake/fd_set_fd_bits.c
+  #  RUN_OUTPUT_VARIABLE SIZEOF_FD_SET_FDS_BITS)
+
+
+  #INCLUDE(CheckCSourceCompiles)
+  # CHECK_C_SOURCE_COMPILES(
+  #   "
+  #   #include <sys/select.h>
+  #
+  #   int main()
+  #   {
+  #
+  #   }
+  #
+  #   "
+  #   SIZEOF_FD_SET_FDS_BITS)
+
+
+  IF(SIZEOF_INT==SIZEOF_FD_SET_FDS_BITS)
+    SET (TYPEOF_FD_SET_FDS_BITS int)
+  ELSEIF(SIZEOF_LONG==SIZEOF_FD_SET_FDS_BITS)
+    SET (TYPEOF_FD_SET_FDS_BITS long)
+  ELSEIF(SIZEOF_LONG_LONG==SIZEOF_FD_SET_FDS_BITS)
+    SET (TYPEOF_FD_SET_FDS_BITS long long)
   ENDIF()
 
 
