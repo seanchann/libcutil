@@ -163,4 +163,22 @@
 /* Define to a type of the same size as fd_set.fds_bits[[0]] */
 #cmakedefine TYPEOF_FD_SET_FDS_BITS @TYPEOF_FD_SET_FDS_BITS@
 
+/* Define to 1 if you have the `gethostbyname' function. */
+#cmakedefine HAVE_GETHOSTBYNAME
+
+/* Define to 1 if your system has gethostbyname_r with 5 arguments. */
+#cmakedefine HAVE_GETHOSTBYNAME_R_5
+
+/* Define to 1 if your system has gethostbyname_r with 6 arguments. */
+#cmakedefine HAVE_GETHOSTBYNAME_R_6
+
+/* Define to 1 if you have the `gethostname' function. */
+#cmakedefine HAVE_GETHOSTNAME
+
+/* Define if your system has the GETIFADDRS headers. */
+#cmakedefine HAVE_GETIFADDRS
+
+/* Define to 1 if your system has the dladdr() GNU extension */
+#cmakedefine HAVE_DLADDR @HAVE_DLADDR@
+
 #endif

@@ -52,6 +52,74 @@ macro(Configure)
   CHECK_FUNCTION_EXISTS(strsep HAVE_STRSEP)
   CHECK_FUNCTION_EXISTS(unsetenv HAVE_UNSETENV)
   CHECK_FUNCTION_EXISTS(vasprintf HAVE_VASPRINTF)
+  CHECK_FUNCTION_EXISTS(gethostbyname HAVE_GETHOSTBYNAME)
+  CHECK_FUNCTION_EXISTS(gethostname HAVE_GETHOSTNAME)
+
+
+  INCLUDE(CheckCSourceCompiles)
+  CHECK_C_SOURCE_COMPILES(
+    "
+    #include <ifaddrs.h>
+    int main ()
+    {
+      struct ifaddrs *p;
+      getifaddrs(&p);;
+      return 0;
+    }
+    "
+
+    HAVE_GETIFADDRS
+  )
+
+
+
+  CHECK_C_SOURCE_COMPILES(
+    "
+    #include <stdlib.h>
+    #include <netdb.h>
+    int
+    main ()
+    {
+    struct hostent *he = gethostbyname_r((const char *)NULL, (struct hostent *)NULL, (char *)NULL, (int)0, (struct hostent **)NULL, (int *)NULL);
+      ;
+      return 0;
+    }
+    "
+
+    HAVE_GETHOSTBYNAME_R_6
+  )
+
+  CHECK_C_SOURCE_COMPILES(
+    "
+    #include <stdlib.h>
+    #include <netdb.h>
+    int main ()
+    {
+    struct hostent *he = gethostbyname_r((const char *)NULL, (struct hostent *)NULL, (char *)NULL, (int)0, (int *)NULL);
+      ;
+      return 0;
+    }
+    "
+
+    HAVE_GETHOSTBYNAME_R_5
+  )
+
+  CHECK_C_SOURCE_COMPILES(
+    "
+    #define _GNU_SOURCE 1
+    #include <dlfcn.h>
+    int
+    main ()
+    {
+      dladdr((void *)0, (void *)0);
+      return 0;
+    }
+    "
+
+    HAVE_DLADDR
+  )
+
+
 
 
   IF(${HAVE_BKTR_HEADER})
@@ -74,7 +142,7 @@ macro(Configure)
     SET (AST_POLL_COMPAT 1)
   ELSE()
     CHECK_INCLUDE_FILES (sys/poll.h HAVE_POLL_H)
-    IF(!${HAVE_POLL_H})
+    IF(NOT ${HAVE_POLL_H})
       SET (AST_POLL_COMPAT 1)
     ENDIF()
   ENDIF()
@@ -85,22 +153,23 @@ macro(Configure)
   CHECK_TYPE_SIZE("int" SIZEOF_INT)
   CHECK_TYPE_SIZE("long" SIZEOF_LONG)
   CHECK_TYPE_SIZE("long long" SIZEOF_LONG_LONG)
+  CHECK_TYPE_SIZE("char" SIZEOF_CHAR)
   SET(CMAKE_EXTRA_INCLUDE_FILES sys/select.h)
-  CHECK_TYPE_SIZE("((fd_set*)0)->__fds_bits" SIZEOF_FD_SET_FDS_BITS)
-  IF(!${SIZEOF_FD_SET_FDS_BITS})
-    CHECK_TYPE_SIZE("((fd_set*)0)->fds_bits" SIZEOF_FD_SET_FDS_BITS)
+  CHECK_TYPE_SIZE("((fd_set*)0)->__fds_bits[0]" SIZEOF_FD_SET_FDS_BITS)
+  IF(NOT ${SIZEOF_FD_SET_FDS_BITS})
+    CHECK_TYPE_SIZE("((fd_set*)0)->fds_bits[0]" SIZEOF_FD_SET_FDS_BITS)
   ENDIF()
-
   SET(CMAKE_EXTRA_INCLUDE_FILES)
 
-
-  IF(SIZEOF_INT==SIZEOF_FD_SET_FDS_BITS)
+  IF(${SIZEOF_INT} EQUAL ${SIZEOF_FD_SET_FDS_BITS})
     SET (TYPEOF_FD_SET_FDS_BITS int)
-  ELSEIF(SIZEOF_LONG==SIZEOF_FD_SET_FDS_BITS)
+  ELSEIF(${SIZEOF_LONG} EQUAL ${SIZEOF_FD_SET_FDS_BITS})
     SET (TYPEOF_FD_SET_FDS_BITS long)
-  ELSEIF(SIZEOF_LONG_LONG==SIZEOF_FD_SET_FDS_BITS)
+  ELSEIF(${SIZEOF_LONG_LONG} EQUAL ${SIZEOF_FD_SET_FDS_BITS})
     SET (TYPEOF_FD_SET_FDS_BITS long long)
   ENDIF()
+
+
 
 
 

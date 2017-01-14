@@ -4,6 +4,13 @@ set(SOURCES
   lock.c
   uuid.c
   utils.c
+  json.c
+  md5.c
+  sha1.c
+  strings.c
+  stringfields.c
+  buildinfo.c
+  stdtime/localtime.c
 )
 
 
@@ -24,16 +31,24 @@ endif()
 
 message(STATUS "source list " ${SOURCES})
 
-add_library(${AST_CORE_LIBRARY}  ${SOURCES})
+add_library(${AST_CORE_LIBRARY} STATIC ${SOURCES})
 
 if(THREADS_HAVE_PTHREAD_ARG)
-  target_compile_options(PUBLIC my_app "-pthread")
+  target_compile_options(${AST_CORE_LIBRARY} PUBLIC  "-pthread")
 endif()
 
+target_compile_options(${AST_CORE_LIBRARY} PUBLIC  "-fPIC")
+
+SET(LINK_LIB jansson)
 if(CMAKE_THREAD_LIBS_INIT)
-  target_link_libraries(${AST_CORE_LIBRARY}
-    ${CMAKE_THREAD_LIBS_INIT})
+  #target_link_libraries(${AST_CORE_LIBRARY}
+  #  ${CMAKE_THREAD_LIBS_INIT})
+  SET(LINK_LIB ${LINK_LIB} ${CMAKE_THREAD_LIBS_INIT})
 endif()
+
+
+target_link_libraries(${AST_CORE_LIBRARY}
+  ${LINK_LIB})
 
 # Portions specific to cpprest binary versioning.
 set (AST_CORE_VERSION_MAJOR 1)

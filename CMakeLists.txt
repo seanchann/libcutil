@@ -22,6 +22,8 @@ message(STATUS "This is Cmake current source dir" ${CMAKE_CURRENT_SOURCE_DIR})
 #call configure first
 Configure()
 
+
+
 if(BUILD_LIBCUTIL)
   # Platform (not compiler) specific settings
   if(IOS)
@@ -29,6 +31,11 @@ if(BUILD_LIBCUTIL)
   elseif(ANDROID)
     message(STATUS "This is on android platform, Not supported!")
   elseif(UNIX)
+
+    #make file from shell
+    #add_custom_target(TARGET buildHeader
+    #  POST_BUILD COMMAND /bin/sh ${CMAKE_CURRENT_SOURCE_DIR}/build_tools/make_build_h > ${CMAKE_CURRENT_SOURCE_DIR}/include/asterisk/build.h)
+
     include_directories(${LIBCUTIL_INSTALL_PREFIX}/include)
 
     find_package(Threads REQUIRED)
