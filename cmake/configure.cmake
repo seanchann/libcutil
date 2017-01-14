@@ -74,7 +74,7 @@ macro(Configure)
     SET (AST_POLL_COMPAT 1)
   ELSE()
     CHECK_INCLUDE_FILES (sys/poll.h HAVE_POLL_H)
-    IF(!{HAVE_POLL_H})
+    IF(!${HAVE_POLL_H})
       SET (AST_POLL_COMPAT 1)
     ENDIF()
   ENDIF()
@@ -86,28 +86,12 @@ macro(Configure)
   CHECK_TYPE_SIZE("long" SIZEOF_LONG)
   CHECK_TYPE_SIZE("long long" SIZEOF_LONG_LONG)
   SET(CMAKE_EXTRA_INCLUDE_FILES sys/select.h)
-  #CHECK_TYPE_SIZE("(struct fd_set*)0)->fds_bits)" SIZEOF_FD_SET_FDS_BITS)
-  CHECK_TYPE_SIZE("(fd_set*)0)->fds_bits" SIZEOF_FD_SET_FDS_BITS)
+  CHECK_TYPE_SIZE("((fd_set*)0)->__fds_bits" SIZEOF_FD_SET_FDS_BITS)
+  IF(!${SIZEOF_FD_SET_FDS_BITS})
+    CHECK_TYPE_SIZE("((fd_set*)0)->fds_bits" SIZEOF_FD_SET_FDS_BITS)
+  ENDIF()
+
   SET(CMAKE_EXTRA_INCLUDE_FILES)
-
-
-  #try_run(RUN_RESULT COMPILE_RESULT {CMAKE_CURRENT_BINARY_DIR}
-  #  ${CMAKE_CURRENT_SOURCE_DIR}/cmake/fd_set_fd_bits.c
-  #  RUN_OUTPUT_VARIABLE SIZEOF_FD_SET_FDS_BITS)
-
-
-  #INCLUDE(CheckCSourceCompiles)
-  # CHECK_C_SOURCE_COMPILES(
-  #   "
-  #   #include <sys/select.h>
-  #
-  #   int main()
-  #   {
-  #
-  #   }
-  #
-  #   "
-  #   SIZEOF_FD_SET_FDS_BITS)
 
 
   IF(SIZEOF_INT==SIZEOF_FD_SET_FDS_BITS)
