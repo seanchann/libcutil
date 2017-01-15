@@ -170,7 +170,8 @@ macro(Configure)
   ENDIF()
 
 
-
+  #it is a libcutl 
+  SET(HAVE_LIBCUITL 1)
 
 
   CONFIGURE_FILE(${PROJECT_SOURCE_DIR}/include/autoconfig.h.in ${PROJECT_SOURCE_DIR}/include/autoconfig.h)

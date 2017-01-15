@@ -1,3 +1,5 @@
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../asterisk)
+
 set(SOURCES
   ${CMAKE_CURRENT_SOURCE_DIR}/../asterisk/syslog.c
   ${CMAKE_CURRENT_SOURCE_DIR}/../asterisk/term.c
@@ -15,6 +17,9 @@ set(SOURCES
   ${CMAKE_CURRENT_SOURCE_DIR}/../asterisk/astobj2_hash.c
   ${CMAKE_CURRENT_SOURCE_DIR}/../asterisk/astobj2_rbtree.c
   ${CMAKE_CURRENT_SOURCE_DIR}/../asterisk/astobj2.c
+  ${CMAKE_CURRENT_SOURCE_DIR}/../asterisk/netsock2.c
+  ${CMAKE_CURRENT_SOURCE_DIR}/../asterisk/config.c
+  ${CMAKE_CURRENT_SOURCE_DIR}/../asterisk/cli.c
   ${CMAKE_CURRENT_SOURCE_DIR}/../asterisk/stdtime/localtime.c
 )
 

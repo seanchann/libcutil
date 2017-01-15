@@ -35,7 +35,16 @@ enum cutil_option_flags {
   AST_OPT_FLAG_NO_COLOR = (1 << 5),
   /*! Reference Debugging */
   AST_OPT_FLAG_REF_DEBUG = (1 << 6),
+  /*! Trascode via signed linear */
+  AST_OPT_FLAG_TRANSCODE_VIA_SLIN = (1 << 7),
+  /*! Display timestamp in CLI verbose output */
+  AST_OPT_FLAG_TIMESTAMP = (1 << 14),
+  /*! Allow \#exec in config files */
+  AST_OPT_FLAG_EXEC_INCLUDES = (1 << 15),
 };
+
+/*! These are the options that set by default when Asterisk starts */
+#define AST_DEFAULT_OPTIONS AST_OPT_FLAG_TRANSCODE_VIA_SLIN
 
 extern int option_verbose;
 extern int option_debug;		/*!< Debugging */
@@ -47,6 +56,10 @@ extern int option_debug;		/*!< Debugging */
 #define ast_opt_light_background	ast_test_flag(&cutil_options, AST_OPT_FLAG_LIGHT_BACKGROUND)
 #define ast_opt_force_black_background	ast_test_flag(&cutil_options, AST_OPT_FLAG_FORCE_BLACK_BACKGROUND)
 #define ast_opt_ref_debug           ast_test_flag(&cutil_options, AST_OPT_FLAG_REF_DEBUG)
+#define ast_opt_transcode_via_slin	ast_test_flag(&cutil_options, AST_OPT_FLAG_TRANSCODE_VIA_SLIN)
+#define ast_opt_timestamp		ast_test_flag(&cutil_options, AST_OPT_FLAG_TIMESTAMP)
+#define ast_opt_exec_includes		ast_test_flag(&cutil_options, AST_OPT_FLAG_EXEC_INCLUDES)
+
 
 extern struct ast_flags cutil_options;
 
