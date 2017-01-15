@@ -19,14 +19,17 @@ set(SOURCES
   ${CMAKE_CURRENT_SOURCE_DIR}/../asterisk/astobj2.c
   ${CMAKE_CURRENT_SOURCE_DIR}/../asterisk/netsock2.c
   ${CMAKE_CURRENT_SOURCE_DIR}/../asterisk/config.c
-  ${CMAKE_CURRENT_SOURCE_DIR}/../asterisk/cli.c
+  ${CMAKE_CURRENT_SOURCE_DIR}/../asterisk/strcompat.c
   ${CMAKE_CURRENT_SOURCE_DIR}/../asterisk/stdtime/localtime.c
 )
 
 
+include_directories(${CMAKE_CURRENT_SOURCE_DIR})
+
 set(SOURCES
   ${SOURCES}
   ${CMAKE_CURRENT_SOURCE_DIR}/astcore_dummy.c
+  ${CMAKE_CURRENT_SOURCE_DIR}/cli.c
 )
 
 if(UNIX)

@@ -21,27 +21,22 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 
-/*#include "asterisk/_private.h"*/
-/*#include "asterisk/paths.h"	/* use ast_config_AST_LOG_DIR */
+
 #include "log/logger.h"
 #include "asterisk/lock.h"
-/*#include "asterisk/channel.h"*/
 #include "asterisk/config.h"
 #include "asterisk/term.h"
 #include "asterisk/utils.h"
-/*#include "asterisk/manager.h"*/
 #include "asterisk/astobj2.h"
 #include "asterisk/threadstorage.h"
 #include "asterisk/strings.h"
-/*#include "asterisk/pbx.h"*/
-/*#include "asterisk/app.h"*/
 #include "asterisk/syslog.h"
 #include "asterisk/buildinfo.h"
 #include "asterisk/ast_version.h"
 #include "asterisk/backtrace.h"
 #include "asterisk/json.h"
 
-#include "cli/cli.h"
+#include "core/cli.h"
 #include "core/paths.h"	/* use ast_config_AST_LOG_DIR*/
 
 /*** DOCUMENTATION

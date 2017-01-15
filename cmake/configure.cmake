@@ -54,6 +54,9 @@ macro(Configure)
   CHECK_FUNCTION_EXISTS(vasprintf HAVE_VASPRINTF)
   CHECK_FUNCTION_EXISTS(gethostbyname HAVE_GETHOSTBYNAME)
   CHECK_FUNCTION_EXISTS(gethostname HAVE_GETHOSTNAME)
+  CHECK_FUNCTION_EXISTS(fork HAVE_WORKING_FORK)
+  CHECK_FUNCTION_EXISTS(vfork HAVE_WORKING_VFORK)
+
 
 
   INCLUDE(CheckCSourceCompiles)
@@ -122,6 +125,7 @@ macro(Configure)
 
 
 
+
   IF(${HAVE_BKTR_HEADER})
     IF(${HAVE_GLIBC})
       CHECK_LIBRARY_EXISTS(c backtrace "" HAVE_BKTR)
@@ -136,6 +140,9 @@ macro(Configure)
   CHECK_LIBRARY_EXISTS(m roundl "" HAVE_ROUNDL)
   CHECK_LIBRARY_EXISTS(m round "" HAVE_ROUND)
   CHECK_LIBRARY_EXISTS(m roundf "" HAVE_ROUNDF)
+  CHECK_LIBRARY_EXISTS(cap cap_set_proc "sys/capability.h" HAVE_CAP)
+
+
 
 
   IF(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
@@ -170,7 +177,7 @@ macro(Configure)
   ENDIF()
 
 
-  #it is a libcutl 
+  #it is a libcutl
   SET(HAVE_LIBCUITL 1)
 
 

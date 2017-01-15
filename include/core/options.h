@@ -41,6 +41,8 @@ enum cutil_option_flags {
   AST_OPT_FLAG_TIMESTAMP = (1 << 14),
   /*! Allow \#exec in config files */
   AST_OPT_FLAG_EXEC_INCLUDES = (1 << 15),
+  /*! Run in realtime Linux priority */
+AST_OPT_FLAG_HIGH_PRIORITY = (1 << 16),
 };
 
 /*! These are the options that set by default when Asterisk starts */
@@ -59,9 +61,12 @@ extern int option_debug;		/*!< Debugging */
 #define ast_opt_transcode_via_slin	ast_test_flag(&cutil_options, AST_OPT_FLAG_TRANSCODE_VIA_SLIN)
 #define ast_opt_timestamp		ast_test_flag(&cutil_options, AST_OPT_FLAG_TIMESTAMP)
 #define ast_opt_exec_includes		ast_test_flag(&cutil_options, AST_OPT_FLAG_EXEC_INCLUDES)
+#define ast_opt_high_priority		ast_test_flag(&cutil_options, AST_OPT_FLAG_HIGH_PRIORITY)
 
 
 extern struct ast_flags cutil_options;
+extern struct timeval ast_startuptime;
+extern struct timeval ast_lastreloadtime;
 
 
 #if defined(__cplusplus) || defined(c_plusplus)

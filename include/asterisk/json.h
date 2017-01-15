@@ -217,6 +217,41 @@ const char *ast_json_typename(enum ast_json_type type);
 /*!@{*/
 
 /*!
+ * \brief Check the string of the given length for UTF-8 format.
+ * \since 13.12.0
+ *
+ * \param str String to check.
+ * \param len Length of string to check.
+ *
+ * \retval 0 if not UTF-8 encoded or str is NULL.
+ * \retval 1 if UTF-8 encoded.
+ */
+int ast_json_utf8_check_len(const char *str, size_t len);
+
+/*!
+ * \brief Check the nul terminated string for UTF-8 format.
+ * \since 13.12.0
+ *
+ * \param str String to check.
+ *
+ * \retval 0 if not UTF-8 encoded or str is NULL.
+ * \retval 1 if UTF-8 encoded.
+ */
+int ast_json_utf8_check(const char *str);
+
+/*!
+ * \brief Check str for UTF-8 and replace with an empty string if fails the check.
+ *
+ * \note The convenience macro is normally used with ast_json_pack()
+ * or a function wrapper that calls ast_json_vpack().
+ */
+#define AST_JSON_UTF8_VALIDATE(str) (ast_json_utf8_check(str) ? (str) : "")
+
+/*!@}*/
+
+/*!@{*/
+
+/*!
  * \brief Get the JSON true value.
  * \since 12.0.0
  *
@@ -1040,6 +1075,18 @@ enum ast_json_to_ast_vars_code {
  * \return Conversion enum ast_json_to_ast_vars_code status
  */
 enum ast_json_to_ast_vars_code ast_json_to_ast_variables(struct ast_json *json_variables, struct ast_variable **variables);
+
+struct varshead;
+
+/*!
+ * \brief Construct a JSON object from a \c ast_var_t list
+ * \since 14.2.0
+ *
+ * \param channelvars The list of \c ast_var_t to represent as JSON
+ *
+ * \return JSON object with variable names as keys and variable values as values
+ */
+struct ast_json *ast_json_channel_vars(struct varshead *channelvars);
 
 /*!@}*/
 

@@ -181,9 +181,14 @@
 /* Define to 1 if your system has the dladdr() GNU extension */
 #cmakedefine HAVE_DLADDR @HAVE_DLADDR@
 
+/* Define to 1 if `fork' works. */
+#cmakedefine HAVE_WORKING_FORK @HAVE_WORKING_FORK@
+
+/* Define to 1 if `vfork' works. */
+#cmakedefine HAVE_WORKING_VFORK @HAVE_WORKING_VFORK@
+
 
 /* Define to 1 for libcutl */
 #cmakedefine HAVE_LIBCUITL @HAVE_LIBCUITL@
-
 
 #endif
