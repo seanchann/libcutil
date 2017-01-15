@@ -14,7 +14,7 @@
 #ifndef _CUTIL_LOGGER_H
 #define _CUTIL_LOGGER_H
 
-#include "cutil/options.h"	/* need option_debug */
+#include "core/options.h"	/* need option_debug */
 
 #if defined(__cplusplus) || defined(c_plusplus)
 extern "C" {

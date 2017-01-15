@@ -42,7 +42,7 @@
 #include "asterisk/json.h"
 
 #include "cli/cli.h"
-#include "cutil/paths.h"	/* use ast_config_AST_LOG_DIR*/
+#include "core/paths.h"	/* use ast_config_AST_LOG_DIR*/
 
 /*** DOCUMENTATION
  ***/
@@ -578,9 +578,16 @@ static struct logchannel *make_logchannel(const char *channel, const char *compo
 			ast_localtime(&now, &tm, NULL);
 			ast_strftime(datestring, sizeof(datestring), dateformat, &tm);
 
+#if 0
 			fprintf(chan->fileptr, "[%s] Asterisk %s built by %s @ %s on a %s running %s on %s\n",
 				datestring, ast_get_version(), ast_build_user, ast_build_hostname,
 				ast_build_machine, ast_build_os, ast_build_date);
+#else
+			fprintf(chan->fileptr, "[%s] liblogutil  built by %s @ %s on a %s running %s on %s\n",
+				datestring, ast_build_user, ast_build_hostname,
+				ast_build_machine, ast_build_os, ast_build_date);
+#endif
+
 			fflush(chan->fileptr);
 		}
 		chan->type = LOGTYPE_FILE;

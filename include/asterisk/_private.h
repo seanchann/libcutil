@@ -15,6 +15,6 @@
 #ifndef _ASTERISK__PRIVATE_H
 #define _ASTERISK__PRIVATE_H
 
-#include "cutil/_private.h"
+#include "core/_private.h"
 
 #endif /* _ASTERISK__PRIVATE_H */

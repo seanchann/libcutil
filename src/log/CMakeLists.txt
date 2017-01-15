@@ -23,7 +23,7 @@ message(STATUS "source list " ${SOURCES})
 
 add_library(${LOGUTIL_LIBRARY}  ${SOURCES})
 target_link_libraries(${LOGUTIL_LIBRARY}
-  ${AST_CORE_LIBRARY}
+  ${CUTIL_CORE_LIBRARY}
   )
 
 # Portions specific to cpprest binary versioning.

@@ -33,6 +33,8 @@ enum cutil_option_flags {
   AST_OPT_FLAG_LIGHT_BACKGROUND = (1 << 4),
   /*! Don't use termcap colors */
   AST_OPT_FLAG_NO_COLOR = (1 << 5),
+  /*! Reference Debugging */
+  AST_OPT_FLAG_REF_DEBUG = (1 << 6),
 };
 
 extern int option_verbose;
@@ -44,6 +46,7 @@ extern int option_debug;		/*!< Debugging */
 #define ast_opt_console			ast_test_flag(&cutil_options, AST_OPT_FLAG_CONSOLE)
 #define ast_opt_light_background	ast_test_flag(&cutil_options, AST_OPT_FLAG_LIGHT_BACKGROUND)
 #define ast_opt_force_black_background	ast_test_flag(&cutil_options, AST_OPT_FLAG_FORCE_BLACK_BACKGROUND)
+#define ast_opt_ref_debug           ast_test_flag(&cutil_options, AST_OPT_FLAG_REF_DEBUG)
 
 extern struct ast_flags cutil_options;
 

@@ -40,10 +40,10 @@ if(BUILD_LIBCUTIL)
 
     find_package(Threads REQUIRED)
 
-    #first build astcore.a
-    set(AST_CORE_LIBRARY astcore)
+    #first build libcutilcore.a
+    set(CUTIL_CORE_LIBRARY cutilcore)
     include_directories(include)
-    add_subdirectory(src/asterisk)
+    add_subdirectory(src/core)
 
 
     if(BUILD_LOGUTIL)
