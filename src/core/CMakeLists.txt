@@ -24,10 +24,14 @@ set(SOURCES
 
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/editline)
 set(SOURCES
   ${SOURCES}
   ${CMAKE_CURRENT_SOURCE_DIR}/astcore_dummy.c
   ${CMAKE_CURRENT_SOURCE_DIR}/cli.c
+  ${CMAKE_CURRENT_SOURCE_DIR}/console.c
+  ${CMAKE_CURRENT_SOURCE_DIR}/daemon.c
+  ${CMAKE_CURRENT_SOURCE_DIR}/el_api.c
 )
 
 message(STATUS "source list " ${SOURCES})

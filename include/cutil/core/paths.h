@@ -17,5 +17,6 @@ extern const char *ast_config_AST_CONFIG_DIR;
 extern const char *ast_config_AST_LOG_DIR;
 //conver ast_config_AST_SYSTEM_NAME
 extern const char *ast_config_AST_SYSTEM_NAME;
+extern const char *ast_config_AST_SOCKET;
 
 #endif /* _CUTIL_PATHS_H */
