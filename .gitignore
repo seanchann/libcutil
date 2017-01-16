@@ -5,5 +5,5 @@
 build.*/
 *.pch
 autoconfig.h
-include/asterisk/build.h
+include/cutil/asterisk/build.h
 install/
