@@ -1,5 +1,4 @@
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../asterisk)
-
 set(SOURCES
   ${CMAKE_CURRENT_SOURCE_DIR}/../asterisk/syslog.c
   ${CMAKE_CURRENT_SOURCE_DIR}/../asterisk/term.c
@@ -25,12 +24,24 @@ set(SOURCES
 
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
-
 set(SOURCES
   ${SOURCES}
   ${CMAKE_CURRENT_SOURCE_DIR}/astcore_dummy.c
   ${CMAKE_CURRENT_SOURCE_DIR}/cli.c
 )
+
+message(STATUS "source list " ${SOURCES})
+
+# Portions specific to cpprest binary versioning.
+set (CUTIL_CORE_VERSION_MAJOR 1)
+set (CUTIL_CORE_VERSION_MINOR 0)
+set (CUTIL_CORE_VERSION_REVISION 0)
+set (CUTIL_CORE_VERSION ${CUTIL_CORE_VERSION_MAJOR}.${CUTIL_CORE_VERSION_MINOR}.${CUTIL_CORE_VERSION_REVISION})
+
+message(STATUS "build cutil version: ${CUTIL_CORE_VERSION}")
+
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cutilcore.pc.cmakein ${CMAKE_CURRENT_BINARY_DIR}/cutilcore.pc @ONLY)
+
 
 if(UNIX)
   if(APPLE)
@@ -39,15 +50,16 @@ if(UNIX)
     message(STATUS "on android platform")
   else()
   endif()
+
+  find_package(Threads REQUIRED)
   #set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${WARNINGS} -Werror -pedantic")
   set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${WARNINGS} -w")
-
-
 elseif(WIN32)
   message(STATUS "on win32 platform")
 endif()
 
-message(STATUS "source list " ${SOURCES})
+
+
 
 add_library(${CUTIL_CORE_LIBRARY} STATIC ${SOURCES})
 
@@ -68,13 +80,6 @@ endif()
 target_link_libraries(${CUTIL_CORE_LIBRARY}
   ${LINK_LIB})
 
-# Portions specific to cpprest binary versioning.
-set (CUTIL_CORE_VERSION_MAJOR 1)
-set (CUTIL_CORE_VERSION_MINOR 0)
-set (CUTIL_CORE_VERSION_REVISION 0)
-
-
-
 if(WIN32)
   message(STATUS "build on win32 platform")
 elseif(ANDROID)
@@ -86,7 +91,12 @@ else()
 
   install(
     TARGETS ${CUTIL_CORE_LIBRARY}
-    LIBRARY DESTINATION lib
-    ARCHIVE DESTINATION lib
+    LIBRARY DESTINATION ${INSTALL_LIB_DIR}
+    ARCHIVE DESTINATION ${INSTALL_LIB_DIR}
     )
+
+  install(
+    FILES ${CMAKE_CURRENT_BINARY_DIR}/${CUTIL_CORE_LIBRARY}.pc
+    DESTINATION "${INSTALL_PKGCONFIG_DIR}"
+  )
 endif()

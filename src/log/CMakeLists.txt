@@ -1,6 +1,16 @@
 set(SOURCES
   logger.c
 )
+message(STATUS "source list " ${SOURCES})
+
+# Portions specific to cpprest binary versioning.
+set (LOGUTIL_VERSION_MAJOR 1)
+set (LOGUTIL_VERSION_MINOR 0)
+set (LOGUTIL_VERSION_REVISION 0)
+set (LOGUTIL_VERSION ${LOGUTIL_VERSION_MAJOR}.${LOGUTIL_VERSION_MINOR}.${LOGUTIL_VERSION_REVISION})
+
+set(LOGUTIL_PC_FILE ${CMAKE_CURRENT_BINARY_DIR}/logutil.pc)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/logutil.pc.cmakein ${LOGUTIL_PC_FILE}  @ONLY)
 
 
 if(UNIX)
@@ -18,7 +28,6 @@ elseif(WIN32)
   message(STATUS "on win32 platform")
 endif()
 
-message(STATUS "source list " ${SOURCES})
 
 
 add_library(${LOGUTIL_LIBRARY}  ${SOURCES})
@@ -26,10 +35,6 @@ target_link_libraries(${LOGUTIL_LIBRARY}
   ${CUTIL_CORE_LIBRARY}
   )
 
-# Portions specific to cpprest binary versioning.
-set (LOGUTIL_VERSION_MAJOR 1)
-set (LOGUTIL_VERSION_MINOR 0)
-set (LOGUTIL_VERSION_REVISION 0)
 
 
 
@@ -44,7 +49,13 @@ else()
 
   install(
     TARGETS ${LOGUTIL_LIBRARY}
-    LIBRARY DESTINATION lib
-    ARCHIVE DESTINATION lib
+    LIBRARY DESTINATION ${INSTALL_LIB_DIR}
+    ARCHIVE DESTINATION ${INSTALL_LIB_DIR}
     )
+
+  install(
+    FILES ${LOGUTIL_PC_FILE}
+    DESTINATION "${INSTALL_PKGCONFIG_DIR}"
+  )
+
 endif()

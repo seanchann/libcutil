@@ -180,6 +180,7 @@ macro(Configure)
   #it is a libcutl
   SET(HAVE_LIBCUITL 1)
 
+  CONFIGURE_FILE(${LIBCUTIL_INCLUDE_DIR}/autoconfig.h.in ${LIBCUTIL_INCLUDE_DIR}/autoconfig.h)
 
-  CONFIGURE_FILE(${PROJECT_SOURCE_DIR}/include/autoconfig.h.in ${PROJECT_SOURCE_DIR}/include/autoconfig.h)
+
 endmacro()
