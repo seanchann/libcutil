@@ -8,9 +8,12 @@ set (CUTIL_CORE_VERSION_EXTRA "master")
 
 message(STATUS "build cutil version: ${CUTIL_CORE_VERSION}")
 
-
+include(CheckCXXSourceCompiles)
+include(${CMAKE_CURRENT_SOURCE_DIR}/../../cmake/readline.cmake)
+include(${CMAKE_CURRENT_SOURCE_DIR}/../../cmake/libutils.cmake)
 #build editline first
-
+# Add system/bundled editline.
+MYSQL_CHECK_EDITLINE()
 
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cutilcore.pc.cmakein ${CMAKE_CURRENT_BINARY_DIR}/cutilcore.pc @ONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/version.c.cmakein ${CMAKE_CURRENT_SOURCE_DIR}/version.c @ONLY)
@@ -83,7 +86,7 @@ endif()
 
 target_compile_options(${CUTIL_CORE_LIBRARY} PUBLIC  "-fPIC")
 
-SET(LINK_LIB jansson ${EDIT_LIBRARY})
+SET(LINK_LIB jansson ${EDITLINE_LIBRARY})
 if(CMAKE_THREAD_LIBS_INIT)
   #target_link_libraries(${AST_CORE_LIBRARY}
   #  ${CMAKE_THREAD_LIBS_INIT})
