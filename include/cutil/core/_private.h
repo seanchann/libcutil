@@ -15,6 +15,6 @@
 #ifndef _CUTIL__PRIVATE_H
 #define _CUTIL__PRIVATE_H
 
-
+void threadstorage_init(void);           /*!< Provided by threadstorage.c */
 
 #endif /* _CUTIL__PRIVATE_H */

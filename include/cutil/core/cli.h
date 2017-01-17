@@ -3,7 +3,7 @@
  *
  * Copyright (C) 2016 - 2017, JYD, Inc.
  *
- * seanchann <seanchann@foxmail.com>
+ * seanchann <xqzhou@bj-jyd.cn>
  *
  * See docs/ for more information about the libcutil project.
  *

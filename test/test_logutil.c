@@ -17,22 +17,20 @@
 
 #include "log/logger.h"
 #include "asterisk/poll-compat.h"
-
+#include "asterisk/utils.h"
+#include "asterisk/options.h"
+#include "core/api.h"
 
 static char *_argv[256];
-
-
-
-
-
 
 
 int main(int argc, char *argv[])
 {
   int isroot = 1, rundir_exists = 0;
 	const char *runuser = NULL, *rungroup = NULL;
-	struct rlimit l;
+  int x;
 	static const char *getopt_settings = "dhRrx:Vv";
+  int c;
 
 	/* Remember original args for restart */
 	if (argc > ARRAY_LEN(_argv) - 1) {
@@ -59,14 +57,14 @@ int main(int argc, char *argv[])
 			option_debug++;
 			break;
 		case 'h':
-			show_cli_help();
+			//show_cli_help();
 			exit(0);
 		case 'R':
 		case 'r':
 		case 'x':
 			/* ast_opt_remote is checked during config load.  This is only part of what
 			 * these options do, see the second loop for the rest of the actions. */
-			ast_set_flag(&ast_options, AST_OPT_FLAG_REMOTE);
+			ast_set_flag(&cutil_options, AST_OPT_FLAG_REMOTE);
 			break;
 		case 'V':
 			show_version();
@@ -79,49 +77,6 @@ int main(int argc, char *argv[])
 		}
 	}
 
-
-  /* For remote connections, change the name of the remote connection.
-	 * We do this for the benefit of init scripts (which need to know if/when
-	 * the main asterisk process has died yet). */
-	if (ast_opt_remote) {
-		strcpy(argv[0], "rasterisk");
-		for (x = 1; x < argc; x++) {
-			argv[x] = argv[0] + 10;
-		}
-	}
-
-  if (isroot) {
-    ast_set_priority(ast_opt_high_priority);
-  }
-
-  if (ast_tryconnect()) {
-		/* One is already running */
-		if (ast_opt_remote) {
-			multi_thread_safe = 1;
-			if (ast_opt_exec) {
-				ast_remotecontrol(xarg);
-				quit_handler(0, SHUTDOWN_FAST, 0);
-				exit(0);
-			}
-			ast_term_init();
-			printf("%s", term_end());
-			fflush(stdout);
-
-			print_intro_message(runuser, rungroup);
-			printf("%s", term_quit());
-			ast_remotecontrol(NULL);
-			quit_handler(0, SHUTDOWN_FAST, 0);
-			exit(0);
-		} else {
-			fprintf(stderr, "Asterisk already running on %s.  Use 'asterisk -r' to connect.\n", ast_config_AST_SOCKET);
-			printf("%s", term_quit());
-			exit(1);
-		}
-	} else if (ast_opt_remote || ast_opt_exec) {
-		fprintf(stderr, "Unable to connect to remote asterisk (does %s exist?)\n", ast_config_AST_SOCKET);
-		printf("%s", term_quit());
-		exit(1);
-	}
 
 
   ast_log(LOG_NOTICE,"test %s level log\r\n", "notice");

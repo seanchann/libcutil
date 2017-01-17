@@ -1,15 +1,32 @@
+/*
+ * libcutil -- An utility toolkit.
+ *
+ * Copyright (C) 2016 - 2017, JYD, Inc.
+ *
+ * seanchann <xqzhou@bj-jyd.cn>
+ *
+ * See docs/ for more information about
+ * the libcutil project.
+ *
+ * This program belongs to JYD, Inc. JYD, Inc reserves all rights
+ */
+
+#include "asterisk.h"
+
+#include "elhelper.h"
+
 #include <stdlib.h>
-#include <histedit.h>
+#include "asterisk/utils.h"
 
 
 #define MAX_HISTORY_COMMAND_LENGTH 256
 
 static History *el_hist;
 static EditLine *el;
+static el_prompt prompt_handler;
+static el_complete complete_handler;
 
-
-
-
+static int ast_el_initialize();
 
 int ast_el_add_history(const char *buf)
 {
@@ -77,7 +94,7 @@ void ast_el_write_default_histfile(void)
 }
 
 
-int ast_el_initialize(void)
+static int ast_el_initialize()
 {
 	HistEvent ev;
 	char *editor, *editrc = getenv("EDITRC");
@@ -94,7 +111,7 @@ int ast_el_initialize(void)
 		history_end(el_hist);
 
 	el = el_init("asterisk", stdin, stdout, stderr);
-	el_set(el, EL_PROMPT, cli_prompt);
+	el_set(el, EL_PROMPT, prompt_handler);
 
 	el_set(el, EL_EDITMODE, 1);
 	el_set(el, EL_EDITOR, editor);
@@ -107,7 +124,7 @@ int ast_el_initialize(void)
 
 	el_set(el, EL_HIST, history, el_hist);
 
-	el_set(el, EL_ADDFN, "ed-complete", "Complete argument", cli_complete);
+	el_set(el, EL_ADDFN, "ed-complete", "Complete argument", complete_handler);
 	/* Bind <tab> to command completion */
 	el_set(el, EL_BIND, "^I", "ed-complete", NULL);
 	/* Bind ? to command completion */
@@ -127,5 +144,39 @@ int ast_el_initialize(void)
 		el_source(el, editrc);
 	}
 
+	return 0;
+}
+
+int ast_el_set_gchar_handler(getchar_handler getc)
+{
+	el_set(el, EL_GETCFN, getc);
+	return 0;
+}
+
+const char* ast_el_get_buf(int* num)
+{
+	return (char *) el_gets(el, num);
+}
+
+
+int ast_el_initialize_wrap(el_prompt prompt, el_complete complete)
+{
+	if (el_hist == NULL || el == NULL){
+		prompt_handler = prompt;
+		complete_handler = complete;
+		ast_el_initialize();
+	}
+
+	return 0;
+}
+
+int ast_el_uninitialize(void)
+{
+	if (el != NULL) {
+		el_end(el);
+	}
+	if (el_hist != NULL) {
+		history_end(el_hist);
+	}
 	return 0;
 }

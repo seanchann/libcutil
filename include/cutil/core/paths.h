@@ -3,7 +3,7 @@
  *
  * Copyright (C) 2016 - 2017, JYD, Inc.
  *
- * seanchann <seanchann@foxmail.com>
+ * seanchann <xqzhou@bj-jyd.cn>
  *
  * See docs/ for more information about
  * the libcutil project.
@@ -18,5 +18,6 @@ extern const char *ast_config_AST_LOG_DIR;
 //conver ast_config_AST_SYSTEM_NAME
 extern const char *ast_config_AST_SYSTEM_NAME;
 extern const char *ast_config_AST_SOCKET;
+extern const char *ast_config_AST_PID;
 
 #endif /* _CUTIL_PATHS_H */

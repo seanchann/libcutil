@@ -1,3 +1,20 @@
+# Portions specific to cpprest binary versioning.
+set (CUTIL_CORE_VERSION_MAJOR 1)
+set (CUTIL_CORE_VERSION_MINOR 0)
+set (CUTIL_CORE_VERSION_REVISION 0)
+set (CUTIL_CORE_VERSION ${CUTIL_CORE_VERSION_MAJOR}.${CUTIL_CORE_VERSION_MINOR}.${CUTIL_CORE_VERSION_REVISION})
+set (CUTIL_CORE_VERSION_NUM "10")
+set (CUTIL_CORE_VERSION_EXTRA "master")
+
+message(STATUS "build cutil version: ${CUTIL_CORE_VERSION}")
+
+
+#build editline first
+
+
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cutilcore.pc.cmakein ${CMAKE_CURRENT_BINARY_DIR}/cutilcore.pc @ONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/version.c.cmakein ${CMAKE_CURRENT_SOURCE_DIR}/version.c @ONLY)
+
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../asterisk)
 set(SOURCES
   ${CMAKE_CURRENT_SOURCE_DIR}/../asterisk/syslog.c
@@ -19,6 +36,8 @@ set(SOURCES
   ${CMAKE_CURRENT_SOURCE_DIR}/../asterisk/netsock2.c
   ${CMAKE_CURRENT_SOURCE_DIR}/../asterisk/config.c
   ${CMAKE_CURRENT_SOURCE_DIR}/../asterisk/strcompat.c
+  ${CMAKE_CURRENT_SOURCE_DIR}/../asterisk/io.c
+  ${CMAKE_CURRENT_SOURCE_DIR}/../asterisk/threadstorage.c
   ${CMAKE_CURRENT_SOURCE_DIR}/../asterisk/stdtime/localtime.c
 )
 
@@ -31,20 +50,11 @@ set(SOURCES
   ${CMAKE_CURRENT_SOURCE_DIR}/cli.c
   ${CMAKE_CURRENT_SOURCE_DIR}/console.c
   ${CMAKE_CURRENT_SOURCE_DIR}/daemon.c
-  ${CMAKE_CURRENT_SOURCE_DIR}/el_api.c
+  ${CMAKE_CURRENT_SOURCE_DIR}/elhelper.c
+  ${CMAKE_CURRENT_SOURCE_DIR}/version.c
 )
 
 message(STATUS "source list " ${SOURCES})
-
-# Portions specific to cpprest binary versioning.
-set (CUTIL_CORE_VERSION_MAJOR 1)
-set (CUTIL_CORE_VERSION_MINOR 0)
-set (CUTIL_CORE_VERSION_REVISION 0)
-set (CUTIL_CORE_VERSION ${CUTIL_CORE_VERSION_MAJOR}.${CUTIL_CORE_VERSION_MINOR}.${CUTIL_CORE_VERSION_REVISION})
-
-message(STATUS "build cutil version: ${CUTIL_CORE_VERSION}")
-
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cutilcore.pc.cmakein ${CMAKE_CURRENT_BINARY_DIR}/cutilcore.pc @ONLY)
 
 
 if(UNIX)
@@ -73,7 +83,7 @@ endif()
 
 target_compile_options(${CUTIL_CORE_LIBRARY} PUBLIC  "-fPIC")
 
-SET(LINK_LIB jansson)
+SET(LINK_LIB jansson ${EDIT_LIBRARY})
 if(CMAKE_THREAD_LIBS_INIT)
   #target_link_libraries(${AST_CORE_LIBRARY}
   #  ${CMAKE_THREAD_LIBS_INIT})

@@ -30,7 +30,7 @@
 #include "asterisk/utils.h"
 #include "asterisk/term.h"
 #include "asterisk/cli.h"
-
+#include "daemon.h"
 
 struct ast_atexit {
 	void (*func)(void);
@@ -47,6 +47,7 @@ struct _cfg_paths {
 	char log_dir[PATH_MAX];
 	char system_name[128];
 	char socket_path[PATH_MAX];
+	char pid_path[PATH_MAX];
 };
 
 static struct _cfg_paths cfg_paths;
@@ -55,8 +56,7 @@ const char *ast_config_AST_CONFIG_DIR	= cfg_paths.config_dir;
 const char *ast_config_AST_LOG_DIR  = cfg_paths.log_dir;
 const char *ast_config_AST_SYSTEM_NAME	= cfg_paths.system_name;
 const char *ast_config_AST_SOCKET	= cfg_paths.socket_path;
-
-
+const char *ast_config_AST_PID		= cfg_paths.pid_path;
 
 
 
@@ -82,9 +82,15 @@ void ast_close_fds_above_n(int n)
 }
 
 /* Sending messages from the daemon back to the display requires _excluding_ the terminating NULL */
-static int fdprint(int fd, const char *s)
+int fdprint(int fd, const char *s)
 {
 	return write(fd, s, strlen(s));
+}
+
+/* Sending commands from consoles back to the daemon requires a terminating NULL */
+int fdsend(int fd, const char *s)
+{
+	return write(fd, s, strlen(s) + 1);
 }
 
 
@@ -125,7 +131,7 @@ void ast_unregister_thread(void *id)
 #endif
 
 
-static void ast_run_atexits(int run_cleanups)
+void ast_run_atexits(int run_cleanups)
 {
 	struct ast_atexit *ae;
 
@@ -188,57 +194,6 @@ void ast_unregister_atexit(void (*func)(void))
 	__ast_unregister_atexit(func);
 	AST_LIST_UNLOCK(&atexits);
 }
-
-
-
-
-/*! \brief NULL handler so we can collect the child exit status */
-static void _null_sig_handler(int sig)
-{
-}
-
-static struct sigaction null_sig_handler = {
-	.sa_handler = _null_sig_handler,
-	.sa_flags = SA_RESTART,
-};
-
-AST_MUTEX_DEFINE_STATIC(safe_system_lock);
-/*! \brief Keep track of how many threads are currently trying to wait*() on
- *  a child process
- */
-static unsigned int safe_system_level = 0;
-static struct sigaction safe_system_prev_handler;
-
-void ast_replace_sigchld(void)
-{
-	unsigned int level;
-
-	ast_mutex_lock(&safe_system_lock);
-	level = safe_system_level++;
-
-	/* only replace the handler if it has not already been done */
-	if (level == 0) {
-		sigaction(SIGCHLD, &null_sig_handler, &safe_system_prev_handler);
-	}
-
-	ast_mutex_unlock(&safe_system_lock);
-}
-
-void ast_unreplace_sigchld(void)
-{
-	unsigned int level;
-
-	ast_mutex_lock(&safe_system_lock);
-	level = --safe_system_level;
-
-	/* only restore the handler if we are the last one */
-	if (level == 0) {
-		sigaction(SIGCHLD, &safe_system_prev_handler, NULL);
-	}
-
-	ast_mutex_unlock(&safe_system_lock);
-}
-
 
 
 int ast_safe_system(const char *s)
@@ -332,4 +287,15 @@ int ast_set_priority(int pri)
 	}
 #endif
 	return 0;
+}
+
+
+int ast_all_zeros(const char *s)
+{
+	while (*s) {
+		if (*s > 32)
+			return 0;
+		s++;
+	}
+	return 1;
 }

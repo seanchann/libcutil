@@ -3,7 +3,7 @@
  *
  * Copyright (C) 2016 - 2017, JYD, Inc.
  *
- * seanchann <xqzhou@bj-jyd.cn>
+ * seanchann <seanchann@foxmail.com>
  *
  * See docs/ for more information about the libcutil project.
  *
@@ -43,14 +43,6 @@ enum cutil_option_flags {
   AST_OPT_FLAG_EXEC_INCLUDES = (1 << 15),
   /*! Run in realtime Linux priority */
   AST_OPT_FLAG_HIGH_PRIORITY = (1 << 16),
-  /*! Do not fork() */
-  AST_OPT_FLAG_NO_FORK = (1 << 17),
-  /*! Reconnect */
-  AST_OPT_FLAG_RECONNECT = (1 << 18),
-  /*! Hide remote console connect messages on console */
-  AST_OPT_FLAG_HIDE_CONSOLE_CONNECT = (1 << 19),
-  /*! Disable log/verbose output to remote consoles */
-  AST_OPT_FLAG_MUTE = (1 << 20),
 };
 
 /*! These are the options that set by default when Asterisk starts */
@@ -70,10 +62,6 @@ extern int option_debug;		/*!< Debugging */
 #define ast_opt_timestamp		ast_test_flag(&cutil_options, AST_OPT_FLAG_TIMESTAMP)
 #define ast_opt_exec_includes		ast_test_flag(&cutil_options, AST_OPT_FLAG_EXEC_INCLUDES)
 #define ast_opt_high_priority		ast_test_flag(&cutil_options, AST_OPT_FLAG_HIGH_PRIORITY)
-#define ast_opt_no_fork			ast_test_flag(&cutil_options, AST_OPT_FLAG_NO_FORK)
-#define ast_opt_reconnect		ast_test_flag(&cutil_options, AST_OPT_FLAG_RECONNECT)
-#define ast_opt_hide_connect		ast_test_flag(&cutil_options, AST_OPT_FLAG_HIDE_CONSOLE_CONNECT)
-#define ast_opt_mute			ast_test_flag(&cutil_options, AST_OPT_FLAG_MUTE)
 
 
 extern struct ast_flags cutil_options;

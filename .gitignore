@@ -7,3 +7,4 @@ build.*/
 autoconfig.h
 include/cutil/asterisk/build.h
 install/
+version.c

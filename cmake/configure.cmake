@@ -56,6 +56,7 @@ macro(Configure)
   CHECK_FUNCTION_EXISTS(gethostname HAVE_GETHOSTNAME)
   CHECK_FUNCTION_EXISTS(fork HAVE_WORKING_FORK)
   CHECK_FUNCTION_EXISTS(vfork HAVE_WORKING_VFORK)
+  CHECK_FUNCTION_EXISTS(getpeereid HAVE_GETPEEREID)
 
 
 
@@ -122,7 +123,53 @@ macro(Configure)
     HAVE_DLADDR
   )
 
+  CHECK_C_SOURCE_COMPILES(
+    "
+    #include <sys/types.h>
+    #include <sys/socket.h>
+    int
+    main ()
+    {
+      struct ucred cred;
+      cred.uid = 0;
+      return 0;
+    }
+    "
 
+    HAVE_STRUCT_UCRED_UID
+  )
+
+  CHECK_C_SOURCE_COMPILES(
+    "
+    #include <sys/types.h>
+    #include <sys/socket.h>
+    int
+    main ()
+    {
+      struct ucred cred;
+      cred.cr_uid = 0;
+      return 0;
+    }
+    "
+
+    HAVE_STRUCT_UCRED_CR_UID
+  )
+
+  CHECK_C_SOURCE_COMPILES(
+    "
+    #include <sys/types.h>
+    #include <sys/socket.h>
+    int
+    main ()
+    {
+      struct sockpeercred cred;
+      cred.uid = 0;
+      return 0;
+    }
+    "
+
+    HAVE_STRUCT_SOCKPEERCRED_UID
+  )
 
 
 
@@ -175,6 +222,67 @@ macro(Configure)
   ELSEIF(${SIZEOF_LONG_LONG} EQUAL ${SIZEOF_FD_SET_FDS_BITS})
     SET (TYPEOF_FD_SET_FDS_BITS long long)
   ENDIF()
+
+
+  # Factoring default headers for most tests.
+  SET(include_default "
+  #include <stdio.h>
+  #ifdef HAVE_SYS_TYPES_H
+  # include <sys/types.h>
+  #endif
+  #ifdef HAVE_SYS_STAT_H
+  # include <sys/stat.h>
+  #endif
+  #ifdef STDC_HEADERS
+  # include <stdlib.h>
+  # include <stddef.h>
+  #else
+  # ifdef HAVE_STDLIB_H
+  #  include <stdlib.h>
+  # endif
+  #endif
+  #ifdef HAVE_STRING_H
+  # if !defined STDC_HEADERS && defined HAVE_MEMORY_H
+  #  include <memory.h>
+  # endif
+  # include <string.h>
+  #endif
+  #ifdef HAVE_STRINGS_H
+  # include <strings.h>
+  #endif
+  #ifdef HAVE_INTTYPES_H
+  # include <inttypes.h>
+  #endif
+  #ifdef HAVE_STDINT_H
+  # include <stdint.h>
+  #endif
+  #ifdef HAVE_UNISTD_H
+  # include <unistd.h>
+#endif")
+
+  CHECK_C_SOURCE_COMPILES(
+    "
+    #define __EXTENSIONS__ 1
+
+    @include_default@
+    int
+    main ()
+    {
+
+    ;
+    return 0;
+    }
+    "
+
+    __EXTENSIONS__
+  )
+
+if(${__EXTENSIONS__} EQUAL 1)
+  SET(_ALL_SOURCE 1)
+  SET(_GNU_SOURCE 1)
+  SET(_POSIX_PTHREAD_SEMANTICS 1)
+  SET(_TANDEM_SOURCE 1)
+endif()
 
 
   #it is a libcutl
