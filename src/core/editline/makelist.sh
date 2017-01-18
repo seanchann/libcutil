@@ -60,7 +60,7 @@ case $FLAG in
 #include "${FILES}"
 _EOF
     ;;
-    
+
 -h)
     set - `echo $FILES | sed -e 's/\\./_/g'`
     hdr="_h_`basename $1`"
@@ -78,7 +78,7 @@ _EOF
 # XXX:	need a space between name and prototype so that -fc and -fh
 #	parsing is much easier
 #
-		printf("protected el_action_t\t%s (EditLine *, Int);\n", name);
+		printf("protected el_action_t\t%s (EditLine *, int);\n", name);
 	    }
 	}
 	END {
@@ -93,7 +93,6 @@ _EOF
 	BEGIN {
 	    printf("/* Automatically generated file, do not edit */\n");
 	    printf("#include \"config.h\"\n#include \"el.h\"\n");
-	    printf("#include \"chartype.h\"\n");
 	    printf("private const struct el_bindings_t el_func_help[] = {\n");
 	    low = "abcdefghijklmnopqrstuvwxyz_";
 	    high = "ABCDEFGHIJKLMNOPQRSTUVWXYZ_";
@@ -115,18 +114,18 @@ _EOF
 		    fname = fname s;
 		}
 
-		printf("    { %-30.30s %-30.30s\n","STR(\"" fname "\"),", uname ",");
+		printf("    { %-30.30s %-30.30s\n","\"" fname "\",", uname ",");
 		ok = 1;
 	    }
 	}
 	/^ \*/ {
 	    if (ok) {
-		printf("      STR(\"");
+		printf("      \"");
 		for (i = 2; i < NF; i++)
 		    printf("%s ", $i);
         # XXXMYSQL: support CRLF
 		sub("\r", "", $i);
-		printf("%s\") },\n", $i);
+		printf("%s\" },\n", $i);
 		ok = 0;
 	    }
 	}
@@ -166,7 +165,7 @@ _EOF
 	END {
 	    printf("#define\t%-30.30s\t%3d\n", "EL_NUM_FCNS", count);
 
-	    printf("typedef el_action_t (*el_func_t)(EditLine *, Int);");
+	    printf("typedef el_action_t (*el_func_t)(EditLine *, int);");
 	    printf("\nprotected const el_func_t* func__get(void);\n");
 	    printf("#endif /* _h_fcns_c */\n");
 	}'

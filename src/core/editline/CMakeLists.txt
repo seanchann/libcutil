@@ -16,7 +16,8 @@
 INCLUDE_DIRECTORIES(BEFORE ${CMAKE_CURRENT_SOURCE_DIR} )
 INCLUDE(CheckIncludeFile)
 include(CheckFunctionExists)
-CHECK_INCLUDE_FILES(term.h HAVE_TERM_H)
+#CHECK_INCLUDE_FILES(term.h HAVE_TERM_H)
+CHECK_INCLUDE_FILES(termcap.h HAVE_TERMCAP_H)
 
 SET(CMAKE_REQUIRED_LIBRARIES ${CURSES_LIBRARY})
 CHECK_CXX_SOURCE_COMPILES("
@@ -75,6 +76,7 @@ IF(HAVE_VIS_H)
   ENDIF()
 ENDIF()
 
+
 CHECK_FUNCTION_EXISTS(strvis HAVE_STRVIS)
 IF(NOT HAVE_STRVIS)
   SET(LIBEDIT_EXTRA_SOURCES ${LIBEDIT_EXTRA_SOURCES}  np/vis.c)
@@ -100,10 +102,21 @@ IF(NOT HAVE_FGETLN)
   SET(LIBEDIT_EXTRA_SOURCES ${LIBEDIT_EXTRA_SOURCES} np/fgetln.c)
 ENDIF()
 
-CHECK_FUNCTION_EXISTS(fgetln HAVE_WCSDUP)
-IF(NOT HAVE_WCSDUP)
-  SET(LIBEDIT_EXTRA_SOURCES ${LIBEDIT_EXTRA_SOURCES} np/wcsdup.c)
-ENDIF()
+#CHECK_FUNCTION_EXISTS(fgetln HAVE_WCSDUP)
+#IF(NOT HAVE_WCSDUP)
+#  SET(LIBEDIT_EXTRA_SOURCES ${LIBEDIT_EXTRA_SOURCES} np/wcsdup.c)
+#ENDIF()
+
+
+#/bin/sh makelist -h common.c > common.h
+#/bin/sh makelist -h emacs.c> emacs.h
+#/bin/sh makelist -h vi.c > vi.h
+#/bin/sh makelist -fh common.h emacs.h vi.h > fcns.h
+#/bin/sh makelist -fc common.h emacs.h vi.h > fcns.c
+#if uname -s | grep -i cygwin > /dev/null; then cat fcns.c | sed -e s/"sys\.h"/"config.h"/g > fcns.c.copy; mv --force fcns.c.copy fcns.c; fi
+#/bin/sh makelist -bh common.c emacs.c vi.c > help.h
+#/bin/sh makelist -bc common.c emacs.c vi.c > help.c
+#if uname -s | grep -i cygwin > /dev/null; then cat help.c | sed -e s/"sys\.h"/"config.h"/g > help.c.copy; mv --force help.c.copy help.c; fi
 
 # Generate headers
 FOREACH(SRCBASENAME  vi emacs common)
@@ -147,6 +160,36 @@ ADD_CUSTOM_COMMAND(
   DEPENDS ${AHDR}
 )
 
+SET(EDITLINE_SRC
+  common.c
+  chared.c
+  emacs.c
+  vi.c
+  el.c
+  hist.c
+  key.c
+  map.c
+  parse.c
+  prompt.c
+  read.c
+  refresh.c
+  search.c
+  sig.c
+  term.c
+  tty.c
+  ${CMAKE_CURRENT_BINARY_DIR}/fcns.c
+  ${CMAKE_CURRENT_BINARY_DIR}/help.c
+)
+
+ADD_CUSTOM_COMMAND(
+  OUTPUT  ${CMAKE_CURRENT_BINARY_DIR}/editline.c
+  COMMAND sh ./makelist -e ${EDITLINE_SRC} > editline.c
+  VERBATIM
+  DEPENDS ${AHDR}
+)
+
+
+CONFIGURE_FILE(config.h.cmakein ${CMAKE_CURRENT_BINARY_DIR}/config.h @ONLY)
 
 INCLUDE_DIRECTORIES(
 ${CMAKE_SOURCE_DIR}/include
@@ -155,29 +198,32 @@ ${CURSES_INCLUDE_PATH}
 )
 
 SET(LIBEDIT_SOURCES
-  chared.c
-  el.c
-  history.c
-  map.c
-  prompt.c
-  readline.c
-  search.c
-  tokenizer.c
-  vi.c
-  common.c
-  emacs.c
-  hist.c
-  parse.c
-  read.c
-  refresh.c
-  sig.c
-  tty.c
-  ${CMAKE_CURRENT_BINARY_DIR}/help.c
-  ${CMAKE_CURRENT_BINARY_DIR}/help.h
-  ${CMAKE_CURRENT_BINARY_DIR}/fcns.c
-  ${CMAKE_CURRENT_BINARY_DIR}/fcns.h
-  ${AHDR}
-  ${LIBEDIT_EXTRA_SOURCES}
+ ${CMAKE_CURRENT_BINARY_DIR}/editline.c
+ history.c
+ map.c
+ prompt.c
+ readline.c
+ search.c
+ tokenizer.c
+ vi.c
+ common.c
+ emacs.c
+ hist.c
+ parse.c
+ read.c
+ refresh.c
+ sig.c
+ tty.c
+ key.c
+ term.c
+ ${CMAKE_CURRENT_BINARY_DIR}/help.c
+ ${CMAKE_CURRENT_BINARY_DIR}/help.h
+ ${CMAKE_CURRENT_BINARY_DIR}/fcns.c
+ ${CMAKE_CURRENT_BINARY_DIR}/fcns.h
+ ${AHDR}
+ ${LIBEDIT_EXTRA_SOURCES}
 )
+
 ADD_CONVENIENCE_LIBRARY(edit ${LIBEDIT_SOURCES})
+target_compile_options(edit PUBLIC   "-D__RCSID(x)=" "-D__RENAME(x)=" "-D_DIAGASSERT(x)=")
 TARGET_LINK_LIBRARIES(edit ${CURSES_LIBRARY})

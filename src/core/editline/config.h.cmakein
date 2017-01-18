@@ -1,0 +1,24 @@
+#cmakedefine SUNOS @SUNOS@
+
+#cmakedefine CYGWIN @CYGWIN@
+
+#cmakedefine HAVE_SYS_CDEFS_H @HAVE_SYS_CDEFS_H@
+#cmakedefine HAVE_TERMCAP_H @HAVE_TERMCAP_H@
+#cmakedefine HAVE_CURSES_H @HAVE_CURSES_H@
+#cmakedefine HAVE_NCURSES_H @HAVE_NCURSES_H@
+#cmakedefine HAVE_TERM_H @HAVE_TERM_H@
+#cmakedefine HAVE_VIS_H @HAVE_VIS_H@
+#cmakedefine HAVE_ISSETUGID @HAVE_ISSETUGID@
+
+
+#cmakedefine HAVE_STRLCAT @HAVE_STRLCAT@
+#cmakedefine HAVE_STRLCPY @HAVE_STRLCPY@
+#cmakedefine HAVE_FGETLN @HAVE_FGETLN@
+#cmakedefine HAVE_STRVIS @HAVE_STRVIS@
+#cmakedefine HAVE_STRUNVIS @HAVE_STRUNVIS@
+
+
+#include "sys.h"
+#ifdef CYGWIN
+# include "cygdef.h"
+#endif
