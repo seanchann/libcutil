@@ -13,3 +13,4 @@
 
 
 int show_version(void);
+void daemon_run(int isroot, const char *runuser, const char *rungroup);

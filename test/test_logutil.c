@@ -29,7 +29,7 @@ int main(int argc, char *argv[])
   int isroot = 1, rundir_exists = 0;
 	const char *runuser = NULL, *rungroup = NULL;
   int x;
-	static const char *getopt_settings = "dhRrx:Vv";
+	static const char *getopt_settings = "cdhRrx:Vv";
   int c;
 
 	/* Remember original args for restart */
@@ -72,11 +72,19 @@ int main(int argc, char *argv[])
 		case 'v':
 			option_verbose++;
 			break;
+    case 'c':
+      ast_set_flag(&cutil_options, AST_OPT_FLAG_NO_FORK | AST_OPT_FLAG_CONSOLE);
+      break;
 		case '?':
 			exit(1);
 		}
 	}
 
+  if (geteuid() != 0)
+		isroot = 0;
+
+  printf("daemon start \r\n");
+  daemon_run(isroot, "seanchann", "seanchann");
 
 
   ast_log(LOG_NOTICE,"test %s level log\r\n", "notice");

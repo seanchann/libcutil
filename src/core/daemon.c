@@ -10,6 +10,7 @@
 #include "asterisk/utils.h"
 #include "asterisk/io.h"
 #include "asterisk/poll-compat.h"
+#include "asterisk/term.h"
 #include "console.h"
 #include "elhelper.h"
 #include "astcore_dummy.h"
@@ -392,7 +393,7 @@ static inline void check_init(int init_result, const char *name)
 	}
 }
 
-static void asterisk_daemon(int isroot, const char *runuser, const char *rungroup)
+void daemon_run(int isroot, const char *runuser, const char *rungroup)
 {
 	sigset_t sigs;
 	int num;
