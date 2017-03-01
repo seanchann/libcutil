@@ -97,17 +97,6 @@ target_link_libraries(${CUTIL_CORE_LIBRARY_STATIC}
 #merget libcutilcore.a and libedit.a begin
 include(${CMAKE_CURRENT_SOURCE_DIR}/../../cmake/merge_static_lib.cmake)
 merge_static_libs(${CUTIL_CORE_LIBRARY} ${CUTIL_CORE_LIBRARY_STATIC} ${EDITLINE_LIBRARY})
-# set(C_LIB  ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/libcombi.a)
-# add_custom_target(combined
-#         COMMAND ar -x $<TARGET_FILE:${CUTIL_CORE_LIBRARY_STATIC}>
-#         COMMAND ar -x $<TARGET_FILE:${EDITLINE_LIBRARY}>
-#         COMMAND ar -qcs ${C_LIB} *.o
-#         WORKING_DIRECTORY ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}
-#         DEPENDS ${CUTIL_CORE_LIBRARY_STATIC} ${EDIT_LIBRARY}
-#         )
-#
-# add_library(c STATIC IMPORTED GLOBAL)
-# add_dependencies(c combined)
 #merget libcutilcore.a and libedit.a end
 
 
@@ -118,11 +107,8 @@ elseif(ANDROID)
   # Do not use SOVERSION on android. It is completely unsupported (and causes problems).
   # Perhaps revisit in the future? (NDK r9d, 8/7/14)
 else()
-  # set_target_properties(c PROPERTIES
-  #   SOVERSION ${CUTIL_CORE_VERSION_MAJOR}.${CUTIL_CORE_VERSION_MINOR}.${CUTIL_CORE_VERSION_REVISION}
-  #   IMPORTED_LOCATION ${C_LIB})
-  # set_target_properties(c PROPERTIES
-  #   IMPORTED_LOCATION ${C_LIB})
+  set_target_properties(${CUTIL_CORE_LIBRARY} PROPERTIES
+    SOVERSION ${CUTIL_CORE_VERSION_MAJOR}.${CUTIL_CORE_VERSION_MINOR}.${CUTIL_CORE_VERSION_REVISION})
 
   install(
     TARGETS ${CUTIL_CORE_LIBRARY}
@@ -130,11 +116,6 @@ else()
     ARCHIVE DESTINATION ${INSTALL_LIB_DIR}
     )
 
-  # install(
-  #   TARGETS ${CUTIL_CORE_LIBRARY_SHARED}
-  #   LIBRARY DESTINATION ${INSTALL_LIB_DIR}
-  #   ARCHIVE DESTINATION ${INSTALL_LIB_DIR}
-  #   )
 
   install(
     FILES ${CMAKE_CURRENT_BINARY_DIR}/${CUTIL_CORE_LIBRARY}.pc
