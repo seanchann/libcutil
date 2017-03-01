@@ -68,6 +68,8 @@ if(UNIX)
     message(STATUS "on android platform")
   else()
   endif()
+
+  find_package(Threads REQUIRED)
   #set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${WARNINGS} -Werror -pedantic")
   set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${WARNINGS} -w")
 elseif(WIN32)
@@ -75,14 +77,21 @@ elseif(WIN32)
 endif()
 
 
+
 add_library(${CUTIL_CORE_LIBRARY_STATIC} STATIC ${SOURCES})
+add_library(${CUTIL_CORE_LIBRARY_SHARED} SHARED ${SOURCES})
+
 find_package(Threads REQUIRED)
 if(THREADS_HAVE_PTHREAD_ARG)
   target_compile_options(${CUTIL_CORE_LIBRARY_STATIC} PUBLIC  "-pthread")
+  target_compile_options(${CUTIL_CORE_LIBRARY_SHARED} PUBLIC  "-pthread")
 endif()
 
-target_compile_options(${CUTIL_CORE_LIBRARY_STATIC} PUBLIC  "-fPIC")
 
+target_compile_options(${CUTIL_CORE_LIBRARY_STATIC} PUBLIC  "-fPIC")
+target_compile_options(${CUTIL_CORE_LIBRARY_SHARED} PUBLIC  "-fPIC")
+
+#SET(LINK_LIB jansson ${EDIT_LIBRARY})
 SET(LINK_LIB jansson)
 
 if(CMAKE_THREAD_LIBS_INIT)
@@ -93,22 +102,10 @@ endif()
 target_link_libraries(${CUTIL_CORE_LIBRARY_STATIC}
   ${LINK_LIB})
 
+target_link_libraries(${CUTIL_CORE_LIBRARY_SHARED}
+  ${LINK_LIB})
 
-#merget libcutilcore.a and libedit.a begin
-set(C_LIB  ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/libcombi.a)
-add_custom_target(combined
-        COMMAND ar -x $<TARGET_FILE:${CUTIL_CORE_LIBRARY_STATIC}>
-        COMMAND ar -x $<TARGET_FILE:${EDITLINE_LIBRARY}>
-        COMMAND ar -qcs ${C_LIB} *.o
-        WORKING_DIRECTORY ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}
-        DEPENDS ${CUTIL_CORE_LIBRARY_STATIC} ${EDIT_LIBRARY}
-        )
-
-add_library(c STATIC IMPORTED GLOBAL)
-add_dependencies(c combined)
-#merget libcutilcore.a and libedit.a end
-
-
+add_dependencies(${CUTIL_CORE_LIBRARY_STATIC} ${EDIT_LIBRARY})
 
 if(WIN32)
   message(STATUS "build on win32 platform")
@@ -116,22 +113,26 @@ elseif(ANDROID)
   # Do not use SOVERSION on android. It is completely unsupported (and causes problems).
   # Perhaps revisit in the future? (NDK r9d, 8/7/14)
 else()
-  set_target_properties(c PROPERTIES
+  set_target_properties(${CUTIL_CORE_LIBRARY_STATIC} PROPERTIES
     SOVERSION ${CUTIL_CORE_VERSION_MAJOR}.${CUTIL_CORE_VERSION_MINOR}.${CUTIL_CORE_VERSION_REVISION}
-    IMPORTED_LOCATION ${C_LIB})
+    OUTPUT_NAME ${CUTIL_CORE_LIBRARY})
   #STATIC_LIBRARY_FLAGS ${CMAKE_ARCHIVE_OUTPUT_DIRECTORY}/libedit.a)
 
-  # install(
-  #   TARGETS ${CUTIL_CORE_LIBRARY}
-  #   LIBRARY DESTINATION ${INSTALL_LIB_DIR}
-  #   ARCHIVE DESTINATION ${INSTALL_LIB_DIR}
-  #   )
+  set_target_properties(${CUTIL_CORE_LIBRARY_SHARED} PROPERTIES
+    SOVERSION ${CUTIL_CORE_VERSION_MAJOR}.${CUTIL_CORE_VERSION_MINOR}.${CUTIL_CORE_VERSION_REVISION}
+  OUTPUT_NAME ${CUTIL_CORE_LIBRARY})
 
-  # install(
-  #   TARGETS ${CUTIL_CORE_LIBRARY_SHARED}
-  #   LIBRARY DESTINATION ${INSTALL_LIB_DIR}
-  #   ARCHIVE DESTINATION ${INSTALL_LIB_DIR}
-  #   )
+  install(
+    TARGETS ${CUTIL_CORE_LIBRARY_STATIC}
+    LIBRARY DESTINATION ${INSTALL_LIB_DIR}
+    ARCHIVE DESTINATION ${INSTALL_LIB_DIR}
+    )
+
+  install(
+    TARGETS ${CUTIL_CORE_LIBRARY_SHARED}
+    LIBRARY DESTINATION ${INSTALL_LIB_DIR}
+    ARCHIVE DESTINATION ${INSTALL_LIB_DIR}
+    )
 
   install(
     FILES ${CMAKE_CURRENT_BINARY_DIR}/${CUTIL_CORE_LIBRARY}.pc

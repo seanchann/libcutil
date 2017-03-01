@@ -6,3 +6,4 @@ build.*/
 *.pch
 .ycm_extra_conf.*
 build.h
+libcutil_autoconfig.h

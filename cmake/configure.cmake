@@ -60,6 +60,7 @@ macro(Configure)
 
 
 
+
   INCLUDE(CheckCSourceCompiles)
   CHECK_C_SOURCE_COMPILES(
     "
@@ -188,6 +189,7 @@ macro(Configure)
   CHECK_LIBRARY_EXISTS(m round "" HAVE_ROUND)
   CHECK_LIBRARY_EXISTS(m roundf "" HAVE_ROUNDF)
   CHECK_LIBRARY_EXISTS(cap cap_set_proc "sys/capability.h" HAVE_CAP)
+  CHECK_LIBRARY_EXISTS(pthread pthread_rwlock_trywrlock "pthread.h" HAVE_PTHREAD_RWLOCK_TIMEDWRLOCK)
 
 
 

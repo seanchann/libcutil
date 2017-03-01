@@ -9,5 +9,5 @@ Description: cutilcore compression library
 Version: @CUTIL_CORE_VERSION@
 
 Requires:
-Libs: -L${libdir} -L${sharedlibdir} -lpthread
+Libs: -L${libdir} -L${sharedlibdir} -lpthread -luuid -ljansson
 Cflags: -I${includedir}

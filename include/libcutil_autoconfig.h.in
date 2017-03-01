@@ -200,6 +200,10 @@
 /* Define to 1 if `uid' is a member of `struct sockpeercred'. */
 #cmakedefine HAVE_STRUCT_SOCKPEERCRED_UID @HAVE_STRUCT_SOCKPEERCRED_UID@
 
+/* Define to 1 if have pthread_rwlock_trywrlock  */
+#cmakedefine HAVE_PTHREAD_RWLOCK_TIMEDWRLOCK @HAVE_PTHREAD_RWLOCK_TIMEDWRLOCK@
+
+
 /* Enable extensions on AIX 3, Interix.  */
 #cmakedefine _ALL_SOURCE @_ALL_SOURCE@
 
@@ -214,6 +218,9 @@
 
 /* Enable general extensions on Solaris.  */
 #cmakedefine __EXTENSIONS__ @__EXTENSIONS__@
+
+
+
 
 
 /* Enable extensions on AIX 3, Interix.  */
