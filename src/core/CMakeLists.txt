@@ -96,7 +96,7 @@ target_link_libraries(${CUTIL_CORE_LIBRARY_STATIC}
 
 #merget libcutilcore.a and libedit.a begin
 include(${CMAKE_CURRENT_SOURCE_DIR}/../../cmake/merge_static_lib.cmake)
-merge_static_libs(${CUTIL_CORE_LIBRARY} ${CUTIL_CORE_LIBRARY_STATIC} ${EDITLINE_LIBRARY})
+merge_static_libs(${CUTIL_CORE_LIBRARY} ${EDITLINE_LIBRARY} ${CUTIL_CORE_LIBRARY_STATIC})
 #merget libcutilcore.a and libedit.a end
 
 
