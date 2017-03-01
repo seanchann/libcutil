@@ -6,7 +6,7 @@ include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/build_tools.cmake)
 
 
 option(BUILD_LIBCUTIL "build c utility library" ON)
-option(BUILD_LOGUTIL "build log library" ON)
+# option(BUILD_LOGUTIL "build log library" ON)
 option(BUILD_TEST "build test binary" ON)
 
 
@@ -21,7 +21,7 @@ message(STATUS "This is SOURCE dir" ${libcutil_SOURCE_DIR})
 message(STATUS "This is Cmake current source dir" ${CMAKE_CURRENT_SOURCE_DIR})
 
 
-set(LIBCUTIL_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/include/cutil)
+set(LIBCUTIL_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/include)
 #call configure first
 Configure()
 #call build tools to generate file
@@ -46,10 +46,10 @@ if(BUILD_LIBCUTIL)
     add_subdirectory(src/core)
 
 
-    if(BUILD_LOGUTIL)
-      set(LOGUTIL_LIBRARY logutil)
-      add_subdirectory(src/log)
-    endif()
+    # if(BUILD_LOGUTIL)
+    #   set(LOGUTIL_LIBRARY logutil)
+    #   add_subdirectory(src/log)
+    # endif()
 
     if(BUILD_TEST)
       add_subdirectory(test)
@@ -57,7 +57,7 @@ if(BUILD_LIBCUTIL)
 
 
     if(NOT SKIP_INSTALL_HEADERS AND NOT SKIP_INSTALL_ALL )
-        install(DIRECTORY  ${CMAKE_CURRENT_SOURCE_DIR}/include/ DESTINATION "${INSTALL_INC_DIR}")
+        install(DIRECTORY  ${CMAKE_CURRENT_SOURCE_DIR}/include/ DESTINATION "${INSTALL_INC_DIR}"  FILES_MATCHING PATTERN "*.h")
     endif()
 
 

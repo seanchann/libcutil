@@ -23,26 +23,30 @@
 #ifndef _ASTERISK_IO_H
 #define _ASTERISK_IO_H
 
-#include "asterisk/poll-compat.h"
+#include "libcutil/poll-compat.h"
 
 #if defined(__cplusplus) || defined(c_plusplus)
 extern "C" {
-#endif
+#endif // if defined(__cplusplus) || defined(c_plusplus)
 
 /*! Input ready */
-#define AST_IO_IN 	POLLIN
+#define AST_IO_IN       POLLIN
+
 /*! Output ready */
-#define AST_IO_OUT 	POLLOUT
+#define AST_IO_OUT      POLLOUT
+
 /*! Priority input ready */
-#define AST_IO_PRI	POLLPRI
+#define AST_IO_PRI      POLLPRI
 
 /* Implicitly polled for */
 /*! Error condition (errno or getsockopt) */
-#define AST_IO_ERR	POLLERR
+#define AST_IO_ERR      POLLERR
+
 /*! Hangup */
-#define AST_IO_HUP	POLLHUP
+#define AST_IO_HUP      POLLHUP
+
 /*! Invalid fd */
-#define AST_IO_NVAL	POLLNVAL
+#define AST_IO_NVAL     POLLNVAL
 
 /*! \brief
  * An Asterisk IO callback takes its id, a file descriptor, list of events, and
@@ -58,17 +62,21 @@ struct io_context;
  * Basically mallocs an IO structure and sets up some default values.
  * \return an allocated io_context structure
  */
-struct io_context *io_context_create(void);
+struct io_context* io_context_create(void);
 
 /*!
  * \brief Destroys a context
  * \param ioc structure to destroy
  * Destroy a context for I/O operations
- * Frees all memory associated with the given io_context structure along with the structure itself
+ * Frees all memory associated with the given io_context structure along with
+ *the structure itself
  */
-void io_context_destroy(struct io_context *ioc);
+void               io_context_destroy(struct io_context *ioc);
 
-typedef int (*ast_io_cb)(int *id, int fd, short events, void *cbdata);
+typedef int (*ast_io_cb)(int  *id,
+                         int   fd,
+                         short events,
+                         void *cbdata);
 #define AST_IO_CB(a) ((ast_io_cb)(a))
 
 /*!
@@ -83,7 +91,11 @@ typedef int (*ast_io_cb)(int *id, int fd, short events, void *cbdata);
  * \retval a pointer to ID of the IO event
  * \retval NULL on failure
  */
-int *ast_io_add(struct io_context *ioc, int fd, ast_io_cb callback, short events, void *data);
+int* ast_io_add(struct io_context *ioc,
+                int                fd,
+                ast_io_cb          callback,
+                short              events,
+                void              *data);
 
 /*!
  * \brief Changes an IO handler
@@ -98,7 +110,12 @@ int *ast_io_add(struct io_context *ioc, int fd, ast_io_cb callback, short events
  * \retval a pointer to the ID of the IO event
  * \retval NULL on failure
  */
-int *ast_io_change(struct io_context *ioc, int *id, int fd, ast_io_cb callback, short events, void *data);
+int* ast_io_change(struct io_context *ioc,
+                   int               *id,
+                   int                fd,
+                   ast_io_cb          callback,
+                   short              events,
+                   void              *data);
 
 /*!
  * \brief Removes an IO context
@@ -108,7 +125,8 @@ int *ast_io_change(struct io_context *ioc, int *id, int fd, ast_io_cb callback, 
  * \retval 0 on success
  * \retval -1 on failure
  */
-int ast_io_remove(struct io_context *ioc, int *id);
+int ast_io_remove(struct io_context *ioc,
+                  int               *id);
 
 /*!
  * \brief Waits for IO
@@ -119,7 +137,8 @@ int ast_io_remove(struct io_context *ioc, int *id);
  * any necessary I/O.
  * \return he number of I/O events which took place.
  */
-int ast_io_wait(struct io_context *ioc, int howlong);
+int ast_io_wait(struct io_context *ioc,
+                int                howlong);
 
 /*!
  * \brief Dumps the IO array.
@@ -135,7 +154,8 @@ int ast_hide_password(int fd);
  * \brief Restores TTY mode.
  * Call with result from previous ast_hide_password
  */
-int ast_restore_tty(int fd, int oldstatus);
+int ast_restore_tty(int fd,
+                    int oldstatus);
 
 int ast_get_termcols(int fd);
 
@@ -151,6 +171,6 @@ int ast_sd_notify(const char *state);
 
 #if defined(__cplusplus) || defined(c_plusplus)
 }
-#endif
+#endif // if defined(__cplusplus) || defined(c_plusplus)
 
 #endif /* _ASTERISK_IO_H */

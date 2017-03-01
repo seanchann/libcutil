@@ -25,24 +25,27 @@
 
 #if defined(__cplusplus) || defined(c_plusplus)
 extern "C" {
-#endif
+#endif // if defined(__cplusplus) || defined(c_plusplus)
 
 #define ESC 0x1b
 
 /*! \name Terminal Attributes
-*/
+ */
+
 /*@{ */
-#define ATTR_RESET	0
-#define ATTR_BRIGHT	1
-#define ATTR_DIM	2
-#define ATTR_UNDER	4
-#define ATTR_BLINK	5
-#define ATTR_REVER	7
-#define ATTR_HIDDEN	8
+#define ATTR_RESET      0
+#define ATTR_BRIGHT     1
+#define ATTR_DIM        2
+#define ATTR_UNDER      4
+#define ATTR_BLINK      5
+#define ATTR_REVER      7
+#define ATTR_HIDDEN     8
+
 /*@} */
 
 /*! \name Terminal Colors
-*/
+ */
+
 /*@{ */
 #define COLOR_BLACK     30
 #define COLOR_GRAY      (30 | 128)
@@ -60,30 +63,42 @@ extern "C" {
 #define COLOR_BRCYAN    (36 | 128)
 #define COLOR_WHITE     37
 #define COLOR_BRWHITE   (37 | 128)
+
 /*@} */
 
 /*! \brief Shortcut macros for coloring a set of text
  */
-#define COLORIZE_FMT	"%s%s%s"
-#define COLORIZE(fg, bg, str)	ast_term_color(fg,bg),str,ast_term_reset()
+#define COLORIZE_FMT    "%s%s%s"
+#define COLORIZE(fg, bg, str) ast_term_color(fg, bg), str, ast_term_reset()
+
 /*! \brief Maximum number of characters needed for a color escape sequence,
  *         and another one for a trailing reset, plus a null char */
 #define AST_TERM_MAX_ESCAPE_CHARS   23
-#define AST_TERM_MAX_ROTATING_BUFFERS	15
+#define AST_TERM_MAX_ROTATING_BUFFERS   15
 
 /*! \brief Colorize a specified string by adding terminal color codes
  *
  * \param outbuf Result buffer
  * \param inbuf Starting string
- * \param fgcolor Foreground color, specified as one of the constants in include/asterisk/term.h.  Use '0' if the want the normal terminal foreground color.
- * \param bgcolor Background color, specified as one of the constants in include/asterisk/term.h.  Use '0' if you want the normal terminal background color.
+ * \param fgcolor Foreground color, specified as one of the constants in
+ *include/asterisk/term.h.  Use '0' if the want the normal terminal foreground
+ *color.
+ * \param bgcolor Background color, specified as one of the constants in
+ *include/asterisk/term.h.  Use '0' if you want the normal terminal background
+ *color.
  * \param maxout Maximum size of outbuf
  *
  * \return outbuf
  *
- * \deprecated Due to the necessity of pre-sizing a result buffer, new code should avoid using this function in preference to ast_term_color_code() or ast_term_color().
+ * \deprecated Due to the necessity of pre-sizing a result buffer, new code
+ *should avoid using this function in preference to ast_term_color_code() or
+ *ast_term_color().
  */
-char *term_color(char *outbuf, const char *inbuf, int fgcolor, int bgcolor, int maxout);
+char* term_color(char       *outbuf,
+                 const char *inbuf,
+                 int         fgcolor,
+                 int         bgcolor,
+                 int         maxout);
 
 /*!
  * \brief Append a color sequence to an ast_str
@@ -95,23 +110,27 @@ char *term_color(char *outbuf, const char *inbuf, int fgcolor, int bgcolor, int 
  * \retval 0 success
  * \retval -1 failure
  */
-int ast_term_color_code(struct ast_str **str, int fgcolor, int bgcolor);
+int ast_term_color_code(struct ast_str **str,
+                        int              fgcolor,
+                        int              bgcolor);
 
 /*!
  * \brief Return a color sequence string
  * \param fgcolor foreground color
  * \param bgcolor background color
- * \note This function may be called up to 15 times within the arguments to a single function without the danger of overwriting a common buffer.
+ * \note This function may be called up to 15 times within the arguments to a
+ *single function without the danger of overwriting a common buffer.
  *
  * \return A color sequence string, or the empty string, on error
  */
-const char *ast_term_color(int fgcolor, int bgcolor);
+const char* ast_term_color(int fgcolor,
+                           int bgcolor);
 
 /*!
  * \brief Returns the terminal reset code
  * \return String which, when sent to the screen, resets the terminal colors
  */
-const char *ast_term_reset(void);
+const char* ast_term_reset(void);
 
 /*!
  * \brief Write a color sequence to a string
@@ -124,7 +143,10 @@ const char *ast_term_reset(void);
  *
  * \return outbuf
  */
-char *term_color_code(char *outbuf, int fgcolor, int bgcolor, int maxout);
+char      * term_color_code(char *outbuf,
+                            int   fgcolor,
+                            int   bgcolor,
+                            int   maxout);
 
 /*!
  * \brief Remove colorings from a specified string
@@ -133,16 +155,18 @@ char *term_color_code(char *outbuf, int fgcolor, int bgcolor, int maxout);
  * \param maxout the available size of outbuf
  * \return outbuf
  */
-char *term_strip(char *outbuf, const char *inbuf, int maxout);
+char* term_strip(char       *outbuf,
+                 const char *inbuf,
+                 int         maxout);
 
-void term_filter_escapes(char *line);
+void        term_filter_escapes(char *line);
 
-const char *term_end(void);
+const char* term_end(void);
 
-const char *term_quit(void);
+const char* term_quit(void);
 
 #if defined(__cplusplus) || defined(c_plusplus)
 }
-#endif
+#endif // if defined(__cplusplus) || defined(c_plusplus)
 
 #endif /* _ASTERISK_TERM_H */

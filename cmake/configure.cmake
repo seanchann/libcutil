@@ -288,7 +288,7 @@ endif()
   #it is a libcutl
   SET(HAVE_LIBCUITL 1)
 
-  CONFIGURE_FILE(${LIBCUTIL_INCLUDE_DIR}/autoconfig.h.in ${LIBCUTIL_INCLUDE_DIR}/autoconfig.h)
+  CONFIGURE_FILE(${LIBCUTIL_INCLUDE_DIR}/libcutil_autoconfig.h.in ${LIBCUTIL_INCLUDE_DIR}/libcutil_autoconfig.h)
 
 
 endmacro()

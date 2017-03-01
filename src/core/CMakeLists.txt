@@ -55,6 +55,7 @@ set(SOURCES
   ${CMAKE_CURRENT_SOURCE_DIR}/daemon.c
   ${CMAKE_CURRENT_SOURCE_DIR}/elhelper.c
   ${CMAKE_CURRENT_SOURCE_DIR}/version.c
+  ${CMAKE_CURRENT_SOURCE_DIR}/logger.c
 )
 
 message(STATUS "source list " ${SOURCES})

@@ -24,40 +24,45 @@
 #ifndef ASTOBJ2_CONTAINER_PRIVATE_H_
 #define ASTOBJ2_CONTAINER_PRIVATE_H_
 
-#include "asterisk/astobj2.h"
+#include "libcutil/astobj2.h"
 
 /*!
  * \internal
  * \brief Enum for internal_ao2_unlink_node.
  */
 enum ao2_unlink_node_flags {
-	/*! Remove the node from the object's weak link list
-	 * OR unref the object if it's a strong reference. */
-	AO2_UNLINK_NODE_UNLINK_OBJECT = (1 << 0),
-	/*! Modified unlink_object to skip the unref of the object. */
-	AO2_UNLINK_NODE_NOUNREF_OBJECT = (1 << 1),
-	/*! Unref the node. */
-	AO2_UNLINK_NODE_UNREF_NODE = (1 << 2),
-	/*! Decrement the container's element count. */
-	AO2_UNLINK_NODE_DEC_COUNT = (1 << 3),
+  /*! Remove the node from the object's weak link list
+  * OR unref the object if it's a strong reference. */
+  AO2_UNLINK_NODE_UNLINK_OBJECT = (1 << 0),
+
+  /*! Modified unlink_object to skip the unref of the object. */
+  AO2_UNLINK_NODE_NOUNREF_OBJECT = (1 << 1),
+
+  /*! Unref the node. */
+  AO2_UNLINK_NODE_UNREF_NODE = (1 << 2),
+
+  /*! Decrement the container's element count. */
+  AO2_UNLINK_NODE_DEC_COUNT = (1 << 3),
 };
 
 enum ao2_callback_type {
-	AO2_CALLBACK_DEFAULT,
-	AO2_CALLBACK_WITH_DATA,
+  AO2_CALLBACK_DEFAULT,
+  AO2_CALLBACK_WITH_DATA,
 };
 
 enum ao2_container_insert {
-	/*! The node was inserted into the container. */
-	AO2_CONTAINER_INSERT_NODE_INSERTED,
-	/*! The node object replaced an existing node object. */
-	AO2_CONTAINER_INSERT_NODE_OBJ_REPLACED,
-	/*! The node was rejected (duplicate). */
-	AO2_CONTAINER_INSERT_NODE_REJECTED,
+  /*! The node was inserted into the container. */
+  AO2_CONTAINER_INSERT_NODE_INSERTED,
+
+  /*! The node object replaced an existing node object. */
+  AO2_CONTAINER_INSERT_NODE_OBJ_REPLACED,
+
+  /*! The node was rejected (duplicate). */
+  AO2_CONTAINER_INSERT_NODE_REJECTED,
 };
 
 /*! Allow enough room for container specific traversal state structs */
-#define AO2_TRAVERSAL_STATE_SIZE	100
+#define AO2_TRAVERSAL_STATE_SIZE        100
 
 /*!
  * \brief Generic container node.
@@ -66,12 +71,14 @@ enum ao2_container_insert {
  * values common to all container nodes.
  */
 struct ao2_container_node {
-	/*! Stored object in node. */
-	void *obj;
-	/*! Container holding the node.  (Does not hold a reference.) */
-	struct ao2_container *my_container;
-	/*! TRUE if the node is linked into the container. */
-	unsigned int is_linked:1;
+  /*! Stored object in node. */
+  void *obj;
+
+  /*! Container holding the node.  (Does not hold a reference.) */
+  struct ao2_container *my_container;
+
+  /*! TRUE if the node is linked into the container. */
+  unsigned int is_linked : 1;
 };
 
 /*!
@@ -95,7 +102,20 @@ typedef void (*ao2_container_destroy_fn)(struct ao2_container *self);
  * \retval empty-container on success.
  * \retval NULL on error.
  */
-typedef struct ao2_container *(*ao2_container_alloc_empty_clone_fn)(struct ao2_container *self, const char *tag, const char *file, int line, const char *func);
+typedef struct ao2_container *(*ao2_container_alloc_empty_clone_fn)(struct
+                                                                    ao2_container
+                                                                    *self,
+                                                                    const char
+                                                                    *
+                                                                    tag,
+                                                                    const char
+                                                                    *
+                                                                    file,
+                                                                    int
+                                                                    line,
+                                                                    const char
+                                                                    *
+                                                                    func);
 
 /*!
  * \brief Create a new container node.
@@ -110,7 +130,22 @@ typedef struct ao2_container *(*ao2_container_alloc_empty_clone_fn)(struct ao2_c
  * \retval initialized-node on success.
  * \retval NULL on error.
  */
-typedef struct ao2_container_node *(*ao2_container_new_node_fn)(struct ao2_container *self, void *obj_new, const char *tag, const char *file, int line, const char *func);
+typedef struct ao2_container_node *(*ao2_container_new_node_fn)(struct
+                                                                ao2_container *
+                                                                 self,
+                                                                void
+                                                                *
+                                                                 obj_new,
+                                                                const char
+                                                                *tag,
+                                                                const char
+                                                                *
+                                                                file,
+                                                                int
+                                                                line,
+                                                                const char
+                                                                *
+                                                                func);
 
 /*!
  * \brief Insert a node into this container.
@@ -120,7 +155,11 @@ typedef struct ao2_container_node *(*ao2_container_new_node_fn)(struct ao2_conta
  *
  * \return enum ao2_container_insert value.
  */
-typedef enum ao2_container_insert (*ao2_container_insert_fn)(struct ao2_container *self, struct ao2_container_node *node);
+typedef enum ao2_container_insert (*ao2_container_insert_fn)(struct ao2_container
+                                                             *self,
+                                                             struct
+                                                             ao2_container_node *
+node);
 
 /*!
  * \brief Find the first container node in a traversal.
@@ -133,7 +172,18 @@ typedef enum ao2_container_insert (*ao2_container_insert_fn)(struct ao2_containe
  * \retval node-ptr of found node (Reffed).
  * \retval NULL when no node found.
  */
-typedef struct ao2_container_node *(*ao2_container_find_first_fn)(struct ao2_container *self, enum search_flags flags, void *arg, void *v_state);
+typedef struct ao2_container_node *(*ao2_container_find_first_fn)(struct
+                                                                  ao2_container *
+                                                                  self,
+                                                                  enum
+                                                                  search_flags
+                                                                  flags,
+                                                                  void
+                                                                  *
+                                                                  arg,
+                                                                  void
+                                                                  *
+                                                                  v_state);
 
 /*!
  * \brief Find the next container node in a traversal.
@@ -146,7 +196,15 @@ typedef struct ao2_container_node *(*ao2_container_find_first_fn)(struct ao2_con
  * \retval node-ptr of found node (Reffed).
  * \retval NULL when no node found.
  */
-typedef struct ao2_container_node *(*ao2_container_find_next_fn)(struct ao2_container *self, void *v_state, struct ao2_container_node *prev);
+typedef struct ao2_container_node *(*ao2_container_find_next_fn)(struct
+                                                                 ao2_container
+                                                                 *self,
+                                                                 void
+                                                                 *
+                                                                 v_state,
+                                                                 struct
+                                                                 ao2_container_node
+                                                                 *prev);
 
 /*!
  * \brief Cleanup the container traversal state.
@@ -170,7 +228,14 @@ typedef void (*ao2_container_find_cleanup_fn)(void *v_state);
  * \retval node on success.
  * \retval NULL on error or no more nodes in the container.
  */
-typedef struct ao2_container_node *(*ao2_iterator_next_fn)(struct ao2_container *self, struct ao2_container_node *prev, enum ao2_iterator_flags flags);
+typedef struct ao2_container_node *(*ao2_iterator_next_fn)(struct ao2_container
+                                                           *
+                                                           self,
+                                                           struct
+                                                           ao2_container_node *
+                                                           prev,
+                                                           enum ao2_iterator_flags
+                                                           flags);
 
 /*!
  * \brief Display contents of the specified container.
@@ -178,11 +243,15 @@ typedef struct ao2_container_node *(*ao2_iterator_next_fn)(struct ao2_container 
  * \param self Container to dump.
  * \param where User data needed by prnt to determine where to put output.
  * \param prnt Print output callback function to use.
- * \param prnt_obj Callback function to print the given object's key. (NULL if not available)
+ * \param prnt_obj Callback function to print the given object's key. (NULL if
+ *not available)
  *
  * \return Nothing
  */
-typedef void (*ao2_container_display)(struct ao2_container *self, void *where, ao2_prnt_fn *prnt, ao2_prnt_obj_fn *prnt_obj);
+typedef void (*ao2_container_display)(struct ao2_container *self,
+                                      void                 *where,
+                                      ao2_prnt_fn          *prnt,
+                                      ao2_prnt_obj_fn      *prnt_obj);
 
 /*!
  * \brief Display statistics of the specified container.
@@ -195,7 +264,9 @@ typedef void (*ao2_container_display)(struct ao2_container *self, void *where, a
  *
  * \return Nothing
  */
-typedef void (*ao2_container_statistics)(struct ao2_container *self, void *where, ao2_prnt_fn *prnt);
+typedef void (*ao2_container_statistics)(struct ao2_container *self,
+                                         void                 *where,
+                                         ao2_prnt_fn          *prnt);
 
 /*!
  * \brief Perform an integrity check on the specified container.
@@ -219,7 +290,8 @@ typedef int (*ao2_container_integrity)(struct ao2_container *self);
  *
  * \return Nothing
  */
-typedef void (*ao2_link_node_stat_fn)(struct ao2_container *container, struct ao2_container_node *node);
+typedef void (*ao2_link_node_stat_fn)(struct ao2_container      *container,
+                                      struct ao2_container_node *node);
 
 /*!
  * \internal
@@ -231,38 +303,52 @@ typedef void (*ao2_link_node_stat_fn)(struct ao2_container *container, struct ao
  *
  * \return Nothing
  */
-typedef void (*ao2_unlink_node_stat_fn)(struct ao2_container *container, struct ao2_container_node *node);
+typedef void (*ao2_unlink_node_stat_fn)(struct ao2_container      *container,
+                                        struct ao2_container_node *node);
 
 /*! Container virtual methods template. */
 struct ao2_container_methods {
-	/*! Destroy this container. */
-	ao2_container_destroy_fn destroy;
-	/*! \brief Create an empty copy of this container. */
-	ao2_container_alloc_empty_clone_fn alloc_empty_clone;
-	/*! Create a new container node. */
-	ao2_container_new_node_fn new_node;
-	/*! Insert a node into this container. */
-	ao2_container_insert_fn insert;
-	/*! Traverse the container, find the first node. */
-	ao2_container_find_first_fn traverse_first;
-	/*! Traverse the container, find the next node. */
-	ao2_container_find_next_fn traverse_next;
-	/*! Traverse the container, cleanup state. */
-	ao2_container_find_cleanup_fn traverse_cleanup;
-	/*! Find the next iteration element in the container. */
-	ao2_iterator_next_fn iterator_next;
+  /*! Destroy this container. */
+  ao2_container_destroy_fn destroy;
+
+  /*! \brief Create an empty copy of this container. */
+  ao2_container_alloc_empty_clone_fn alloc_empty_clone;
+
+  /*! Create a new container node. */
+  ao2_container_new_node_fn new_node;
+
+  /*! Insert a node into this container. */
+  ao2_container_insert_fn insert;
+
+  /*! Traverse the container, find the first node. */
+  ao2_container_find_first_fn traverse_first;
+
+  /*! Traverse the container, find the next node. */
+  ao2_container_find_next_fn traverse_next;
+
+  /*! Traverse the container, cleanup state. */
+  ao2_container_find_cleanup_fn traverse_cleanup;
+
+  /*! Find the next iteration element in the container. */
+  ao2_iterator_next_fn iterator_next;
 #if defined(AO2_DEBUG)
-	/*! Increment the container linked object statistic. */
-	ao2_link_node_stat_fn link_stat;
-	/*! Deccrement the container linked object statistic. */
-	ao2_unlink_node_stat_fn unlink_stat;
-	/*! Display container contents. (Method for debug purposes) */
-	ao2_container_display dump;
-	/*! Display container debug statistics. (Method for debug purposes) */
-	ao2_container_statistics stats;
-	/*! Perform an integrity check on the container. (Method for debug purposes) */
-	ao2_container_integrity integrity;
-#endif	/* defined(AO2_DEBUG) */
+
+  /*! Increment the container linked object statistic. */
+  ao2_link_node_stat_fn link_stat;
+
+  /*! Deccrement the container linked object statistic. */
+  ao2_unlink_node_stat_fn unlink_stat;
+
+  /*! Display container contents. (Method for debug purposes) */
+  ao2_container_display dump;
+
+  /*! Display container debug statistics. (Method for debug purposes) */
+  ao2_container_statistics stats;
+
+  /*! Perform an integrity check on the container. (Method for debug purposes)
+     */
+  ao2_container_integrity integrity;
+#endif /* defined(AO2_DEBUG) */
 };
 
 /*!
@@ -280,33 +366,40 @@ struct ao2_container_methods {
  * (that we need anyway).
  */
 struct ao2_container {
-	/*! Container virtual method table. */
-	const struct ao2_container_methods *v_table;
-	/*! Container sort function if the container is sorted. */
-	ao2_sort_fn *sort_fn;
-	/*! Container traversal matching function for ao2_find. */
-	ao2_callback_fn *cmp_fn;
-	/*! The container option flags */
-	uint32_t options;
-	/*! Number of elements in the container. */
-	int elements;
+  /*! Container virtual method table. */
+  const struct ao2_container_methods *v_table;
+
+  /*! Container sort function if the container is sorted. */
+  ao2_sort_fn *sort_fn;
+
+  /*! Container traversal matching function for ao2_find. */
+  ao2_callback_fn *cmp_fn;
+
+  /*! The container option flags */
+  uint32_t options;
+
+  /*! Number of elements in the container. */
+  int elements;
 #if defined(AO2_DEBUG)
-	/*! Number of nodes in the container. */
-	int nodes;
-	/*! Maximum number of empty nodes in the container. (nodes - elements) */
-	int max_empty_nodes;
-#endif	/* defined(AO2_DEBUG) */
-	/*!
-	 * \brief TRUE if the container is being destroyed.
-	 *
-	 * \note The destruction traversal should override any requested
-	 * search order to do the most efficient order for destruction.
-	 *
-	 * \note There should not be any empty nodes in the container
-	 * during destruction.  If there are then an error needs to be
-	 * issued about container node reference leaks.
-	 */
-	unsigned int destroying:1;
+
+  /*! Number of nodes in the container. */
+  int nodes;
+
+  /*! Maximum number of empty nodes in the container. (nodes - elements) */
+  int max_empty_nodes;
+#endif /* defined(AO2_DEBUG) */
+
+  /*!
+   * \brief TRUE if the container is being destroyed.
+   *
+   * \note The destruction traversal should override any requested
+   * search order to do the most efficient order for destruction.
+   *
+   * \note There should not be any empty nodes in the container
+   * during destruction.  If there are then an error needs to be
+   * issued about container node reference leaks.
+   */
+  unsigned int destroying : 1;
 };
 
 /*!
@@ -319,13 +412,22 @@ struct ao2_container {
  * \retval 0 on errors.
  * \retval 1 on success.
  */
-int __container_unlink_node_debug(struct ao2_container_node *node, uint32_t flags,
-	const char *tag, const char *file, int line, const char *func);
+int __container_unlink_node_debug(struct ao2_container_node *node,
+                                  uint32_t                   flags,
+                                  const char                *tag,
+                                  const char                *file,
+                                  int                        line,
+                                  const char                *func);
 
 #define __container_unlink_node(node, flags) \
-	__container_unlink_node_debug(node, flags, NULL, __FILE__, __LINE__, __PRETTY_FUNCTION__)
+  __container_unlink_node_debug(node,        \
+                                flags,       \
+                                NULL,        \
+                                __FILE__,    \
+                                __LINE__,    \
+                                __PRETTY_FUNCTION__)
 
 void container_destruct(void *_c);
-int container_init(void);
+int  container_init(void);
 
 #endif /* ASTOBJ2_CONTAINER_PRIVATE_H_ */

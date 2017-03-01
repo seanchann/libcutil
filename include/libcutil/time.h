@@ -24,132 +24,143 @@
 #define _ASTERISK_TIME_H
 
 #ifdef HAVE_SYS_TIME_H
-#include <sys/time.h>
-#endif
+# include <sys/time.h>
+#endif // ifdef HAVE_SYS_TIME_H
 
-#include "asterisk/inline_api.h"
+#include "libcutil/inline_api.h"
 
 /* We have to let the compiler learn what types to use for the elements of a
    struct timeval since on linux, it's time_t and suseconds_t, but on *BSD,
    they are just a long. */
 extern struct timeval tv;
-typedef typeof(tv.tv_sec) ast_time_t;
-typedef typeof(tv.tv_usec) ast_suseconds_t;
+typedef typeof (tv.tv_sec) ast_time_t;
+typedef typeof (tv.tv_usec) ast_suseconds_t;
 
 /*!
- * \brief Computes the difference (in seconds) between two \c struct \c timeval instances.
+ * \brief Computes the difference (in seconds) between two \c struct \c timeval
+ *instances.
  * \param end the end of the time period
  * \param start the beginning of the time period
  * \return the difference in seconds
  */
 AST_INLINE_API(
-int64_t ast_tvdiff_sec(struct timeval end, struct timeval start),
+  int64_t ast_tvdiff_sec(struct timeval end, struct timeval start),
 {
-	int64_t result = end.tv_sec - start.tv_sec;
-	if (result > 0 && end.tv_usec < start.tv_usec)
-		result--;
-	else if (result < 0 && end.tv_usec > start.tv_usec)
-		result++;
+  int64_t result = end.tv_sec - start.tv_sec;
 
-	return result;
+  if ((result > 0) && (end.tv_usec < start.tv_usec)) result--;
+  else if ((result < 0) && (end.tv_usec > start.tv_usec)) result++;
+
+  return result;
 }
-)
+
+  )
 
 /*!
- * \brief Computes the difference (in microseconds) between two \c struct \c timeval instances.
+ * \brief Computes the difference (in microseconds) between two \c struct \c
+ *timeval instances.
  * \param end the end of the time period
  * \param start the beginning of the time period
  * \return the difference in microseconds
  */
 AST_INLINE_API(
-int64_t ast_tvdiff_us(struct timeval end, struct timeval start),
+  int64_t ast_tvdiff_us(struct timeval end, struct timeval start),
 {
-	return (end.tv_sec - start.tv_sec) * (int64_t) 1000000 +
-		end.tv_usec - start.tv_usec;
+  return (end.tv_sec - start.tv_sec) * (int64_t)1000000 +
+  end.tv_usec - start.tv_usec;
 }
-)
+
+  )
 
 /*!
- * \brief Computes the difference (in milliseconds) between two \c struct \c timeval instances.
+ * \brief Computes the difference (in milliseconds) between two \c struct \c
+ *timeval instances.
  * \param end end of the time period
  * \param start beginning of the time period
  * \return the difference in milliseconds
  */
 AST_INLINE_API(
-int64_t ast_tvdiff_ms(struct timeval end, struct timeval start),
+  int64_t ast_tvdiff_ms(struct timeval end, struct timeval start),
 {
-	/* the offset by 1,000,000 below is intentional...
-	   it avoids differences in the way that division
-	   is handled for positive and negative numbers, by ensuring
-	   that the divisor is always positive
-	*/
-	int64_t sec_dif = (int64_t)(end.tv_sec - start.tv_sec) * 1000;
-	int64_t usec_dif = (1000000 + end.tv_usec - start.tv_usec) / 1000 - 1000;
-	return  sec_dif + usec_dif;
+  /* the offset by 1,000,000 below is intentional...
+     it avoids differences in the way that division
+     is handled for positive and negative numbers, by ensuring
+     that the divisor is always positive
+   */
+  int64_t sec_dif = (int64_t)(end.tv_sec - start.tv_sec) * 1000;
+  int64_t usec_dif = (1000000 + end.tv_usec - start.tv_usec) / 1000 - 1000;
+  return sec_dif + usec_dif;
 }
-)
+
+  )
 
 /*!
  * \brief Returns true if the argument is 0,0
  */
 AST_INLINE_API(
-int ast_tvzero(const struct timeval t),
+  int ast_tvzero(const struct timeval t),
 {
-	return (t.tv_sec == 0 && t.tv_usec == 0);
+  return t.tv_sec == 0 && t.tv_usec == 0;
 }
-)
+
+  )
 
 /*!
  * \brief Compres two \c struct \c timeval instances returning
  * -1, 0, 1 if the first arg is smaller, equal or greater to the second.
  */
 AST_INLINE_API(
-int ast_tvcmp(struct timeval _a, struct timeval _b),
+  int ast_tvcmp(struct timeval _a, struct timeval _b),
 {
-	if (_a.tv_sec < _b.tv_sec)
-		return -1;
-	if (_a.tv_sec > _b.tv_sec)
-		return 1;
-	/* now seconds are equal */
-	if (_a.tv_usec < _b.tv_usec)
-		return -1;
-	if (_a.tv_usec > _b.tv_usec)
-		return 1;
-	return 0;
+  if (_a.tv_sec < _b.tv_sec) return -1;
+
+  if (_a.tv_sec > _b.tv_sec) return 1;
+
+  /* now seconds are equal */
+  if (_a.tv_usec < _b.tv_usec) return -1;
+
+  if (_a.tv_usec > _b.tv_usec) return 1;
+
+  return 0;
 }
-)
+
+  )
 
 /*!
  * \brief Returns true if the two \c struct \c timeval arguments are equal.
  */
 AST_INLINE_API(
-int ast_tveq(struct timeval _a, struct timeval _b),
+  int ast_tveq(struct timeval _a, struct timeval _b),
 {
-	return (_a.tv_sec == _b.tv_sec && _a.tv_usec == _b.tv_usec);
+  return _a.tv_sec == _b.tv_sec && _a.tv_usec == _b.tv_usec;
 }
-)
+
+  )
 
 /*!
  * \brief Returns current timeval. Meant to replace calls to gettimeofday().
  */
 AST_INLINE_API(
-struct timeval ast_tvnow(void),
+  struct timeval ast_tvnow(void),
 {
-	struct timeval t;
-	gettimeofday(&t, NULL);
-	return t;
+  struct timeval t;
+  gettimeofday(&t, NULL);
+  return t;
 }
-)
+
+  )
 
 /*!
  * \brief Returns the sum of two timevals a + b
  */
-struct timeval ast_tvadd(struct timeval a, struct timeval b);
+struct timeval ast_tvadd(struct timeval a,
+                         struct timeval b);
 
 /*!
  * \brief Returns the difference of two timevals a - b
  */
-struct timeval ast_tvsub(struct timeval a, struct timeval b);
+struct timeval ast_tvsub(struct timeval a,
+                         struct timeval b);
 
 /*!
  * \since 12
@@ -159,7 +170,9 @@ struct timeval ast_tvsub(struct timeval a, struct timeval b);
  * \param buf A buffer to hold the formatted string'
  * \param length The size of the buffer
  */
-void ast_format_duration_hh_mm_ss(int duration, char *buf, size_t length);
+void ast_format_duration_hh_mm_ss(int    duration,
+                                  char  *buf,
+                                  size_t length);
 
 
 /*!
@@ -171,34 +184,39 @@ void ast_format_duration_hh_mm_ss(int duration, char *buf, size_t length);
  * negative return.
  *
  * \param start When timing started being calculated
- * \param max_ms The maximum number of milliseconds to wait from start. May be negative.
+ * \param max_ms The maximum number of milliseconds to wait from start. May be
+ *negative.
  * \return The number of milliseconds left to wait for. May be negative.
  */
-int ast_remaining_ms(struct timeval start, int max_ms);
+int ast_remaining_ms(struct timeval start,
+                     int            max_ms);
 
 /*!
  * \brief Returns a timeval from sec, usec
  */
 AST_INLINE_API(
-struct timeval ast_tv(ast_time_t sec, ast_suseconds_t usec),
+  struct timeval ast_tv(ast_time_t sec, ast_suseconds_t usec),
 {
-	struct timeval t;
-	t.tv_sec = sec;
-	t.tv_usec = usec;
-	return t;
+  struct timeval t;
+  t.tv_sec = sec;
+  t.tv_usec = usec;
+  return t;
 }
-)
+
+  )
 
 /*!
- * \brief Returns a timeval corresponding to the duration of n samples at rate r.
+ * \brief Returns a timeval corresponding to the duration of n samples at rate
+ *r.
  * Useful to convert samples to timevals, or even milliseconds to timevals
  * in the form ast_samp2tv(milliseconds, 1000)
  */
 AST_INLINE_API(
-struct timeval ast_samp2tv(unsigned int _nsamp, unsigned int _rate),
+  struct timeval ast_samp2tv(unsigned int _nsamp, unsigned int _rate),
 {
-	return ast_tv(_nsamp / _rate, (_nsamp % _rate) * (1000000 / (float) _rate));
+  return ast_tv(_nsamp / _rate, (_nsamp % _rate) * (1000000 / (float)_rate));
 }
-)
+
+  )
 
 #endif /* _ASTERISK_TIME_H */

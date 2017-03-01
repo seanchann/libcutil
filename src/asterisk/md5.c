@@ -20,10 +20,10 @@
  * will fill a supplied 16-byte array with the digest.
  */
 
-#include "asterisk.h"
+#include "libcutil.h"
 
-#include "asterisk/endian.h"
-#include "asterisk/md5.h"
+#include "libcutil/endian.h"
+#include "libcutil/md5.h"
 
 # if __BYTE_ORDER == __BIG_ENDIAN
 #  define HIGHFIRST 1

@@ -15,9 +15,9 @@
 
 #include "libcutil/ast_version.h"
 
-static const char asterisk_version[] = "@CUTIL_CORE_VERSION@-@CUTIL_CORE_VERSION_EXTRA@";
+static const char asterisk_version[] = "1.0.0-master";
 
-static const char asterisk_version_num[] = "@CUTIL_CORE_VERSION_NUM@";
+static const char asterisk_version_num[] = "10";
 
 static const char asterisk_build_opts[] = "";
 

@@ -4,7 +4,4 @@
 .tags1
 build.*/
 *.pch
-autoconfig.h
-include/cutil/asterisk/build.h
-install/
-version.c
+.ycm_extra_conf.*

@@ -23,12 +23,12 @@
  * \author Kevin P. Fleming <kpfleming@digium.com>
  */
 
-#include "asterisk/buildinfo.h"
-#include "asterisk/build.h"
+#include "libcutil/buildinfo.h"
+#include "libcutil/build.h"
 
 const char *ast_build_hostname = BUILD_HOSTNAME;
-const char *ast_build_kernel = BUILD_KERNEL;
-const char *ast_build_machine = BUILD_MACHINE;
-const char *ast_build_os = BUILD_OS;
-const char *ast_build_date = BUILD_DATE;
-const char *ast_build_user = BUILD_USER;
+const char *ast_build_kernel   = BUILD_KERNEL;
+const char *ast_build_machine  = BUILD_MACHINE;
+const char *ast_build_os       = BUILD_OS;
+const char *ast_build_date     = BUILD_DATE;
+const char *ast_build_user     = BUILD_USER;

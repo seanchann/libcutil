@@ -24,16 +24,19 @@
 #define _ASTERISK_MD5_H
 
 struct MD5Context {
-	uint32_t buf[4];
-	uint32_t bits[2];
-	/*! Align because we cast this buffer to uint32s */
-	unsigned char in[64] __attribute__((aligned(__alignof__(uint32_t))));
+  uint32_t buf[4];
+  uint32_t bits[2];
+
+  /*! Align because we cast this buffer to uint32s */
+  unsigned char in[64] __attribute__((aligned(__alignof__(uint32_t))));
 };
 
 void MD5Init(struct MD5Context *context);
-void MD5Update(struct MD5Context *context, unsigned char const *buf,
-	       unsigned len);
+void MD5Update(struct MD5Context   *context,
+               unsigned char const *buf,
+               unsigned             len);
 void MD5Final(unsigned char digest[16], struct MD5Context *context);
-void MD5Transform(uint32_t buf[4], uint32_t const in[16]);
+void MD5Transform(uint32_t       buf[4],
+                  uint32_t const in[16]);
 
 #endif /* _ASTERISK_MD5_H */
