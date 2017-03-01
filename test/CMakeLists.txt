@@ -3,7 +3,7 @@ set(SOURCES
 )
 
 add_executable(test_logutil ${SOURCES})
-target_link_libraries(test_logutil ${CUTIL_CORE_LIBRARY})
+target_link_libraries(test_logutil ${CUTIL_CORE_LIBRARY_STATIC})
 
 if(UNIX)
   message(STATUS "on unix platform")

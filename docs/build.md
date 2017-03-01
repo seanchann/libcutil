@@ -11,4 +11,4 @@
 - `make`
 
 *note: g++ version in my case that is 5.1*
-*install:if given a -DCMAKE_INSTALL_PREFIX . cmake will be install with this prefix*
+*install:if given a -DCMAKE_INSTALL_PREFIX . cmake will be install with this prefix (eg. cmake .. -DCMAKE_INSTALL_PREFIX=/home/seanchann/usr)*

@@ -6,7 +6,6 @@ include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/build_tools.cmake)
 
 
 option(BUILD_LIBCUTIL "build c utility library" ON)
-# option(BUILD_LOGUTIL "build log library" ON)
 option(BUILD_TEST "build test binary" ON)
 
 
@@ -40,16 +39,12 @@ if(BUILD_LIBCUTIL)
     set(INSTALL_PKGCONFIG_DIR "${CMAKE_INSTALL_PREFIX}/share/pkgconfig" CACHE PATH "Installation directory for pkgconfig (.pc) files")
     set(INSTALL_BIN_DIR "${CMAKE_INSTALL_PREFIX}/bin" CACHE PATH "Installation directory for binary")
 
-    #first build libcutilcore.a
+    #first build libcutilcore
     set(CUTIL_CORE_LIBRARY cutilcore)
+    set(CUTIL_CORE_LIBRARY_STATIC ${CUTIL_CORE_LIBRARY}-static)
+    set(CUTIL_CORE_LIBRARY_SHARED ${CUTIL_CORE_LIBRARY}-shared)
     include_directories(${LIBCUTIL_INCLUDE_DIR})
     add_subdirectory(src/core)
-
-
-    # if(BUILD_LOGUTIL)
-    #   set(LOGUTIL_LIBRARY logutil)
-    #   add_subdirectory(src/log)
-    # endif()
 
     if(BUILD_TEST)
       add_subdirectory(test)

@@ -78,14 +78,16 @@ endif()
 
 
 
-
-add_library(${CUTIL_CORE_LIBRARY} STATIC ${SOURCES})
+add_library(${CUTIL_CORE_LIBRARY_STATIC} STATIC ${SOURCES})
+add_library(${CUTIL_CORE_LIBRARY_SHARED} SHARED ${SOURCES})
 
 if(THREADS_HAVE_PTHREAD_ARG)
-  target_compile_options(${CUTIL_CORE_LIBRARY} PUBLIC  "-pthread")
+  target_compile_options(${CUTIL_CORE_LIBRARY_STATIC} PUBLIC  "-pthread")
+  target_compile_options(${CUTIL_CORE_LIBRARY_SHARED} PUBLIC  "-pthread")
 endif()
 
-target_compile_options(${CUTIL_CORE_LIBRARY} PUBLIC  "-fPIC")
+target_compile_options(${CUTIL_CORE_LIBRARY_STATIC} PUBLIC  "-fPIC")
+target_compile_options(${CUTIL_CORE_LIBRARY_SHARED} PUBLIC  "-fPIC")
 
 SET(LINK_LIB jansson ${EDITLINE_LIBRARY})
 if(CMAKE_THREAD_LIBS_INIT)
@@ -95,7 +97,10 @@ if(CMAKE_THREAD_LIBS_INIT)
 endif()
 
 
-target_link_libraries(${CUTIL_CORE_LIBRARY}
+target_link_libraries(${CUTIL_CORE_LIBRARY_STATIC}
+  ${LINK_LIB})
+
+target_link_libraries(${CUTIL_CORE_LIBRARY_SHARED}
   ${LINK_LIB})
 
 if(WIN32)
@@ -104,14 +109,25 @@ elseif(ANDROID)
   # Do not use SOVERSION on android. It is completely unsupported (and causes problems).
   # Perhaps revisit in the future? (NDK r9d, 8/7/14)
 else()
-  set_target_properties(${CUTIL_CORE_LIBRARY} PROPERTIES
-  SOVERSION ${CUTIL_CORE_VERSION_MAJOR}.${CUTIL_CORE_VERSION_MINOR}.${CUTIL_CORE_VERSION_REVISION})
+  set_target_properties(${CUTIL_CORE_LIBRARY_STATIC} PROPERTIES
+  SOVERSION ${CUTIL_CORE_VERSION_MAJOR}.${CUTIL_CORE_VERSION_MINOR}.${CUTIL_CORE_VERSION_REVISION}
+  OUTPUT_NAME ${CUTIL_CORE_LIBRARY})
+
+  set_target_properties(${CUTIL_CORE_LIBRARY_SHARED} PROPERTIES
+  SOVERSION ${CUTIL_CORE_VERSION_MAJOR}.${CUTIL_CORE_VERSION_MINOR}.${CUTIL_CORE_VERSION_REVISION}
+  OUTPUT_NAME ${CUTIL_CORE_LIBRARY})
 
   install(
-    TARGETS ${CUTIL_CORE_LIBRARY}
+    TARGETS ${CUTIL_CORE_LIBRARY_STATIC}
     LIBRARY DESTINATION ${INSTALL_LIB_DIR}
     ARCHIVE DESTINATION ${INSTALL_LIB_DIR}
     )
+
+    install(
+      TARGETS ${CUTIL_CORE_LIBRARY_SHARED}
+      LIBRARY DESTINATION ${INSTALL_LIB_DIR}
+      ARCHIVE DESTINATION ${INSTALL_LIB_DIR}
+      )
 
   install(
     FILES ${CMAKE_CURRENT_BINARY_DIR}/${CUTIL_CORE_LIBRARY}.pc

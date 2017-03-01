@@ -5,3 +5,4 @@
 build.*/
 *.pch
 .ycm_extra_conf.*
+build.h
