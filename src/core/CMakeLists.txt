@@ -19,6 +19,8 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cutil.pc.cmakein ${CMAKE_CURRENT_BINA
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/version.c.cmakein ${CMAKE_CURRENT_SOURCE_DIR}/version.c @ONLY)
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../asterisk)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR})
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/editline)
 set(SOURCES
   ${CMAKE_CURRENT_SOURCE_DIR}/../asterisk/syslog.c
   ${CMAKE_CURRENT_SOURCE_DIR}/../asterisk/term.c
@@ -42,13 +44,6 @@ set(SOURCES
   ${CMAKE_CURRENT_SOURCE_DIR}/../asterisk/io.c
   ${CMAKE_CURRENT_SOURCE_DIR}/../asterisk/threadstorage.c
   ${CMAKE_CURRENT_SOURCE_DIR}/../asterisk/stdtime/localtime.c
-)
-
-
-include_directories(${CMAKE_CURRENT_SOURCE_DIR})
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/editline)
-set(SOURCES
-  ${SOURCES}
   ${CMAKE_CURRENT_SOURCE_DIR}/astcore_dummy.c
   ${CMAKE_CURRENT_SOURCE_DIR}/cli.c
   ${CMAKE_CURRENT_SOURCE_DIR}/console.c
@@ -97,7 +92,8 @@ target_link_libraries(${CUTIL_CORE_LIBRARY_STATIC}
   ${LINK_LIB})
 target_link_libraries(${CUTIL_CORE_LIBRARY_SHARED}
   ${LINK_LIB}
-  "-Wl,--whole-archive"
+  "-fvisibility=hidden"
+  "-Wl,--whole-archive,--exclude-libs,ALL"
   ${EDITLINE_LIBRARY}
   "-Wl,--no-whole-archive"
 )

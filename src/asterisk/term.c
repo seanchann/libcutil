@@ -243,10 +243,10 @@ char* term_color(char       *outbuf,
              fgcolor,
              bgcolor + 10,
              inbuf,
-             term_end());
+             ast_insteadof_term_end());
   } else {
     snprintf(outbuf, maxout, "%c[%d;%dm%s%s", ESC, attr, fgcolor, inbuf,
-             term_end());
+             ast_insteadof_term_end());
   }
   return outbuf;
 }
@@ -341,7 +341,7 @@ const char* ast_term_color(int fgcolor, int bgcolor)
 
 const char* ast_term_reset(void)
 {
-  return term_end();
+  return ast_insteadof_term_end();
 }
 
 char* term_strip(char *outbuf, const char *inbuf, int maxout)
@@ -391,7 +391,7 @@ void term_filter_escapes(char *line)
   }
 }
 
-const char* term_end(void)
+const char* ast_insteadof_term_end(void)
 {
   return enddata;
 }

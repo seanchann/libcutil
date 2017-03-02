@@ -161,26 +161,31 @@ ADD_CUSTOM_COMMAND(
 )
 
 
+# SET(EDITLINE_SRC
+#   common.c
+#   emacs.c
+#   vi.c
+#   chared.c
+#   el.c
+#   hist.c
+#   key.c
+#   map.c
+#   parse.c
+#   prompt.c
+#   read.c
+#   refresh.c
+#   search.c
+#   sig.c
+#   term.c
+#   tty.c
+#   ${CMAKE_CURRENT_BINARY_DIR}/fcns.c
+#   ${CMAKE_CURRENT_BINARY_DIR}/help.c
+# )
+
 SET(EDITLINE_SRC
   common.c
-  chared.c
-  emacs.c
-  vi.c
-  el.c
-  hist.c
-  key.c
-  map.c
-  parse.c
-  prompt.c
-  read.c
-  refresh.c
-  search.c
-  sig.c
-  term.c
-  tty.c
-  ${CMAKE_CURRENT_BINARY_DIR}/fcns.c
-  ${CMAKE_CURRENT_BINARY_DIR}/help.c
 )
+
 
 ADD_CUSTOM_COMMAND(
   OUTPUT  ${CMAKE_CURRENT_BINARY_DIR}/editline.c
@@ -201,6 +206,7 @@ ${CURSES_INCLUDE_PATH}
 
 SET(LIBEDIT_SOURCES
  ${CMAKE_CURRENT_BINARY_DIR}/editline.c
+ #common.c
  history.c
  map.c
  prompt.c
@@ -215,6 +221,12 @@ SET(LIBEDIT_SOURCES
  sig.c
  tty.c
  key.c
+ el.c
+ chared.c
+ parse.c
+ emacs.c
+ term.c
+ read.c
  ${CMAKE_CURRENT_BINARY_DIR}/help.c
  ${CMAKE_CURRENT_BINARY_DIR}/help.h
  ${CMAKE_CURRENT_BINARY_DIR}/fcns.c
@@ -222,7 +234,20 @@ SET(LIBEDIT_SOURCES
  ${AHDR}
  ${LIBEDIT_EXTRA_SOURCES}
 )
+#history.o_a tokenizer.o_a readline.o_a
+# SET(LIBEDIT_SOURCES
+#  ${CMAKE_CURRENT_BINARY_DIR}/editline.c
+#  history.c
+#  readline.c
+#  tokenizer.c
+#  ${CMAKE_CURRENT_BINARY_DIR}/help.c
+#  ${CMAKE_CURRENT_BINARY_DIR}/help.h
+#  ${CMAKE_CURRENT_BINARY_DIR}/fcns.c
+#  ${CMAKE_CURRENT_BINARY_DIR}/fcns.h
+#  ${AHDR}
+#  ${LIBEDIT_EXTRA_SOURCES}
+# )
 
 ADD_CONVENIENCE_LIBRARY(edit ${LIBEDIT_SOURCES})
-target_compile_options(edit PUBLIC    "-fPIC" "-D__RCSID(x)=" "-D__RENAME(x)=" "-D_DIAGASSERT(x)=")
+target_compile_options(edit PUBLIC  "-fPIC"  "-Wno-error=unused-but-set-variable" "-D__RCSID(x)=" "-D__COPYRIGHT(x)=" "-D__RENAME(x)=" "-D_DIAGASSERT(x)=")
 TARGET_LINK_LIBRARIES(edit ${CURSES_LIBRARY})

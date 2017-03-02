@@ -81,18 +81,18 @@ extern "C" {
  * \param outbuf Result buffer
  * \param inbuf Starting string
  * \param fgcolor Foreground color, specified as one of the constants in
- *include/asterisk/term.h.  Use '0' if the want the normal terminal foreground
- *color.
+ * include/asterisk/term.h.  Use '0' if the want the normal terminal foreground
+ * color.
  * \param bgcolor Background color, specified as one of the constants in
- *include/asterisk/term.h.  Use '0' if you want the normal terminal background
- *color.
+ * include/asterisk/term.h.  Use '0' if you want the normal terminal background
+ * color.
  * \param maxout Maximum size of outbuf
  *
  * \return outbuf
  *
  * \deprecated Due to the necessity of pre-sizing a result buffer, new code
- *should avoid using this function in preference to ast_term_color_code() or
- *ast_term_color().
+ * should avoid using this function in preference to ast_term_color_code() or
+ * ast_term_color().
  */
 char* term_color(char       *outbuf,
                  const char *inbuf,
@@ -119,7 +119,7 @@ int ast_term_color_code(struct ast_str **str,
  * \param fgcolor foreground color
  * \param bgcolor background color
  * \note This function may be called up to 15 times within the arguments to a
- *single function without the danger of overwriting a common buffer.
+ * single function without the danger of overwriting a common buffer.
  *
  * \return A color sequence string, or the empty string, on error
  */
@@ -161,7 +161,7 @@ char* term_strip(char       *outbuf,
 
 void        term_filter_escapes(char *line);
 
-const char* term_end(void);
+const char* ast_insteadof_term_end(void);
 
 const char* term_quit(void);
 
