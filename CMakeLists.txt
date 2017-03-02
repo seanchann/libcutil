@@ -40,7 +40,7 @@ if(BUILD_LIBCUTIL)
     set(INSTALL_BIN_DIR "${CMAKE_INSTALL_PREFIX}/bin" CACHE PATH "Installation directory for binary")
 
     #first build libcutilcore
-    set(CUTIL_CORE_LIBRARY cutilcore)
+    set(CUTIL_CORE_LIBRARY cutil)
     set(CUTIL_CORE_LIBRARY_STATIC ${CUTIL_CORE_LIBRARY}staticlib)
     set(CUTIL_CORE_LIBRARY_SHARED ${CUTIL_CORE_LIBRARY}-shared)
     include_directories(${LIBCUTIL_INCLUDE_DIR})
