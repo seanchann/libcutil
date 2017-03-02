@@ -261,6 +261,8 @@ attribute_warn_unused_result;
 #define VERBOSE_MAGIC2LEVEL(x) (((char)-*(signed char *)(x)) - 1)
 #define VERBOSE_HASMAGIC(x) (*(signed char *)(x) < 0)
 
+#define cutil_verbose ast_verbose
+
 void ast_console_puts(const char *string);
 
 /*!
