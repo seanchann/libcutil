@@ -6,7 +6,7 @@ include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/build_tools.cmake)
 
 
 option(BUILD_LIBCUTIL "build c utility library" ON)
-option(BUILD_TEST "build test binary" ON)
+#option(BUILD_TEST "build test binary" ON)
 
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/.libs)
