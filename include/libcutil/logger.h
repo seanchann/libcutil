@@ -62,6 +62,8 @@ enum ast_logger_results {
            your favorite breed of printf.  You know how that works, right? :-)
  */
 
+#define cutil_log ast_log
+
 void ast_log(int         level,
              const char *file,
              int         line,
@@ -535,6 +537,8 @@ void ast_callid_strnprint(char      *buffer,
       ast_log(AST_LOG_DEBUG, __VA_ARGS__); \
     }                                      \
   } while (0)
+
+#define cutil_debug ast_debug
 
 extern int ast_verb_sys_level;
 

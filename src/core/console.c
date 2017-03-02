@@ -55,7 +55,7 @@ int ast_verb_sys_level;
 
 static int ast_socket  = -1; /*!< UNIX Socket for allowing remote control */
 static int ast_consock = -1; /*!< UNIX Socket for controlling another asterisk
-                                */
+                              */
 
 static char ast_config_AST_CTL_PERMISSIONS[PATH_MAX];
 static char ast_config_AST_CTL_OWNER[PATH_MAX] = "\0";
@@ -76,6 +76,7 @@ struct console {
   int       gid;                  /*!< Remote group ID. */
   int       levels[NUMLOGLEVELS]; /*!< Which log levels are enabled for the
                                      console */
+
   /*! Verbosity level of this console. */
   int option_verbose;
 };
@@ -502,7 +503,7 @@ static int read_credentials(int fd, char *buffer, size_t size,
 # ifdef HAVE_STRUCT_SOCKPEERCRED_UID
 #  define HAVE_STRUCT_UCRED_UID
   struct sockpeercred cred;
-# else  /* ifdef HAVE_STRUCT_SOCKPEERCRED_UID */
+# else /* ifdef HAVE_STRUCT_SOCKPEERCRED_UID */
   struct ucred cred;
 # endif /* ifdef HAVE_STRUCT_SOCKPEERCRED_UID */
   socklen_t len = sizeof(cred);
@@ -510,7 +511,7 @@ static int read_credentials(int fd, char *buffer, size_t size,
 #if defined(HAVE_GETPEEREID)
   uid_t uid;
   gid_t gid;
-#else  /* if defined(HAVE_GETPEEREID) */
+#else /* if defined(HAVE_GETPEEREID) */
   int uid, gid;
 #endif /* if defined(HAVE_GETPEEREID) */
   int result;
@@ -540,7 +541,7 @@ static int read_credentials(int fd, char *buffer, size_t size,
   if (getpeereid(fd, &uid, &gid)) {
     return result;
   }
-#else  /* if defined(SO_PEERCRED) && (defined(HAVE_STRUCT_UCRED_UID) ||
+#else /* if defined(SO_PEERCRED) && (defined(HAVE_STRUCT_UCRED_UID) ||
          defined(HAVE_STRUCT_UCRED_CR_UID)) */
   return result;
 
@@ -567,6 +568,8 @@ static void* netconsole(void *vconsole)
   if (gethostname(hostname, sizeof(hostname) - 1)) ast_copy_string(hostname,
                                                                    "<Unknown>",
                                                                    sizeof(hostname));
+
+
 
   snprintf(outbuf, sizeof(outbuf), "%s/%ld/%s\n", hostname,
            (long)mainpid(), ast_get_version());
@@ -639,7 +642,7 @@ static void* netconsole(void *vconsole)
       /* If we get this far, we have left over characters that have not been
          processed.
        * Advance to the character after the last command read by
-       *ast_cli_command_multiple_full.
+       * ast_cli_command_multiple_full.
        * We are guaranteed to have at least cmds_read NULLs */
       while (cmds_read-- && (start_read = strchr(start_read, '\0'))) {
         start_read++;
@@ -825,6 +828,8 @@ static int ast_makesocket(void)
                                                                    "Unable to find uid of user %s\n",
                                                                    ast_config_AST_CTL_OWNER);
 
+
+
     else uid = pw->pw_uid;
   }
 
@@ -834,6 +839,8 @@ static int ast_makesocket(void)
     if ((grp = getgrnam(ast_config_AST_CTL_GROUP)) == NULL) ast_log(LOG_WARNING,
                                                                     "Unable to find gid of group %s\n",
                                                                     ast_config_AST_CTL_GROUP);
+
+
 
     else gid = grp->gr_gid;
   }
@@ -1174,7 +1181,7 @@ static char* cli_prompt(EditLine *editline)
 
 #ifdef HAVE_LIBEDIT_IS_UNICODE
 static int ast_el_read_char(EditLine *editline, wchar_t *cp)
-#else  /* ifdef HAVE_LIBEDIT_IS_UNICODE */
+#else /* ifdef HAVE_LIBEDIT_IS_UNICODE */
 static int ast_el_read_char(EditLine * editline, char * cp)
 #endif /* ifdef HAVE_LIBEDIT_IS_UNICODE */
 {
@@ -1217,7 +1224,7 @@ static int ast_el_read_char(EditLine * editline, char * cp)
       } else {
 #ifdef  HAVE_LIBEDIT_IS_UNICODE
         *cp = btowc(c);
-#else  /* ifdef  HAVE_LIBEDIT_IS_UNICODE */
+#else /* ifdef  HAVE_LIBEDIT_IS_UNICODE */
         *cp = c;
 #endif /* ifdef  HAVE_LIBEDIT_IS_UNICODE */
         return num_read;
@@ -1271,7 +1278,7 @@ static int ast_el_read_char(EditLine * editline, char * cp)
           ((buf[res - 1] == '\n') || ((res >= 2) && (buf[res - 2] == '\n')))) {
 #ifdef  HAVE_LIBEDIT_IS_UNICODE
         *cp = btowc(CC_REFRESH);
-#else  /* ifdef  HAVE_LIBEDIT_IS_UNICODE */
+#else /* ifdef  HAVE_LIBEDIT_IS_UNICODE */
         *cp = CC_REFRESH;
 #endif /* ifdef  HAVE_LIBEDIT_IS_UNICODE */
         return 1;
@@ -1283,7 +1290,7 @@ static int ast_el_read_char(EditLine * editline, char * cp)
 
 #ifdef  HAVE_LIBEDIT_IS_UNICODE
   *cp = btowc('\0');
-#else  /* ifdef  HAVE_LIBEDIT_IS_UNICODE */
+#else /* ifdef  HAVE_LIBEDIT_IS_UNICODE */
   *cp = '\0';
 #endif /* ifdef  HAVE_LIBEDIT_IS_UNICODE */
 
@@ -1293,7 +1300,7 @@ static int ast_el_read_char(EditLine * editline, char * cp)
 /* This is the main console CLI command handler.  Run by the main() thread. */
 void consolehandler(const char *s)
 {
-  printf("%s", term_end());
+  printf("%s", ast_insteadof_term_end());
   fflush(stdout);
 
   /* Called when readline data is available */

@@ -199,7 +199,7 @@ static void really_quit(int num, shutdown_nice_t niceness, int restart)
         pthread_kill(consolethread, SIGURG);
       }
     }
-                #else  /* if 0 */
+                #else /* if 0 */
     console_quit(mon_sig_flags);
                 #endif /* if 0 */
   }
@@ -234,7 +234,7 @@ static void really_quit(int num, shutdown_nice_t niceness, int restart)
   }
 
   if (ast_consock > -1) close(ast_consock);
-#else  /* if 0 */
+#else /* if 0 */
   console_uninitialize();
 #endif /* if 0 */
 
@@ -276,7 +276,7 @@ static void really_quit(int num, shutdown_nice_t niceness, int restart)
     close_logger();
     clean_time_zones();
   }
-#else  /* if 0 */
+#else /* if 0 */
 
   /* close logger */
   close_logger();
@@ -411,8 +411,8 @@ static inline void check_init(int init_result, const char *name)
 void daemon_run(int isroot, const char *runuser, const char *rungroup)
 {
   sigset_t sigs;
-  int   num;
-  char *buf;
+  int      num;
+  char    *buf;
 
   ast_mainpid = getpid();
 
@@ -420,7 +420,7 @@ void daemon_run(int isroot, const char *runuser, const char *rungroup)
    * we can now start using the standard log messages.
    */
   ast_term_init();
-  printf("%s", term_end());
+  printf("%s", ast_insteadof_term_end());
   fflush(stdout);
 
 
