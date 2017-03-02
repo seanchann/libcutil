@@ -76,12 +76,15 @@ endif()
 
 
 add_library(${CUTIL_CORE_LIBRARY_STATIC} STATIC ${SOURCES})
+add_library(${CUTIL_CORE_LIBRARY_SHARED} SHARED ${SOURCES})
 find_package(Threads REQUIRED)
 if(THREADS_HAVE_PTHREAD_ARG)
   target_compile_options(${CUTIL_CORE_LIBRARY_STATIC} PUBLIC  "-pthread")
+  target_compile_options(${CUTIL_CORE_LIBRARY_SHARED} PUBLIC  "-pthread")
 endif()
 
 target_compile_options(${CUTIL_CORE_LIBRARY_STATIC} PUBLIC  "-fPIC")
+target_compile_options(${CUTIL_CORE_LIBRARY_SHARED} PUBLIC  "-fPIC")
 
 SET(LINK_LIB jansson)
 
@@ -92,11 +95,16 @@ endif()
 
 target_link_libraries(${CUTIL_CORE_LIBRARY_STATIC}
   ${LINK_LIB})
-
+target_link_libraries(${CUTIL_CORE_LIBRARY_SHARED}
+  ${LINK_LIB}
+  "-Wl,--whole-archive"
+  ${EDITLINE_LIBRARY}
+  "-Wl,--no-whole-archive"
+)
 
 #merget libcutilcore.a and libedit.a begin
-include(${CMAKE_CURRENT_SOURCE_DIR}/../../cmake/merge_static_lib.cmake)
-merge_static_libs(${CUTIL_CORE_LIBRARY} ${EDITLINE_LIBRARY} ${CUTIL_CORE_LIBRARY_STATIC})
+include(${CMAKE_CURRENT_SOURCE_DIR}/../../cmake/libutils.cmake)
+merge_static_libs(${CUTIL_CORE_LIBRARY} ${EDITLINE_LIBRARY} ${CUTIL_CORE_LIBRARY_STATIC} )
 #merget libcutilcore.a and libedit.a end
 
 
@@ -110,8 +118,18 @@ else()
   set_target_properties(${CUTIL_CORE_LIBRARY} PROPERTIES
     SOVERSION ${CUTIL_CORE_VERSION_MAJOR}.${CUTIL_CORE_VERSION_MINOR}.${CUTIL_CORE_VERSION_REVISION})
 
+  set_target_properties(${CUTIL_CORE_LIBRARY_SHARED} PROPERTIES
+    SOVERSION ${CUTIL_CORE_VERSION_MAJOR}.${CUTIL_CORE_VERSION_MINOR}.${CUTIL_CORE_VERSION_REVISION}
+    OUTPUT_NAME ${CUTIL_CORE_LIBRARY})
+
   install(
     TARGETS ${CUTIL_CORE_LIBRARY}
+    LIBRARY DESTINATION ${INSTALL_LIB_DIR}
+    ARCHIVE DESTINATION ${INSTALL_LIB_DIR}
+    )
+
+  install(
+    TARGETS ${CUTIL_CORE_LIBRARY_SHARED}
     LIBRARY DESTINATION ${INSTALL_LIB_DIR}
     ARCHIVE DESTINATION ${INSTALL_LIB_DIR}
     )

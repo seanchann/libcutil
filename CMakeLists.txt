@@ -41,7 +41,7 @@ if(BUILD_LIBCUTIL)
 
     #first build libcutilcore
     set(CUTIL_CORE_LIBRARY cutilcore)
-    set(CUTIL_CORE_LIBRARY_STATIC ${CUTIL_CORE_LIBRARY}-static)
+    set(CUTIL_CORE_LIBRARY_STATIC ${CUTIL_CORE_LIBRARY}staticlib)
     set(CUTIL_CORE_LIBRARY_SHARED ${CUTIL_CORE_LIBRARY}-shared)
     include_directories(${LIBCUTIL_INCLUDE_DIR})
     add_subdirectory(src/core)

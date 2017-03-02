@@ -160,6 +160,7 @@ ADD_CUSTOM_COMMAND(
   DEPENDS ${AHDR}
 )
 
+
 SET(EDITLINE_SRC
   common.c
   chared.c
@@ -197,6 +198,7 @@ ${CMAKE_CURRENT_BINARY_DIR}
 ${CURSES_INCLUDE_PATH}
 )
 
+
 SET(LIBEDIT_SOURCES
  ${CMAKE_CURRENT_BINARY_DIR}/editline.c
  history.c
@@ -209,13 +211,10 @@ SET(LIBEDIT_SOURCES
  common.c
  emacs.c
  hist.c
- parse.c
- read.c
  refresh.c
  sig.c
  tty.c
  key.c
- term.c
  ${CMAKE_CURRENT_BINARY_DIR}/help.c
  ${CMAKE_CURRENT_BINARY_DIR}/help.h
  ${CMAKE_CURRENT_BINARY_DIR}/fcns.c
@@ -225,5 +224,5 @@ SET(LIBEDIT_SOURCES
 )
 
 ADD_CONVENIENCE_LIBRARY(edit ${LIBEDIT_SOURCES})
-target_compile_options(edit PUBLIC   "-D__RCSID(x)=" "-D__RENAME(x)=" "-D_DIAGASSERT(x)=")
+target_compile_options(edit PUBLIC    "-fPIC" "-D__RCSID(x)=" "-D__RENAME(x)=" "-D_DIAGASSERT(x)=")
 TARGET_LINK_LIBRARIES(edit ${CURSES_LIBRARY})
