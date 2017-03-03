@@ -16,8 +16,8 @@
  * functions.
  */
 
-#ifndef _ASTERISK_H
-#define _ASTERISK_H
+#ifndef _LIBCUTIL_H
+#define _LIBCUTIL_H
 
 #include "libcutil_autoconfig.h"
 
@@ -292,4 +292,9 @@ struct ast_module* AST_MODULE_SELF_SYM(void);
 int ast_pbx_uuid_get(char *pbx_uuid,
                      int   length);
 
-#endif /* _ASTERISK_H */
+/*libcutil init and free api.not use "-nonstartfiles" or "-nostdlib" for build
+   flag*/
+void __attribute__((constructor)) libcutil_init(void);
+void __attribute__((destructor))  libcutil_free(void);
+
+#endif /* _LIBCUTIL_H */
