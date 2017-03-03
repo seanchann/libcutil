@@ -133,7 +133,7 @@ else()
 
 
   install(
-    FILES ${CMAKE_CURRENT_BINARY_DIR}/${CUTIL_CORE_LIBRARY}.pc
+    FILES ${CMAKE_CURRENT_BINARY_DIR}/cutil.pc
     DESTINATION "${INSTALL_PKGCONFIG_DIR}"
   )
 endif()
