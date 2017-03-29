@@ -48,13 +48,7 @@
 
 
 static struct ast_str *prompt = NULL;
-int option_verbose;          /*!< Verbosity level */
-int option_debug;            /*!< Debug level */
-int ast_verb_sys_level;
 
-static int ast_socket  = -1; /*!< UNIX Socket for allowing remote control */
-static int ast_consock = -1; /*!< UNIX Socket for controlling another asterisk
-                              */
 
 static char ast_config_AST_CTL_PERMISSIONS[PATH_MAX];
 static char ast_config_AST_CTL_OWNER[PATH_MAX] = "\0";
@@ -217,21 +211,24 @@ static void send_rasterisk_connect_commands(void)
    * Tell the server asterisk instance about the verbose level
    * initially desired.
    */
-  if (option_verbose) {
+  if (libcutil_get_option_verbose()) {
     snprintf(buf,
              sizeof(buf),
              "core set verbose atleast %d silent",
-             option_verbose);
-    fdsend(ast_consock, buf);
+             libcutil_get_option_verbose());
+    fdsend(libcutil_get_consock(), buf);
   }
 
-  if (option_debug) {
-    snprintf(buf, sizeof(buf), "core set debug atleast %d", option_debug);
-    fdsend(ast_consock, buf);
+  if (libcutil_get_option_debug()) {
+    snprintf(buf,
+             sizeof(buf),
+             "core set debug atleast %d",
+             libcutil_get_option_debug());
+    fdsend(libcutil_get_consock(), buf);
   }
 
   if (!ast_opt_mute) {
-    fdsend(ast_consock, "logger mute silent");
+    fdsend(libcutil_get_consock(), "logger mute silent");
   } else {
     printf("log and verbose output currently muted ('logger mute' to unmute)\n");
   }
@@ -448,7 +445,7 @@ static int console_print(const char *s)
     /* check if we should write this line after calculating begin/end
        so we process the case of a higher level line embedded within
        two lower level lines */
-    if (state->verbose_line_level > option_verbose) {
+    if (state->verbose_line_level > libcutil_get_option_verbose()) {
       continue;
     }
 
@@ -685,9 +682,9 @@ static void* listener(void *unused)
   struct pollfd fds[1];
 
   for (;;) {
-    if (ast_socket < 0) return NULL;
+    if (libcutil_get_socket() < 0) return NULL;
 
-    fds[0].fd     = ast_socket;
+    fds[0].fd     = libcutil_get_socket();
     fds[0].events = POLLIN;
     s             = ast_poll(fds, 1, -1);
     pthread_testcancel();
@@ -699,7 +696,7 @@ static void* listener(void *unused)
       continue;
     }
     len = sizeof(sunaddr);
-    s   = accept(ast_socket, (struct sockaddr *)&sunaddr, &len);
+    s   = accept(libcutil_get_socket(), (struct sockaddr *)&sunaddr, &len);
 
     if (s < 0) {
       if (errno != EINTR) ast_log(LOG_WARNING,
@@ -779,9 +776,9 @@ static int ast_makesocket(void)
 
   for (x = 0; x < AST_MAX_CONNECTS; x++) consoles[x].fd = -1;
   unlink(libcutil_get_config_socket());
-  ast_socket = socket(PF_LOCAL, SOCK_STREAM, 0);
+  libcutil_set_socket(socket(PF_LOCAL, SOCK_STREAM, 0));
 
-  if (ast_socket < 0) {
+  if (libcutil_get_socket() < 0) {
     ast_log(LOG_WARNING, "Unable to create control socket: %s\n",
             strerror(errno));
     return -1;
@@ -791,32 +788,32 @@ static int ast_makesocket(void)
   ast_copy_string(sunaddr.sun_path,
                   libcutil_get_config_socket(),
                   sizeof(sunaddr.sun_path));
-  res = bind(ast_socket, (struct sockaddr *)&sunaddr, sizeof(sunaddr));
+  res = bind(libcutil_get_socket(), (struct sockaddr *)&sunaddr, sizeof(sunaddr));
 
   if (res) {
     ast_log(LOG_WARNING,
             "Unable to bind socket to %s: %s\n",
             libcutil_get_config_socket(),
             strerror(errno));
-    close(ast_socket);
-    ast_socket = -1;
+    close(libcutil_get_socket());
+    libcutil_set_socket(-1);
     return -1;
   }
-  res = listen(ast_socket, 2);
+  res = listen(libcutil_get_socket(), 2);
 
   if (res < 0) {
     ast_log(LOG_WARNING,
             "Unable to listen on socket %s: %s\n",
             libcutil_get_config_socket(),
             strerror(errno));
-    close(ast_socket);
-    ast_socket = -1;
+    close(libcutil_get_socket());
+    libcutil_set_socket(-1);
     return -1;
   }
 
   if (ast_pthread_create_background(&lthread, NULL, listener, NULL)) {
     ast_log(LOG_WARNING, "Unable to create listener thread.\n");
-    close(ast_socket);
+    close(libcutil_get_socket());
     return -1;
   }
 
@@ -871,9 +868,9 @@ static int ast_tryconnect(void)
   struct sockaddr_un sunaddr;
   int res;
 
-  ast_consock = socket(PF_LOCAL, SOCK_STREAM, 0);
+  libcutil_set_consock(socket(PF_LOCAL, SOCK_STREAM, 0));
 
-  if (ast_consock < 0) {
+  if (libcutil_get_consock() < 0) {
     fprintf(stderr, "Unable to create socket: %s\n", strerror(errno));
     return 0;
   }
@@ -882,11 +879,12 @@ static int ast_tryconnect(void)
   ast_copy_string(sunaddr.sun_path,
                   libcutil_get_config_socket(),
                   sizeof(sunaddr.sun_path));
-  res = connect(ast_consock, (struct sockaddr *)&sunaddr, sizeof(sunaddr));
+  res =
+    connect(libcutil_get_consock(), (struct sockaddr *)&sunaddr, sizeof(sunaddr));
 
   if (res) {
-    close(ast_consock);
-    ast_consock = -1;
+    close(libcutil_get_consock());
+    libcutil_set_consock(-1);
     return 0;
   } else return 1;
 }
@@ -925,9 +923,9 @@ static char* cli_complete(EditLine *editline, int ch)
              "_COMMAND NUMMATCHES \"%s\" \"%s\"",
              lf->buffer,
              ptr);
-    fdsend(ast_consock, buf);
+    fdsend(libcutil_get_consock(), buf);
 
-    if ((res = read(ast_consock, buf, sizeof(buf) - 1)) < 0) {
+    if ((res = read(libcutil_get_consock(), buf, sizeof(buf) - 1)) < 0) {
       return (char *)(CC_ERROR);
     }
     buf[res]   = '\0';
@@ -948,7 +946,7 @@ static char* cli_complete(EditLine *editline, int ch)
                "_COMMAND MATCHESARRAY \"%s\" \"%s\"",
                lf->buffer,
                ptr);
-      fdsend(ast_consock, buf);
+      fdsend(libcutil_get_consock(), buf);
       res     = 0;
       mbuf[0] = '\0';
 
@@ -967,7 +965,7 @@ static char* cli_complete(EditLine *editline, int ch)
         }
 
         /* Only read 1024 bytes at a time */
-        res = read(ast_consock, mbuf + mlen, 1024);
+        res = read(libcutil_get_consock(), mbuf + mlen, 1024);
 
         if (res > 0) mlen += res;
       }
@@ -1197,7 +1195,7 @@ static int ast_el_read_char(EditLine * editline, char * cp)
 
   for (;;) {
     max           = 1;
-    fds[0].fd     = ast_consock;
+    fds[0].fd     = libcutil_get_consock();
     fds[0].events = POLLIN;
 
     if (!ast_opt_exec) {
@@ -1233,7 +1231,7 @@ static int ast_el_read_char(EditLine * editline, char * cp)
     }
 
     if (fds[0].revents) {
-      res = read(ast_consock, buf, sizeof(buf) - 1);
+      res = read(libcutil_get_consock(), buf, sizeof(buf) - 1);
 
       /* if the remote side disappears exit */
       if (res < 1) {
@@ -1345,16 +1343,16 @@ int console_initialize(void)
 
 int console_uninitialize(void)
 {
-  if (ast_socket > -1) {
+  if (libcutil_get_socket() > -1) {
     pthread_cancel(lthread);
-    close(ast_socket);
-    ast_socket = -1;
+    close(libcutil_get_socket());
+    libcutil_set_socket(-1);
     unlink(libcutil_get_config_socket());
     pthread_kill(lthread, SIGURG);
     pthread_join(lthread, NULL);
   }
 
-  if (ast_consock > -1) close(ast_consock);
+  if (libcutil_get_consock() > -1) close(libcutil_get_consock());
 
   return 0;
 }

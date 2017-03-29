@@ -319,9 +319,6 @@ enum cutil_option_flags {
   /*! Reference Debugging */
   AST_OPT_FLAG_REF_DEBUG = (1 << 6),
 
-  /*! Trascode via signed linear */
-  AST_OPT_FLAG_TRANSCODE_VIA_SLIN = (1 << 7),
-
   /*! Display timestamp in CLI verbose output */
   AST_OPT_FLAG_TIMESTAMP = (1 << 14),
 
@@ -357,13 +354,18 @@ void           libcutil_set_option_debug(int level);
 int            libcutil_get_option_verbose(void);
 void           libcutil_set_option_verbose(int level);
 
+int            libcutil_get_option_verbose_sys_level(void);
+void           libcutil_set_option_verbose_sys_level(int level);
+
 struct timeval libcutil_get_startup_time(void);
 struct timeval libcutil_get_lastreload_time(void);
 int            libcutil_test_option(enum cutil_option_flags flag);
 
+int            libcutil_get_consock(void);
+void           libcutil_set_consock(int fd);
 
-/*! These are the options that set by default when Asterisk starts */
-#define AST_DEFAULT_OPTIONS AST_OPT_FLAG_TRANSCODE_VIA_SLIN
+int            libcutil_get_socket(void);
+void           libcutil_set_socket(int fd);
 
 
 #define ast_opt_remote                  libcutil_test_option(AST_OPT_FLAG_REMOTE)
@@ -375,8 +377,6 @@ int            libcutil_test_option(enum cutil_option_flags flag);
 #define ast_opt_force_black_background  libcutil_test_option( \
     AST_OPT_FLAG_FORCE_BLACK_BACKGROUND)
 #define ast_opt_ref_debug           libcutil_test_option(AST_OPT_FLAG_REF_DEBUG)
-#define ast_opt_transcode_via_slin      libcutil_test_option( \
-    AST_OPT_FLAG_TRANSCODE_VIA_SLIN)
 #define ast_opt_timestamp               libcutil_test_option( \
     AST_OPT_FLAG_TIMESTAMP)
 #define ast_opt_exec_includes           libcutil_test_option( \

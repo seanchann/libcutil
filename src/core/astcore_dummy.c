@@ -25,7 +25,6 @@
 
 
 /* we define here the variables so to better agree on the prototype */
-#include "libcutil/options.h"
 #include "libcutil/utils.h"
 #include "libcutil/term.h"
 #include "libcutil/cli.h"
@@ -39,24 +38,6 @@ struct ast_atexit {
 
 static AST_LIST_HEAD_STATIC(atexits, ast_atexit);
 
-struct ast_flags cutil_options = { AST_DEFAULT_OPTIONS };
-
-struct _cfg_paths {
-  char config_dir[PATH_MAX];
-  char log_dir[PATH_MAX];
-  char system_name[128];
-  char socket_path[PATH_MAX];
-  char pid_path[PATH_MAX];
-};
-
-static struct _cfg_paths cfg_paths;
-
-const char *ast_config_AST_CONFIG_DIR  = cfg_paths.config_dir;
-const char *ast_config_AST_LOG_DIR     = cfg_paths.log_dir;
-const char *ast_config_AST_SYSTEM_NAME = cfg_paths.system_name;
-const char *ast_config_AST_SOCKET      = cfg_paths.socket_path;
-const char *ast_config_AST_PID         = cfg_paths.pid_path;
-
 
 #if !defined(LOW_MEMORY)
 struct thread_list_t {
@@ -67,10 +48,6 @@ struct thread_list_t {
 };
 
 static AST_RWLIST_HEAD_STATIC(thread_list, thread_list_t);
-
-
-struct timeval ast_startuptime;
-struct timeval ast_lastreloadtime;
 
 
 void ast_close_fds_above_n(int n)

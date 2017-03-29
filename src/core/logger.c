@@ -2383,7 +2383,8 @@ void ast_verb_update(void)
   }
   AST_RWLIST_UNLOCK(&logchannels);
 
-  ast_verb_sys_level = verb_level;
+
+  libcutil_set_option_verbose_sys_level(verb_level);
 
   ast_mutex_unlock(&verb_update_lock);
 }

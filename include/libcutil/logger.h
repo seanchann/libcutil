@@ -542,9 +542,9 @@ void ast_callid_strnprint(char      *buffer,
 
 #define cutil_debug ast_debug
 
-extern int ast_verb_sys_level;
 
-#define VERBOSITY_ATLEAST(level) ((level) <= ast_verb_sys_level)
+#define VERBOSITY_ATLEAST(level) ((level) <= \
+                                  libcutil_get_option_verbose_sys_level())
 
 #define ast_verb(level, ...)                                                      \
   do {                                                                            \

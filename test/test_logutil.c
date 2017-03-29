@@ -18,7 +18,6 @@
 #include "libcutil/logger.h"
 #include "libcutil/poll-compat.h"
 #include "libcutil/utils.h"
-#include "libcutil/options.h"
 #include "libcutil/api.h"
 
 static char *_argv[256];
