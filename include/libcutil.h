@@ -29,6 +29,7 @@
 
 #include "libcutil/compat.h"
 
+
 /* Default to allowing the umask or filesystem ACLs to determine actual file
  * creation permissions
  */
@@ -295,19 +296,99 @@ int ast_pbx_uuid_get(char *pbx_uuid,
                      int   length);
 #endif // ifdef NOT_USE
 
-struct libcutil {
-  const char *config_CONFIG_DIR;
-  const char *config_LOG_DIR;
-  const char *config_SYSTEM_NAME;
-  const char *config_SOCKET;
-  const char *config_PID;
+/*! \ingroup main_options */
+enum cutil_option_flags {
+  /*! Remote console */
+  AST_OPT_FLAG_REMOTE = (1 << 0),
+
+  /*! Execute an program CLI command upon startup */
+  AST_OPT_FLAG_EXEC = (1 << 1),
+
+  /*! Console mode */
+  AST_OPT_FLAG_CONSOLE = (1 << 2),
+
+  /*! Force black background */
+  AST_OPT_FLAG_FORCE_BLACK_BACKGROUND = (1 << 3),
+
+  /*! Terminal colors should be adjusted for a light-colored background */
+  AST_OPT_FLAG_LIGHT_BACKGROUND = (1 << 4),
+
+  /*! Don't use termcap colors */
+  AST_OPT_FLAG_NO_COLOR = (1 << 5),
+
+  /*! Reference Debugging */
+  AST_OPT_FLAG_REF_DEBUG = (1 << 6),
+
+  /*! Trascode via signed linear */
+  AST_OPT_FLAG_TRANSCODE_VIA_SLIN = (1 << 7),
+
+  /*! Display timestamp in CLI verbose output */
+  AST_OPT_FLAG_TIMESTAMP = (1 << 14),
+
+  /*! Allow \#exec in config files */
+  AST_OPT_FLAG_EXEC_INCLUDES = (1 << 15),
+
+  /*! Run in realtime Linux priority */
+  AST_OPT_FLAG_HIGH_PRIORITY = (1 << 16),
+
+  /*! Do not fork() */
+  AST_OPT_FLAG_NO_FORK = (1 << 17),
+
+  /*! Reconnect */
+  AST_OPT_FLAG_RECONNECT = (1 << 18),
+
+  /*! Hide remote console connect messages on console */
+  AST_OPT_FLAG_HIDE_CONSOLE_CONNECT = (1 << 19),
+
+  /*! Disable log/verbose output to remote consoles */
+  AST_OPT_FLAG_MUTE = (1 << 20),
 };
 
-const char* libcutil_get_config_dir(void);
-const char* libcutil_get_config_log_dir(void);
-const char* libcutil_get_config_system_name(void);
-const char* libcutil_get_config_socket(void);
-const char* libcutil_get_config_pid(void);
+
+const char   * libcutil_get_config_dir(void);
+const char   * libcutil_get_config_log_dir(void);
+const char   * libcutil_get_config_system_name(void);
+const char   * libcutil_get_config_socket(void);
+const char   * libcutil_get_config_pid(void);
+
+int            libcutil_get_option_debug(void);
+void           libcutil_set_option_debug(int level);
+
+int            libcutil_get_option_verbose(void);
+void           libcutil_set_option_verbose(int level);
+
+struct timeval libcutil_get_startup_time(void);
+struct timeval libcutil_get_lastreload_time(void);
+int            libcutil_test_option(enum cutil_option_flags flag);
+
+
+/*! These are the options that set by default when Asterisk starts */
+#define AST_DEFAULT_OPTIONS AST_OPT_FLAG_TRANSCODE_VIA_SLIN
+
+
+#define ast_opt_remote                  libcutil_test_option(AST_OPT_FLAG_REMOTE)
+#define ast_opt_exec                    libcutil_test_option(AST_OPT_FLAG_EXEC)
+#define ast_opt_no_color                libcutil_test_option(AST_OPT_FLAG_NO_COLOR)
+#define ast_opt_console                 libcutil_test_option(AST_OPT_FLAG_CONSOLE)
+#define ast_opt_light_background        libcutil_test_option( \
+    AST_OPT_FLAG_LIGHT_BACKGROUND)
+#define ast_opt_force_black_background  libcutil_test_option( \
+    AST_OPT_FLAG_FORCE_BLACK_BACKGROUND)
+#define ast_opt_ref_debug           libcutil_test_option(AST_OPT_FLAG_REF_DEBUG)
+#define ast_opt_transcode_via_slin      libcutil_test_option( \
+    AST_OPT_FLAG_TRANSCODE_VIA_SLIN)
+#define ast_opt_timestamp               libcutil_test_option( \
+    AST_OPT_FLAG_TIMESTAMP)
+#define ast_opt_exec_includes           libcutil_test_option( \
+    AST_OPT_FLAG_EXEC_INCLUDES)
+#define ast_opt_high_priority           libcutil_test_option( \
+    AST_OPT_FLAG_HIGH_PRIORITY)
+#define ast_opt_no_fork                 libcutil_test_option(AST_OPT_FLAG_NO_FORK)
+#define ast_opt_reconnect               libcutil_test_option( \
+    AST_OPT_FLAG_RECONNECT)
+#define ast_opt_hide_connect            libcutil_test_option( \
+    AST_OPT_FLAG_HIDE_CONSOLE_CONNECT)
+#define ast_opt_mute                    libcutil_test_option(AST_OPT_FLAG_MUTE)
 
 
 /*libcutil init and free api.not use "-nonstartfiles" or "-nostdlib" for build

@@ -344,7 +344,7 @@ static void _child_handler(int sig)
   for (n = 0; waitpid(-1, &status, WNOHANG) > 0; n++) ;
 
   if ((n == 0) &&
-      option_debug) printf("Huh?  Child handler, but nobody there?\n");
+      libcutil_get_option_debug()) printf("Huh?  Child handler, but nobody there?\n");
   errno = save_errno;
 }
 

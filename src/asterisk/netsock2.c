@@ -263,7 +263,7 @@ int ast_sockaddr_parse(struct ast_sockaddr *addr, const char *str, int flags)
 
 #ifdef AI_NUMERICSERV
   hints.ai_flags = AI_NUMERICHOST | AI_NUMERICSERV;
-#else  /* ifdef AI_NUMERICSERV */
+#else /* ifdef AI_NUMERICSERV */
   hints.ai_flags = AI_NUMERICHOST;
 #endif /* ifdef AI_NUMERICSERV */
 
@@ -416,9 +416,9 @@ int ast_sockaddr_cmp_addr(const struct ast_sockaddr *a,
                           const struct ast_sockaddr *b)
 {
   const struct ast_sockaddr *a_tmp, *b_tmp;
-  struct ast_sockaddr    ipv4_mapped;
-  const struct in_addr  *ip4a, *ip4b;
-  const struct in6_addr *ip6a, *ip6b;
+  struct ast_sockaddr        ipv4_mapped;
+  const struct in_addr      *ip4a, *ip4b;
+  const struct in6_addr     *ip6a, *ip6b;
   int ret = -1;
 
   a_tmp = a;
@@ -467,7 +467,7 @@ uint16_t _ast_sockaddr_port(const struct ast_sockaddr *addr,
     return ntohs(((struct sockaddr_in6 *)&addr->ss)->sin6_port);
   }
 
-  if (option_debug >= 1) {
+  if (libcutil_get_option_debug() >= 1) {
     ast_log(__LOG_DEBUG,
             file,
             line,
@@ -489,7 +489,7 @@ void _ast_sockaddr_set_port(struct ast_sockaddr *addr,
   } else if ((addr->ss.ss_family == AF_INET6) &&
              (addr->len == sizeof(struct sockaddr_in6))) {
     ((struct sockaddr_in6 *)&addr->ss)->sin6_port = htons(port);
-  } else if (option_debug >= 1) {
+  } else if (libcutil_get_option_debug() >= 1) {
     ast_log(__LOG_DEBUG, file, line, func,
             "Not an IPv4 nor IPv6 address, cannot set port.\n");
   }
@@ -704,7 +704,7 @@ int _ast_sockaddr_to_sin(const struct ast_sockaddr *addr,
     return 0;
   }
 
-  if ((addr->ss.ss_family != AF_INET) && (option_debug >= 1)) {
+  if ((addr->ss.ss_family != AF_INET) && (libcutil_get_option_debug() >= 1)) {
     ast_log(__LOG_DEBUG, file, line, func, "Address family is not AF_INET\n");
   }
 
@@ -720,7 +720,7 @@ void _ast_sockaddr_from_sin(struct ast_sockaddr      *addr,
 {
   memcpy(&addr->ss, sin, sizeof(*sin));
 
-  if ((addr->ss.ss_family != AF_INET) && (option_debug >= 1)) {
+  if ((addr->ss.ss_family != AF_INET) && (libcutil_get_option_debug() >= 1)) {
     ast_log(__LOG_DEBUG, file, line, func, "Address family is not AF_INET\n");
   }
 

@@ -3,7 +3,7 @@
  *
  * Copyright (C) 2016 - 2017, JYD, Inc.
  *
- * seanchann <seanchann@foxmail.com>
+ * seanchann <xqzhou@bj-jyd.cn>
  *
  * See docs/ for more information about
  * the libcutil project.
@@ -34,13 +34,13 @@ int main(int argc, char *argv[])
 
   // x = init_logger();
   // printf("init logger result %d \r\n", x);
-  option_debug   = 5;
-  option_verbose = 5;
+  libcutil_set_option_debug(5);
+  libcutil_set_option_verbose(5);
 
   cutil_log(LOG_NOTICE, "test %s level log\r\n", "notice");
   cutil_debug(1, "debug test\n");
   cutil_verbose("cutil verbose test. current verbose level(%d)\n",
-                option_verbose);
+                libcutil_get_option_verbose());
 
   sleep(5);
   return 0;

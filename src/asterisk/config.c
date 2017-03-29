@@ -3217,7 +3217,7 @@ int ast_config_text_file_save2(const char              *configfile,
       cat = cat->next;
     }
 
-    if (!option_debug) {
+    if (!libcutil_get_option_debug()) {
       ast_verb(2, "Saving '%s': saved\n", fn);
     }
   } else {

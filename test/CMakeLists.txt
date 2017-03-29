@@ -10,9 +10,9 @@ find_library(ncurses REQUIRED)
 add_executable(test_logutil ${SOURCES})
 message(STATUS "ncurses lib ${NCURSES_LIBRARY}")
 
-find_library(${CUTILCORE_LIBRARY} NAMES  cutil)
+#find_library(${CUTILCORE_LIBRARY} NAMES  cutil)
 #target_link_libraries(test_logutil ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/lib${CUTIL_CORE_LIBRARY}.a jansson ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/libedit.a ${CURSES_LIBRARY})
-target_link_libraries(test_logutil  ${CUTILCORE_LIBRARY} jansson uuid ncurses)
+target_link_libraries(test_logutil ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/lib${CUTIL_CORE_LIBRARY}.so jansson uuid ncurses)
 
 
 find_package(Threads REQUIRED)

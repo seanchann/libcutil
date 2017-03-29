@@ -1688,7 +1688,8 @@ static void logger_print_normal(struct logmsg *logmsg)
       }
 
       if ((logmsg->level == __LOG_VERBOSE)
-          && ((((chan->verbosity < 0) ? option_verbose : chan->verbosity)) <
+          && ((((chan->verbosity <
+                 0) ? libcutil_get_option_verbose() : chan->verbosity)) <
               level)) {
         continue;
       }
@@ -1782,7 +1783,7 @@ static void logger_print_normal(struct logmsg *logmsg)
       }
     }
   } else if ((logmsg->level != __LOG_VERBOSE) ||
-             (option_verbose >= logmsg->sublevel)) {
+             (libcutil_get_option_verbose() >= logmsg->sublevel)) {
     fputs(logmsg->message, stdout);
   }
 
@@ -2363,7 +2364,7 @@ void ast_verb_update(void)
   AST_RWLIST_RDLOCK(&verb_consoles);
 
   /* Default to the root console verbosity. */
-  verb_level = option_verbose;
+  verb_level = libcutil_get_option_verbose();
 
   /* Determine max remote console level. */
   AST_LIST_TRAVERSE(&verb_consoles, console, node) {
@@ -2459,7 +2460,7 @@ int ast_verb_console_get(void)
   } else if (console->level) {
     verb_level = *console->level;
   } else {
-    verb_level = option_verbose;
+    verb_level = libcutil_get_option_verbose();
   }
   AST_RWLIST_UNLOCK(&verb_consoles);
   return verb_level;
@@ -2480,7 +2481,7 @@ void ast_verb_console_set(int verb_level)
   if (console->level) {
     *console->level = verb_level;
   } else {
-    option_verbose = verb_level;
+    libcutil_set_option_verbose(verb_level);
   }
   AST_RWLIST_UNLOCK(&verb_consoles);
   ast_verb_update();

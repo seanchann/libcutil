@@ -334,8 +334,8 @@ static char* handle_debug(struct ast_cli_entry *e, int cmd,
         return ast_strdup("atleast");
       }
     } /*else if ((a->pos == 4 && !atleast && strcasecmp(argv3, "off") &&
-        strcasecmp(argv3, "channel"))
-      || (a->pos == 5 && atleast)) {
+         strcasecmp(argv3, "channel"))
+       || (a->pos == 5 && atleast)) {
             return ast_module_helper(a->line, a->word, a->pos, a->n, a->pos, 0);
          }*/
     return NULL;
@@ -367,14 +367,14 @@ static char* handle_debug(struct ast_cli_entry *e, int cmd,
   }
 
   /* Update global debug level */
-  oldval = option_debug;
+  oldval = libcutil_get_option_debug();
 
-  if (!atleast || (newlevel > option_debug)) {
-    option_debug = newlevel;
+  if (!atleast || (newlevel > libcutil_get_option_debug())) {
+    libcutil_set_option_debug(newlevel);
   }
 
   /* Report debug level status */
-  status_debug_verbose(a, "Core debug", oldval, option_debug);
+  status_debug_verbose(a, "Core debug", oldval, libcutil_get_option_debug());
 
   return CLI_SUCCESS;
 }
@@ -616,15 +616,15 @@ static char* handle_showuptime(struct ast_cli_entry *e,
   else if (a->argc == e->args - 1) printsec = 0;
   else return CLI_SHOWUSAGE;
 
-  if (ast_startuptime.tv_sec) {
+  if (libcutil_get_startup_time().tv_sec) {
     print_uptimestr(a->fd, ast_tvsub(curtime,
-                                     ast_startuptime), "System uptime: ",
+                                     libcutil_get_startup_time()), "System uptime: ",
                     printsec);
   }
 
-  if (ast_lastreloadtime.tv_sec) {
+  if (libcutil_get_lastreload_time().tv_sec) {
     print_uptimestr(a->fd, ast_tvsub(curtime,
-                                     ast_lastreloadtime), "Last reload: ",
+                                     libcutil_get_lastreload_time()), "Last reload: ",
                     printsec);
   }
   return CLI_SUCCESS;
@@ -1198,11 +1198,11 @@ static int word_match(const char *cmd, const char *cli_word)
   while (pos) {
     /*
      * Check if the word matched with is surrounded by reserved characters on
-     *both sides
+     * both sides
      * and isn't at the beginning of the cli_word since that would make it check
-     *in a location we shouldn't know about.
+     * in a location we shouldn't know about.
      * If it is surrounded by reserved chars and isn't at the beginning, it's a
-     *match.
+     * match.
      */
     if ((pos != cli_word) &&
         strchr(cli_rsvd, pos[-1]) && strchr(cli_rsvd, pos[l])) {
@@ -1271,7 +1271,7 @@ static char* is_prefix(const char *word, const char *token,
  * \brief locate a cli command in the 'helpers' list (which must be locked).
  *     The search compares word by word taking care of regexps in e->cmda
  *     This function will return NULL when nothing is matched, or the
- *ast_cli_entry that matched.
+ * ast_cli_entry that matched.
  * \param cmds
  * \param match_type has 3 possible values:
  *      0       returns if the search key is equal or longer than the entry.
@@ -1847,7 +1847,8 @@ static char* __ast_cli_generator(const char *text,
        */
       if (e->handler) { /* new style command */
         struct ast_cli_args a = {
-          .line = matchstr,         .word                 = word,
+          .line = matchstr,
+          .word = word,
           .pos  = argindex,
           .n    = state - matchnum,
           .argv = argv,

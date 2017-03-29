@@ -14,7 +14,7 @@
 #ifndef _CUTIL_LOGGER_H
 #define _CUTIL_LOGGER_H
 
-#include "libcutil/options.h" /* need option_debug */
+#include "libcutil.h"
 
 #if defined(__cplusplus) || defined(c_plusplus)
 extern "C" {
@@ -525,7 +525,7 @@ void ast_callid_strnprint(char      *buffer,
    || (ast_opt_dbg_module && (int)ast_debug_get_by_module(AST_MODULE) >= (level)))
 #else // if 0
 # define DEBUG_ATLEAST(level) \
-  (option_debug >= (level))
+  (libcutil_get_option_debug() >= (level))
 #endif // if 0
 
 /*!
