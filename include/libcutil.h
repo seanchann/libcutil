@@ -16,8 +16,8 @@
  * functions.
  */
 
-#ifndef _ASTERISK_H
-#define _ASTERISK_H
+#ifndef _LIBCUTIL_H
+#define _LIBCUTIL_H
 
 #include "libcutil_autoconfig.h"
 
@@ -130,12 +130,12 @@ int __ast_fdleak_dup(int         oldfd,
 # if defined(__cplusplus) || defined(c_plusplus)
 }
 # endif // if defined(__cplusplus) || defined(c_plusplus)
-#endif  // if defined(DEBUG_FD_LEAKS) && !defined(STANDALONE) &&
+#endif   // if defined(DEBUG_FD_LEAKS) && !defined(STANDALONE) &&
 // !defined(STANDALONE2) && !defined(STANDALONE_AEL)
 
 int  ast_set_priority(int); /*!< Provided by asterisk.c */
-int  ast_fd_init(void);  /*!< Provided by astfd.c */
-int  ast_pbx_init(void); /*!< Provided by pbx.c */
+int  ast_fd_init(void);     /*!< Provided by astfd.c */
+int  ast_pbx_init(void);    /*!< Provided by pbx.c */
 
 /*!
  * \brief Register a function to be executed before Asterisk exits.
@@ -211,7 +211,7 @@ int  ast_shutdown_final(void);
 
 #ifdef MTX_PROFILE
 # define HAVE_MTX_PROFILE /* used in lock.h */
-#endif /* MTX_PROFILE */
+#endif  /* MTX_PROFILE */
 
 /*!
  * \brief support for event profiling
@@ -279,9 +279,11 @@ struct ast_module* AST_MODULE_SELF_SYM(void);
 # endif // if defined(AST_IN_CORE) || (!defined(AST_MODULE_SELF_SYM) &&
 // (defined(STANDALONE) || defined(STANDALONE2) ||
 // defined(AST_NOT_MODULE)))
-#else // if 0
+#else  // if 0
 # define AST_MODULE_SELF NULL
 #endif // if 0
+
+#ifdef NOT_USE
 
 /*!
  * \brief Retrieve the PBX UUID
@@ -291,5 +293,25 @@ struct ast_module* AST_MODULE_SELF_SYM(void);
  */
 int ast_pbx_uuid_get(char *pbx_uuid,
                      int   length);
+#endif // ifdef NOT_USE
 
-#endif /* _ASTERISK_H */
+struct libcutil {
+  const char *config_CONFIG_DIR;
+  const char *config_LOG_DIR;
+  const char *config_SYSTEM_NAME;
+  const char *config_SOCKET;
+  const char *config_PID;
+};
+
+const char                      * libcutil_get_config_dir(void);
+const char                      * libcutil_get_config_log_dir(void);
+const char                      * libcutil_get_config_system_name(void);
+const char                      * libcutil_get_config_socket(void);
+const char                      * libcutil_get_config_pid(void);
+
+/*libcutil init and free api.not use "-nonstartfiles" or "-nostdlib" for build
+   flag*/
+void __attribute__((constructor)) libcutil_init(void);
+void __attribute__((destructor))  libcutil_free(void);
+
+#endif /* _LIBCUTIL_H */

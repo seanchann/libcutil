@@ -37,7 +37,6 @@
 #include "libcutil/json.h"
 
 #include "libcutil/cli.h"
-#include "libcutil/paths.h" /* use ast_config_AST_LOG_DIR*/
 
 /*** DOCUMENTATION
  ***/
@@ -257,7 +256,7 @@ static int format_log_json(struct logchannel *channel,
                        "s: {s: i, s: s} "
                        "s: {s: {s: s, s: s, s: i}, "
                        "s: s, s: s} }",
-                       "hostname", ast_config_AST_SYSTEM_NAME,
+                       "hostname", libcutil_get_config_system_name(),
                        "timestamp", msg->date,
                        "identifiers",
                        "lwp", msg->lwp,
@@ -548,7 +547,7 @@ static void make_filename(const char *channel, char *filename, size_t size)
   /* It's a filename */
 
   if (channel[0] != '/') {
-    log_dir_prefix    = ast_config_AST_LOG_DIR;
+    log_dir_prefix    = libcutil_get_config_log_dir();
     log_dir_separator = "/";
   }
 
@@ -1136,7 +1135,7 @@ static int logger_queue_restart(int queue_rotate)
     return res;
   }
 
-  snprintf(qfname, sizeof(qfname), "%s/%s", ast_config_AST_LOG_DIR,
+  snprintf(qfname, sizeof(qfname), "%s/%s", libcutil_get_config_log_dir(),
            queue_log_name);
 
   if (qlog) {
@@ -1184,7 +1183,7 @@ static int reload_logger(int rotate, const char *altconf)
     queue_rotate = 0;
   }
 
-  ast_mkdir(ast_config_AST_LOG_DIR, 0777);
+  ast_mkdir(libcutil_get_config_log_dir(), 0777);
 
   AST_RWLIST_TRAVERSE(&logchannels, f, list) {
     if (f->disabled) {
@@ -1318,7 +1317,7 @@ int ast_logger_rotate_channel(const char *log_channel)
 
   AST_RWLIST_WRLOCK(&logchannels);
 
-  ast_mkdir(ast_config_AST_LOG_DIR, 0644);
+  ast_mkdir(libcutil_get_config_log_dir(), 0644);
 
   AST_RWLIST_TRAVERSE(&logchannels, f, list) {
     if (f->disabled) {
@@ -1855,7 +1854,7 @@ static void logger_queue_init(void)
     }
 
     /* Open the log file. */
-    snprintf(qfname, sizeof(qfname), "%s/%s", ast_config_AST_LOG_DIR,
+    snprintf(qfname, sizeof(qfname), "%s/%s", libcutil_get_config_log_dir(),
              queue_log_name);
 
     if (qlog) {
@@ -1921,7 +1920,7 @@ int init_logger(void)
   /* register the logger cli commands */
   ast_cli_register_multiple(cli_logger, ARRAY_LEN(cli_logger));
 
-  ast_mkdir(ast_config_AST_LOG_DIR, 0777);
+  ast_mkdir(libcutil_get_config_log_dir(), 0777);
 
   /* create log channels */
   AST_RWLIST_WRLOCK(&logchannels);

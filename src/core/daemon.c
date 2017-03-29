@@ -6,7 +6,6 @@
 
 #include <histedit.h>
 
-#include "libcutil/paths.h"
 #include "libcutil/utils.h"
 #include "libcutil/io.h"
 #include "libcutil/poll-compat.h"
@@ -239,7 +238,7 @@ static void really_quit(int num, shutdown_nice_t niceness, int restart)
 #endif /* if 0 */
 
 
-  if (!ast_opt_remote) unlink(ast_config_AST_PID);
+  if (!ast_opt_remote) unlink(libcutil_get_config_pid());
 
   if (sig_alert_pipe[0]) close(sig_alert_pipe[0]);
 

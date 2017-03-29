@@ -32,7 +32,6 @@
 #include "astobj2_private.h"
 #include "astobj2_container_private.h"
 #include "libcutil/cli.h"
-#include "libcutil/paths.h"
 
 /* Use ast_log_safe in place of ast_log. */
 #define ast_log ast_log_safe
@@ -1042,7 +1041,7 @@ int __ao2_weakproxy_set_object(void       *weakproxy,
                                                             file,
                                                             line,
                                                             func);
-  struct astobj2 *obj_internal       =
+  struct astobj2 *obj_internal =
     __INTERNAL_OBJ_CHECK(obj, file, line, func);
   int ret = -1;
 
@@ -1318,7 +1317,7 @@ static char* handle_astobj2_test(struct ast_cli_entry *e,
   }
 
   ast_cli(a->fd,
-                 "argc %d argv %s %s %s\n",
+          "argc %d argv %s %s %s\n",
           a->argc,
           a->argv[0],
           a->argv[1],
@@ -1332,7 +1331,8 @@ static char* handle_astobj2_test(struct ast_cli_entry *e,
    * Allocate a list container.
    */
   c1 = ao2_t_container_alloc_list(AO2_ALLOC_OPT_LOCK_MUTEX, 0, NULL /* no sort
-                                                                       */        ,
+                                                                     */
+                                  ,
                                   NULL /* no callback */, "test");
   ast_cli(a->fd, "container allocated as %p\n", c1);
 
@@ -1434,7 +1434,7 @@ int astobj2_init(void)
 
   if (ast_opt_ref_debug) {
     snprintf(ref_filename, sizeof(ref_filename), "%s/refs",
-             ast_config_AST_LOG_DIR);
+             libcutil_get_config_log_dir());
     ref_log = fopen(ref_filename, "w");
 
     if (!ref_log) {

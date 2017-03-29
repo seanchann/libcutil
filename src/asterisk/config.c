@@ -32,7 +32,7 @@
 
 #include "libcutil.h"
 
-#include "libcutil/paths.h"   /* use ast_config_AST_CONFIG_DIR */
+
 #include "libcutil/network.h" /* we do some sockaddr manipulation here */
 
 #include <string.h>
@@ -230,7 +230,7 @@ static struct ast_config_map {
   const char *table;
 
   /*! Contents of name, driver, database, and table in that order stuffed here.
-     */
+   */
   char stuff[0];
 } *config_maps = NULL;
 
@@ -249,7 +249,7 @@ struct ast_category {
   char name[80];
   int  ignored; /*!< do not let user of the config see this category -- set by
                    (!) after the category decl; a template */
-  int  include_level;
+  int include_level;
 
   /*!
    * \brief The file name from whence this declaration was read
@@ -264,6 +264,7 @@ struct ast_category {
   struct ast_comment *trailing; /*!< the last object in the list will get
                                    assigned any trailing comments when EOF is
                                    hit */
+
   /*! First category variable in the list. */
   struct ast_variable *root;
 
@@ -282,14 +283,14 @@ struct ast_config {
   struct ast_category *root;
 
   /*! Last config category in the list. */
-  struct ast_category       *last;
-  struct ast_category       *current;
-  struct ast_category       *last_browse; /*!< used to cache the last category
-                                             supplied via category_browse */
+  struct ast_category *last;
+  struct ast_category *current;
+  struct ast_category *last_browse;    /*!< used to cache the last category
+                                          supplied via category_browse */
   int                        include_level;
   int                        max_include_level;
-  struct ast_config_include *includes;    /*!< a list of inclusions, which
-                                             should describe the entire tree */
+  struct ast_config_include *includes; /*!< a list of inclusions, which
+                                          should describe the entire tree */
 };
 
 struct ast_config_include {
@@ -300,11 +301,11 @@ struct ast_config_include {
   char *include_location_file;
   int   include_location_lineno; /*!< lineno where include occurred */
   int   exec;                    /*!< set to non-zero if its a #exec statement
-                                    */
+                                  */
 
   /*!
    * \brief if it's an exec, you'll have both the /var/tmp to read, and the
-   *original script
+   * original script
    * \note Will never be NULL if exec is non-zero
    */
   char *exec_file;
@@ -314,15 +315,15 @@ struct ast_config_include {
    * \note Will never be NULL
    */
   char *included_file;
-  int   inclusion_count;             /*!< if the file is included more than
-                                        once, a running count thereof -- but,
-                                        worry not,
-                                          we explode the instances and will
-                                             include those-- so all entries will
-                                             be unique */
-  int                        output; /*!< a flag to indicate if the inclusion
-                                        has been output */
-  struct ast_config_include *next;   /*!< ptr to next inclusion in the list */
+  int   inclusion_count;           /*!< if the file is included more than
+                                      once, a running count thereof -- but,
+                                      worry not,
+                                        we explode the instances and will
+                                           include those-- so all entries will
+                                           be unique */
+  int output;                      /*!< a flag to indicate if the inclusion
+                                      has been output */
+  struct ast_config_include *next; /*!< ptr to next inclusion in the list */
 };
 
 static void          ast_variable_destroy(struct ast_variable *doomed);
@@ -335,7 +336,7 @@ struct ast_variable* _ast_variable_new(const char *name,
                                        const char *file,
                                        const char *func,
                                        int         lineno)
-#else  /* ifdef __AST_DEBUG_MALLOC */
+#else /* ifdef __AST_DEBUG_MALLOC */
 struct ast_variable* ast_variable_new(const char * name,
                                       const char * value,
                                       const char * filename)
@@ -357,7 +358,7 @@ struct ast_variable* ast_variable_new(const char * name,
        __ast_calloc(1, fn_len + name_len + val_len + sizeof(*variable), file,
                     lineno,
                     func))
-#else  /* ifdef __AST_DEBUG_MALLOC */
+#else /* ifdef __AST_DEBUG_MALLOC */
     (variable = ast_calloc(1, fn_len + name_len + val_len + sizeof(*variable)))
 #endif /* ifdef __AST_DEBUG_MALLOC */
     ) {
@@ -1743,7 +1744,7 @@ static void cfmstat_save(struct cache_file_mtime *cfmtime, struct stat *statbuf)
   cfmtime->stat_mtime_nsec = statbuf->st_mtimensec;
 #elif defined(HAVE_STRUCT_STAT_ST_MTIMESPEC)
   cfmtime->stat_mtime_nsec = statbuf->st_mtimespec.tv_nsec;
-#else  /* if defined(HAVE_STRUCT_STAT_ST_MTIM) */
+#else /* if defined(HAVE_STRUCT_STAT_ST_MTIM) */
   cfmtime->stat_mtime_nsec = 0;
 #endif /* if defined(HAVE_STRUCT_STAT_ST_MTIM) */
   cfmtime->stat_mtime = statbuf->st_mtime;
@@ -1807,7 +1808,7 @@ static void config_cache_destroy_entry(struct cache_file_mtime *cfmtime)
 /*!
  * \internal
  * \brief Remove and destroy the config cache entry for the filename and
- *who_asked.
+ * who_asked.
  *
  * \param filename Config filename.
  * \param who_asked Which module asked.
@@ -2301,7 +2302,7 @@ static struct ast_config* config_text_file_load(const char        *database,
 
 #if defined(LOW_MEMORY)
   char buf[512];
-#else  /* if defined(LOW_MEMORY) */
+#else /* if defined(LOW_MEMORY) */
   char buf[8192];
 #endif /* if defined(LOW_MEMORY) */
   char *new_buf, *comment_p, *process_buf;
@@ -2332,7 +2333,7 @@ static struct ast_config* config_text_file_load(const char        *database,
   if (filename[0] == '/') {
     ast_copy_string(fn, filename, sizeof(fn));
   } else {
-    snprintf(fn, sizeof(fn), "%s/%s", ast_config_AST_CONFIG_DIR, filename);
+    snprintf(fn, sizeof(fn), "%s/%s", libcutil_get_config_dir(), filename);
   }
 
   if (ast_test_flag(&flags, CONFIG_FLAG_WITHCOMMENTS)) {
@@ -2436,7 +2437,7 @@ static struct ast_config* config_text_file_load(const char        *database,
         if (!config_text_file_load(NULL, NULL, cfinclude->include,
                                    NULL, flags, "", who_asked)) {
           /* One change is enough to short-circuit and reload the whole shebang
-             */
+           */
           unchanged = 0;
           break;
         }
@@ -2513,7 +2514,7 @@ static struct ast_config* config_text_file_load(const char        *database,
                                                                     buffer */
           ast_str_reset(lline_buffer);                           /* erase the
                                                                     lline buffer
-                                                                    */
+                                                                  */
         }
 
         new_buf = buf;
@@ -2532,7 +2533,7 @@ static struct ast_config* config_text_file_load(const char        *database,
           /* blank line? really? Can we add it to an existing comment and maybe
              preserve inter- and post- comment spacing? */
           CB_ADD(&comment_buffer, "\n"); /* add a newline to the comment buffer
-                                            */
+                                          */
           continue;                      /* go get a new line, then */
         }
 
@@ -2567,7 +2568,7 @@ static struct ast_config* config_text_file_load(const char        *database,
               /* Back to non-comment now */
               if (process_buf) {
                 /* Actually have to move what's left over the top, then continue
-                   */
+                 */
                 char *oldptr;
 
                 oldptr = process_buf + strlen(process_buf);
@@ -2601,7 +2602,7 @@ static struct ast_config* config_text_file_load(const char        *database,
         if (ast_test_flag(&flags,
                           CONFIG_FLAG_WITHCOMMENTS) && comment && !process_buf) {
           CB_ADD(&comment_buffer, buf); /* the whole line is a comment, store it
-                                           */
+                                         */
         }
 
         if (process_buf) {
@@ -2634,7 +2635,7 @@ static struct ast_config* config_text_file_load(const char        *database,
                                                                     buffer */
           ast_str_reset(lline_buffer);                           /* erase the
                                                                     lline buffer
-                                                                    */
+                                                                  */
         }
         last_cat->trailing = ALLOC_COMMENT(comment_buffer);
       }
@@ -2651,7 +2652,7 @@ static struct ast_config* config_text_file_load(const char        *database,
                                                                     buffer */
           ast_str_reset(lline_buffer);                           /* erase the
                                                                     lline buffer
-                                                                    */
+                                                                  */
         }
         last_var->trailing = ALLOC_COMMENT(comment_buffer);
       }
@@ -2767,12 +2768,12 @@ static void make_fn(char       *fn,
     if (configfile[0] == '/') {
       ast_copy_string(fn, configfile, fn_size);
     } else {
-      snprintf(fn, fn_size, "%s/%s", ast_config_AST_CONFIG_DIR, configfile);
+      snprintf(fn, fn_size, "%s/%s", libcutil_get_config_dir(), configfile);
     }
   } else if (file[0] == '/') {
     ast_copy_string(fn, file, fn_size);
   } else {
-    snprintf(fn, fn_size, "%s/%s", ast_config_AST_CONFIG_DIR, file);
+    snprintf(fn, fn_size, "%s/%s", libcutil_get_config_dir(), file);
   }
 }
 
@@ -3003,7 +3004,7 @@ int ast_config_text_file_save2(const char              *configfile,
   if (
 #ifdef __CYGWIN__
     (f = fopen(fn, "w+"))
-#else  /* ifdef __CYGWIN__ */
+#else /* ifdef __CYGWIN__ */
     (f = fopen(fn, "w"))
 #endif /* ifdef __CYGWIN__ */
     ) {
@@ -3288,7 +3289,7 @@ int ast_realtime_append_mapping(const char *name,
                                 const char *database,
                                 const char *table,
                                 int         priority)
-#else  /* ifdef TEST_FRAMEWORK */
+#else /* ifdef TEST_FRAMEWORK */
 static int ast_realtime_append_mapping(const char * name,
                                        const char * driver,
                                        const char * database,

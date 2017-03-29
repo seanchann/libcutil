@@ -25,7 +25,6 @@
 
 
 /* we define here the variables so to better agree on the prototype */
-#include "libcutil/paths.h"
 #include "libcutil/options.h"
 #include "libcutil/utils.h"
 #include "libcutil/term.h"

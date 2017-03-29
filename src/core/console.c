@@ -25,7 +25,6 @@
 #include <fcntl.h>
 
 
-#include "libcutil/paths.h"
 #include "libcutil/lock.h"
 #include "libcutil/localtime.h"
 #include "libcutil/term.h"
@@ -779,7 +778,7 @@ static int ast_makesocket(void)
   gid_t gid = -1;
 
   for (x = 0; x < AST_MAX_CONNECTS; x++) consoles[x].fd = -1;
-  unlink(ast_config_AST_SOCKET);
+  unlink(libcutil_get_config_socket());
   ast_socket = socket(PF_LOCAL, SOCK_STREAM, 0);
 
   if (ast_socket < 0) {
@@ -790,14 +789,14 @@ static int ast_makesocket(void)
   memset(&sunaddr, 0, sizeof(sunaddr));
   sunaddr.sun_family = AF_LOCAL;
   ast_copy_string(sunaddr.sun_path,
-                  ast_config_AST_SOCKET,
+                  libcutil_get_config_socket(),
                   sizeof(sunaddr.sun_path));
   res = bind(ast_socket, (struct sockaddr *)&sunaddr, sizeof(sunaddr));
 
   if (res) {
     ast_log(LOG_WARNING,
             "Unable to bind socket to %s: %s\n",
-            ast_config_AST_SOCKET,
+            libcutil_get_config_socket(),
             strerror(errno));
     close(ast_socket);
     ast_socket = -1;
@@ -808,7 +807,7 @@ static int ast_makesocket(void)
   if (res < 0) {
     ast_log(LOG_WARNING,
             "Unable to listen on socket %s: %s\n",
-            ast_config_AST_SOCKET,
+            libcutil_get_config_socket(),
             strerror(errno));
     close(ast_socket);
     ast_socket = -1;
@@ -845,10 +844,12 @@ static int ast_makesocket(void)
     else gid = grp->gr_gid;
   }
 
-  if (chown(ast_config_AST_SOCKET, uid, gid) < 0) ast_log(LOG_WARNING,
-                                                          "Unable to change ownership of %s: %s\n",
-                                                          ast_config_AST_SOCKET,
-                                                          strerror(errno));
+  if (chown(libcutil_get_config_socket(), uid, gid) < 0) ast_log(LOG_WARNING,
+                                                                 "Unable to change ownership of %s: %s\n",
+                                                                 libcutil_get_config_socket(),
+                                                                 strerror(errno));
+
+
 
   if (!ast_strlen_zero(ast_config_AST_CTL_PERMISSIONS)) {
     unsigned int p1;
@@ -856,10 +857,10 @@ static int ast_makesocket(void)
     sscanf(ast_config_AST_CTL_PERMISSIONS, "%30o", &p1);
     p = p1;
 
-    if ((chmod(ast_config_AST_SOCKET, p)) < 0) ast_log(LOG_WARNING,
-                                                       "Unable to change file permissions of %s: %s\n",
-                                                       ast_config_AST_SOCKET,
-                                                       strerror(errno));
+    if ((chmod(libcutil_get_config_socket(), p)) < 0) ast_log(LOG_WARNING,
+                                                              "Unable to change file permissions of %s: %s\n",
+                                                              libcutil_get_config_socket(),
+                                                              strerror(errno));
   }
 
   return 0;
@@ -879,7 +880,7 @@ static int ast_tryconnect(void)
   memset(&sunaddr, 0, sizeof(sunaddr));
   sunaddr.sun_family = AF_LOCAL;
   ast_copy_string(sunaddr.sun_path,
-                  ast_config_AST_SOCKET,
+                  libcutil_get_config_socket(),
                   sizeof(sunaddr.sun_path));
   res = connect(ast_consock, (struct sockaddr *)&sunaddr, sizeof(sunaddr));
 
@@ -1129,7 +1130,7 @@ static char* cli_prompt(EditLine *editline)
 
 #endif /* ifdef HAVE_GETLOADAVG */
         case 's': /* Asterisk system name (from asterisk.conf) */
-          ast_str_append(&prompt, 0, "%s", ast_config_AST_SYSTEM_NAME);
+          ast_str_append(&prompt, 0, "%s", libcutil_get_config_system_name());
           break;
 
         case 't': /* time */
@@ -1348,7 +1349,7 @@ int console_uninitialize(void)
     pthread_cancel(lthread);
     close(ast_socket);
     ast_socket = -1;
-    unlink(ast_config_AST_SOCKET);
+    unlink(libcutil_get_config_socket());
     pthread_kill(lthread, SIGURG);
     pthread_join(lthread, NULL);
   }
