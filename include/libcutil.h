@@ -303,11 +303,12 @@ struct libcutil {
   const char *config_PID;
 };
 
-const char                      * libcutil_get_config_dir(void);
-const char                      * libcutil_get_config_log_dir(void);
-const char                      * libcutil_get_config_system_name(void);
-const char                      * libcutil_get_config_socket(void);
-const char                      * libcutil_get_config_pid(void);
+const char* libcutil_get_config_dir(void);
+const char* libcutil_get_config_log_dir(void);
+const char* libcutil_get_config_system_name(void);
+const char* libcutil_get_config_socket(void);
+const char* libcutil_get_config_pid(void);
+
 
 /*libcutil init and free api.not use "-nonstartfiles" or "-nostdlib" for build
    flag*/

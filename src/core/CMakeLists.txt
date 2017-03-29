@@ -51,6 +51,7 @@ set(SOURCES
   ${CMAKE_CURRENT_SOURCE_DIR}/elhelper.c
   ${CMAKE_CURRENT_SOURCE_DIR}/version.c
   ${CMAKE_CURRENT_SOURCE_DIR}/logger.c
+  ${CMAKE_CURRENT_SOURCE_DIR}/libcutil.c
 )
 
 message(STATUS "source list " ${SOURCES})
@@ -132,7 +133,7 @@ else()
 
 
   install(
-    FILES ${CMAKE_CURRENT_BINARY_DIR}/${CUTIL_CORE_LIBRARY}.pc
+    FILES ${CMAKE_CURRENT_BINARY_DIR}/cutil.pc
     DESTINATION "${INSTALL_PKGCONFIG_DIR}"
   )
 endif()
