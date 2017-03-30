@@ -12,6 +12,7 @@
 #include "libcutil.h"
 
 #include "libcutil/utils.h"
+#include "daemon.h"
 
 struct libcutil {
   const char *config_CONFIG_DIR;
@@ -20,11 +21,11 @@ struct libcutil {
   const char *config_SOCKET;
   const char *config_PID;
 
+  /*log configure*/
   int option_verbose;
 
   /*!< Debugging */
   int option_debug;
-
   int ast_verb_sys_level;
 
   struct ast_flags options;
@@ -37,6 +38,23 @@ struct libcutil {
 
   /*!< UNIX Socket for controlling another asterisk*/
   int ast_consock;
+
+
+  /*ctl files*/
+
+  // console permissions eg 0700 ,0660
+  const char *config_CTL_PERMISSIONS;
+
+  // console owner user
+  const char *config_CTL_OWNER;
+
+  // console group
+  const char *config_CTL_GROUP;
+
+  // console ctl file name
+  const char *config_CTL;
+
+  const char *remotehostname;
 };
 
 static struct libcutil *g_libcutil = NULL;
@@ -57,12 +75,25 @@ static struct libcutil *g_libcutil = NULL;
 // const char *ast_config_AST_SOCKET      = cfg_paths.socket_path;
 // const char *ast_config_AST_PID         = cfg_paths.pid_path;
 
+
 void __attribute__((constructor)) libcutil_init(void)
 {
+  printf("init library  \r\n");
+
   if (!g_libcutil) {
-    g_libcutil              = calloc(1, sizeof(struct libcutil));
-    g_libcutil->ast_socket  = -1;
-    g_libcutil->ast_consock = -1;
+    g_libcutil                         = calloc(1, sizeof(struct libcutil));
+    g_libcutil->ast_socket             = -1;
+    g_libcutil->ast_consock            = -1;
+    g_libcutil->config_CTL_PERMISSIONS = "0600";
+
+    // snprintf(g_libcutil->config_CTL_PERMISSIONS,
+    //          sizeof(g_libcutil->config_CTL_PERMISSIONS, "0600"));
+    //
+    // snprintf(g_libcutil->config_CTL, sizeof(g_libcutil->config_CTL),
+    // "cutil.ctl");
+
+    printf("start daemon  \r\n");
+    daemon_run(0, "seanchann", "seanchann");
   }
 }
 
@@ -203,4 +234,47 @@ int libcutil_get_socket(void)
   struct libcutil *instance = libcutil_instance();
 
   return instance->ast_socket;
+}
+
+const char* libcutil_get_ctl_permissions(void)
+{
+  struct libcutil *instance = libcutil_instance();
+
+  return instance->config_CTL_PERMISSIONS;
+}
+
+void libcutil_set_ctl_permissions(char *permissions)
+{
+  struct libcutil *instance = libcutil_instance();
+
+  snprintf(instance->config_CTL_PERMISSIONS,
+           sizeof(instance->config_CTL_PERMISSIONS), "%s", permissions);
+}
+
+const char* libcutil_get_ctl_owner(void)
+{
+  struct libcutil *instance = libcutil_instance();
+
+  return instance->config_CTL_OWNER;
+}
+
+const char* libcutil_get_ctl_group(void)
+{
+  struct libcutil *instance = libcutil_instance();
+
+  return instance->config_CTL_GROUP;
+}
+
+const char* libcutil_get_ctl_filename(void)
+{
+  struct libcutil *instance = libcutil_instance();
+
+  return instance->config_CTL;
+}
+
+const char* libcutil_get_remotehostname(void)
+{
+  struct libcutil *instance = libcutil_instance();
+
+  return instance->remotehostname;
 }

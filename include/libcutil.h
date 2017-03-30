@@ -367,6 +367,15 @@ void           libcutil_set_consock(int fd);
 int            libcutil_get_socket(void);
 void           libcutil_set_socket(int fd);
 
+const char   * libcutil_get_ctl_permissions(void);
+void           libcutil_set_ctl_permissions(char *permissions);
+
+const char   * libcutil_get_remotehostname(void);
+
+const char   * libcutil_get_ctl_owner(void);
+const char   * libcutil_get_ctl_group(void);
+const char   * libcutil_get_ctl_filename(void);
+
 
 #define ast_opt_remote                  libcutil_test_option(AST_OPT_FLAG_REMOTE)
 #define ast_opt_exec                    libcutil_test_option(AST_OPT_FLAG_EXEC)

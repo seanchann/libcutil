@@ -47,17 +47,13 @@
               ast_get_version())                                                                  \
 
 
+/*console prompt string. set env(CUTIL_PROMPT) will be overried default*/
+#define CUTIL_PROMPT "*CLI> "
+
 static struct ast_str *prompt = NULL;
 
 
-static char ast_config_AST_CTL_PERMISSIONS[PATH_MAX];
-static char ast_config_AST_CTL_OWNER[PATH_MAX] = "\0";
-static char ast_config_AST_CTL_GROUP[PATH_MAX] = "\0";
-static char ast_config_AST_CTL[PATH_MAX]       = "cutil.ctl";
-
 #define AST_MAX_CONNECTS 128
-
-#define ASTERISK_PROMPT "*CLI> "
 
 
 struct console {
@@ -75,9 +71,6 @@ struct console {
 };
 struct console   consoles[AST_MAX_CONNECTS];
 static pthread_t consolethread = AST_PTHREADT_NULL;
-
-
-static char *remotehostname;
 
 
 static void destroy_match_list(char **match_list, int matches)
@@ -817,24 +810,24 @@ static int ast_makesocket(void)
     return -1;
   }
 
-  if (!ast_strlen_zero(ast_config_AST_CTL_OWNER)) {
+  if (!ast_strlen_zero(libcutil_get_ctl_owner())) {
     struct passwd *pw;
 
-    if ((pw = getpwnam(ast_config_AST_CTL_OWNER)) == NULL) ast_log(LOG_WARNING,
+    if ((pw = getpwnam(libcutil_get_ctl_owner())) == NULL) ast_log(LOG_WARNING,
                                                                    "Unable to find uid of user %s\n",
-                                                                   ast_config_AST_CTL_OWNER);
+                                                                   libcutil_get_ctl_owner());
 
 
 
     else uid = pw->pw_uid;
   }
 
-  if (!ast_strlen_zero(ast_config_AST_CTL_GROUP)) {
+  if (!ast_strlen_zero(libcutil_get_ctl_group())) {
     struct group *grp;
 
-    if ((grp = getgrnam(ast_config_AST_CTL_GROUP)) == NULL) ast_log(LOG_WARNING,
+    if ((grp = getgrnam(libcutil_get_ctl_group())) == NULL) ast_log(LOG_WARNING,
                                                                     "Unable to find gid of group %s\n",
-                                                                    ast_config_AST_CTL_GROUP);
+                                                                    libcutil_get_ctl_group());
 
 
 
@@ -848,10 +841,12 @@ static int ast_makesocket(void)
 
 
 
-  if (!ast_strlen_zero(ast_config_AST_CTL_PERMISSIONS)) {
+  if (!ast_strlen_zero(libcutil_get_ctl_permissions())) {
     unsigned int p1;
     mode_t p;
-    sscanf(ast_config_AST_CTL_PERMISSIONS, "%30o", &p1);
+    char   permissions[PATH_MAX];
+    sscanf(permissions, "%30o", &p1);
+    libcutil_set_ctl_permissions(permissions);
     p = p1;
 
     if ((chmod(libcutil_get_config_socket(), p)) < 0) ast_log(LOG_WARNING,
@@ -1044,7 +1039,7 @@ static char* cli_prompt(EditLine *editline)
     ast_str_reset(prompt);
   }
 
-  if ((pfmt = getenv("ASTERISK_PROMPT"))) {
+  if ((pfmt = getenv("CUTIL_PROMPT"))) {
     char *t           = pfmt;
     struct timeval ts = ast_tvnow();
 
@@ -1171,8 +1166,9 @@ static char* cli_prompt(EditLine *editline)
     }
   } else {
     ast_str_set(&prompt, 0, "%s%s",
-                remotehostname ? remotehostname : "",
-                ASTERISK_PROMPT);
+                !ast_strlen_zero(
+                  libcutil_get_remotehostname()) ? libcutil_get_remotehostname() : "",
+                CUTIL_PROMPT);
   }
 
   return ast_str_buffer(prompt);
