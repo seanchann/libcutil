@@ -346,8 +346,18 @@ enum cutil_option_flags {
 
 
 const char   * libcutil_get_config_dir(void);
+void           libcutil_set_config_dir(const char *dir);
+
 const char   * libcutil_get_config_log_dir(void);
+void           libcutil_set_config_log_dir(const char *dir);
+
+
 const char   * libcutil_get_config_system_name(void);
+void           libcutil_set_config_system_name(const char *system_name);
+
+const char   * libcutil_get_config_run_dir(void);
+void           libcutil_set_config_run_dir(const char *dir);
+
 const char   * libcutil_get_config_socket(void);
 const char   * libcutil_get_config_pid(void);
 
@@ -409,6 +419,8 @@ void           libcutil_enable_remote(void);
 #define ast_opt_mute                    libcutil_test_option(AST_OPT_FLAG_MUTE)
 #define ast_opt_dump_core               libcutil_test_option( \
     AST_OPT_FLAG_DUMP_CORE)
+
+void                              libcutil_process(void);
 
 /*libcutil init and free api.not use "-nonstartfiles" or "-nostdlib" for build
    flag*/

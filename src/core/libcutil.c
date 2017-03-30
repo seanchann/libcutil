@@ -28,6 +28,9 @@ struct libcutil {
   char config_SOCKET[PATH_MAX];
   char config_PID[PATH_MAX];
   char config_RUN_DIR[PATH_MAX];
+  char config_RUN_USER[PATH_MAX];
+  char config_RUN_GROUP[PATH_MAX];
+
 
   /*log configure*/
   int option_verbose;
@@ -67,23 +70,6 @@ struct libcutil {
 
 static struct libcutil *g_libcutil = NULL;
 
-// struct _cfg_paths {
-//   char config_dir[PATH_MAX];
-//   char log_dir[PATH_MAX];
-//   char system_name[128];
-//   char socket_path[PATH_MAX];
-//   char pid_path[PATH_MAX];
-// };
-//
-// static struct _cfg_paths cfg_paths;
-//
-// const char *ast_config_AST_CONFIG_DIR  = cfg_paths.config_dir;
-// const char *ast_config_AST_LOG_DIR     = cfg_paths.log_dir;
-// const char *ast_config_AST_SYSTEM_NAME = cfg_paths.system_name;
-// const char *ast_config_AST_SOCKET      = cfg_paths.socket_path;
-// const char *ast_config_AST_PID         = cfg_paths.pid_path;
-
-
 void __attribute__((constructor)) libcutil_init(void)
 {
   printf("init library  \r\n");
@@ -98,9 +84,6 @@ void __attribute__((constructor)) libcutil_init(void)
 
     snprintf(g_libcutil->config_CTL, sizeof(g_libcutil->config_CTL),
              "cutil.ctl");
-
-    printf("start daemon  \r\n");
-    daemon_run(0, "seanchann", "seanchann");
   }
 }
 
@@ -124,11 +107,28 @@ const char* libcutil_get_config_dir(void)
   return instance->config_CONFIG_DIR;
 }
 
+void libcutil_set_config_dir(const char *dir)
+{
+  struct libcutil *instance = libcutil_instance();
+
+  snprintf(instance->config_CONFIG_DIR,
+           sizeof(instance->config_CONFIG_DIR),
+           "%s",
+           dir);
+}
+
 const char* libcutil_get_config_log_dir(void)
 {
   struct libcutil *instance = libcutil_instance();
 
   return instance->config_LOG_DIR;
+}
+
+void libcutil_set_config_log_dir(const char *dir)
+{
+  struct libcutil *instance = libcutil_instance();
+
+  snprintf(instance->config_LOG_DIR, sizeof(instance->config_LOG_DIR), "%s", dir);
 }
 
 const char* libcutil_get_config_system_name(void)
@@ -138,11 +138,36 @@ const char* libcutil_get_config_system_name(void)
   return instance->config_SYSTEM_NAME;
 }
 
+void libcutil_set_config_system_name(const char *system_name)
+{
+  struct libcutil *instance = libcutil_instance();
+
+  snprintf(instance->config_SYSTEM_NAME,
+           sizeof(instance->config_SYSTEM_NAME),
+           "%s",
+           system_name);
+}
+
 const char* libcutil_get_config_socket(void)
 {
   struct libcutil *instance = libcutil_instance();
 
   return instance->config_SOCKET;
+}
+
+int libcutil_set_config_socket(void)
+{
+  struct libcutil *instance = libcutil_instance();
+
+  // set default sockcet
+  if (!ast_strlen_zero(libcutil_get_config_run_dir())) {
+    snprintf(instance->config_SOCKET,
+             sizeof(instance->config_SOCKET),
+             "%s/cutil.ctl", libcutil_get_config_run_dir());
+    return 0;
+  }
+
+  return -1;
 }
 
 const char* libcutil_get_config_pid(void)
@@ -291,6 +316,40 @@ void libcutil_set_remotehostname(const char *hostname)
   struct libcutil *instance = libcutil_instance();
 }
 
+const char* libcutil_get_config_run_user(void)
+{
+  struct libcutil *instance = libcutil_instance();
+
+  return instance->config_RUN_USER;
+}
+
+void libcutil_set_config_run_user(const char *run_user)
+{
+  struct libcutil *instance = libcutil_instance();
+
+  snprintf(instance->config_RUN_USER,
+           sizeof(instance->config_RUN_USER),
+           "%s",
+           run_user);
+}
+
+const char* libcutil_get_config_run_group(void)
+{
+  struct libcutil *instance = libcutil_instance();
+
+  return instance->config_RUN_GROUP;
+}
+
+void libcutil_set_config_run_group(const char *run_group)
+{
+  struct libcutil *instance = libcutil_instance();
+
+  snprintf(instance->config_RUN_GROUP,
+           sizeof(instance->config_RUN_GROUP),
+           "%s",
+           run_group);
+}
+
 // libcutil_enable_console enable console when program start
 // default not start a console when main up.
 void libcutil_enable_console(void)
@@ -312,6 +371,13 @@ const char* libcutil_get_config_run_dir(void)
   struct libcutil *instance = libcutil_instance();
 
   return instance->config_RUN_DIR;
+}
+
+void libcutil_set_config_run_dir(const char *dir)
+{
+  struct libcutil *instance = libcutil_instance();
+
+  snprintf(instance->config_RUN_DIR, sizeof(instance->config_RUN_DIR), "%s", dir);
 }
 
 static void print_intro_message(const char *runuser, const char *rungroup)
@@ -360,6 +426,7 @@ void libcutil_process(void)
   char *xarg = NULL;
   int   x;
 
+
   if (geteuid() != 0) isroot = 0;
 
   /* Must install this signal handler up here to ensure that if the canary
@@ -372,12 +439,24 @@ void libcutil_process(void)
   if (mkdir(libcutil_get_config_run_dir(), 0755)) {
     if (errno == EEXIST) {
       rundir_exists = 1;
+      libcutil_set_config_socket();
     } else {
       fprintf(stderr,
               "Unable to create socket file directory.  Remote consoles will not be able to connect! (%s)\n",
               strerror(x));
+      exit(1);
     }
   }
+
+  if ((!rungroup) &&
+      !ast_strlen_zero(libcutil_get_config_run_group())) rungroup =
+      libcutil_get_config_run_group();
+
+
+  if ((!runuser) &&
+      !ast_strlen_zero(libcutil_get_config_run_user())) runuser =
+      libcutil_get_config_run_user();
+
 
 #ifndef __CYGWIN__
 
@@ -440,7 +519,7 @@ void libcutil_process(void)
 
     if (!isroot && (pw->pw_uid != geteuid())) {
       fprintf(stderr,
-              "Asterisk started as nonroot, but runuser '%s' requested.\n",
+              "main started as nonroot, but runuser '%s' requested.\n",
               runuser);
       exit(1);
     }
@@ -514,7 +593,7 @@ void libcutil_process(void)
       exit(0);
     } else {
       fprintf(stderr,
-              "Asterisk already running on %s.  Use 'asterisk -r' to connect.\n",
+              "already running on %s.  get your help for connect.\n",
               libcutil_get_config_socket());
       printf("%s", term_quit());
       exit(1);

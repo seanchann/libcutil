@@ -31,10 +31,18 @@ int main(int argc, char *argv[])
   static const char *getopt_settings = "cdhRrx:Vv";
   int c;
 
-  // x = init_logger();
-  // printf("init logger result %d \r\n", x);
+  printf("init library  \r\n");
+
+
   libcutil_set_option_debug(5);
   libcutil_set_option_verbose(5);
+  libcutil_set_config_run_user("seanchann");
+  libcutil_set_config_run_group("seanchann");
+  libcutil_enable_console();
+
+  libcutil_set_config_run_dir("/var/run/testcutil");
+
+  libcutil_process();
 
   cutil_log(LOG_NOTICE, "test %s level log\r\n", "notice");
   cutil_debug(1, "debug test\n");
@@ -42,6 +50,8 @@ int main(int argc, char *argv[])
                 libcutil_get_option_verbose());
 
   sleep(5);
+
+  // libcutil_free();
   return 0;
 }
 
