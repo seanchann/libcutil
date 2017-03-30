@@ -21,6 +21,25 @@
 #include "libcutil/utils.h"
 #include "internal.h"
 
+#define LOGFILES_MAX 10
+
+struct logger_files_line {
+  char logfiles[128];
+
+  // refer logger files line
+  AST_LIST_ENTRY(logger_files_line) list; /*!< Linked list information */
+};
+
+struct logger_config {
+  char                                date_format[64];
+  char                                use_callids[16];
+  char                                append_hostname[16];
+  enum libcuti_logger_rotate_strategy rotate_strategy;
+
+  AST_LIST_HEAD_NOLOCK(, logger_files_line) lines;
+};
+
+
 struct libcutil {
   char config_CONFIG_DIR[PATH_MAX];
   char config_LOG_DIR[PATH_MAX];
@@ -66,6 +85,8 @@ struct libcutil {
   char config_CTL[64];
 
   char remotehostname[128];
+
+  struct logger_config *logger_cfg;
 };
 
 static struct libcutil *g_libcutil = NULL;
@@ -75,21 +96,76 @@ void __attribute__((constructor)) libcutil_init(void)
   printf("init library  \r\n");
 
   if (!g_libcutil) {
-    g_libcutil              = calloc(1, sizeof(struct libcutil));
-    g_libcutil->ast_socket  = -1;
-    g_libcutil->ast_consock = -1;
+    g_libcutil = calloc(1, sizeof(struct libcutil));
 
-    snprintf(g_libcutil->config_CTL_PERMISSIONS,
-             sizeof(g_libcutil->config_CTL_PERMISSIONS), "0600");
+    if (g_libcutil) {
+      g_libcutil->ast_socket  = -1;
+      g_libcutil->ast_consock = -1;
 
-    snprintf(g_libcutil->config_CTL, sizeof(g_libcutil->config_CTL),
-             "cutil.ctl");
+      snprintf(g_libcutil->config_CTL_PERMISSIONS,
+               sizeof(g_libcutil->config_CTL_PERMISSIONS), "0600");
+
+      snprintf(g_libcutil->config_CTL, sizeof(g_libcutil->config_CTL),
+               "cutil.ctl");
+
+      g_libcutil->logger_cfg = calloc(1, sizeof(struct logger_config));
+
+      if (g_libcutil->logger_cfg) {
+        struct logger_files_line *console_line =
+          calloc(1, sizeof(struct logger_files_line));
+
+        if (!console_line) {
+          goto err;
+        }
+
+        snprintf(console_line->logfiles,
+                 sizeof(console_line->logfiles),
+                 "console => notice,warning,error");
+
+        g_libcutil->logger_cfg->lines = AST_LIST_HEAD_NOLOCK_INIT_VALUE;
+        AST_LIST_INSERT_TAIL(g_libcutil->logger_cfg->lines, console_line, lines);
+
+
+        snprintf(g_libcutil->logger_cfg->date_format,
+                 sizeof(g_libcutil->logger_cfg->date_format), "%%F %%T.%%3q");
+        snprintf(g_libcutil->logger_cfg->use_callids,
+                 sizeof(g_libcutil->logger_cfg->use_callids), "no");
+
+        snprintf(g_libcutil->logger_cfg->append_hostname,
+                 sizeof(g_libcutil->logger_cfg->append_hostname), "yes");
+
+        g_libcutil->logger_cfg->rotate_strategy = LOGGER_ROTATE_STRATEGY_ROTATE;
+      } else {
+        goto err;
+      }
+    } else {
+      goto err;
+    }
   }
+
+  return;
+
+err:
+  fprintf(stderr,
+          "Unable to calloc any more memory for libcutil\n");
+  exit(1);
 }
 
 void __attribute__((destructor)) libcutil_free(void)
 {
   if (g_libcutil) {
+    if (g_libcutil->logger_cfg) {
+      struct logger_files_line *current = NULL;
+      struct logger_config     *head    = g_libcutil->logger_cfg;
+
+
+      while ((current = AST_LIST_REMOVE_HEAD(head, lines))) {
+        free(current);
+      }
+
+      free(g_libcutil->logger_cfg);
+    }
+
     free(g_libcutil);
   }
   g_libcutil = NULL;
@@ -378,6 +454,103 @@ void libcutil_set_config_run_dir(const char *dir)
   struct libcutil *instance = libcutil_instance();
 
   snprintf(instance->config_RUN_DIR, sizeof(instance->config_RUN_DIR), "%s", dir);
+}
+
+// ses strftime(3) for details. eg '%F %T' is ISO 8601 date format
+void libcutil_logger_set_date_format(char *dataformat)
+{
+  struct libcutil *instance = libcutil_instance();
+
+  snprintf(instance->logger_cfg->date_format,
+           sizeof(instance->logger_cfg->date_format), "%s", dataformat);
+}
+
+const char* libcutil_logger_get_date_format(void)
+{
+  struct libcutil *instance = libcutil_instance();
+
+  return instance->logger_cfg->date_format;
+}
+
+// This makes  write callids to log messages.value is yes or no
+void libcutil_logger_set_use_callids(char *flags)
+{
+  struct libcutil *instance = libcutil_instance();
+
+  snprintf(instance->logger_cfg->use_callids,
+           sizeof(instance->logger_cfg->use_callids), "%s", flags);
+}
+
+const char* libcutil_logger_get_use_callids(void)
+{
+  struct libcutil *instance = libcutil_instance();
+
+  return instance->logger_cfg->use_callids;
+}
+
+// This appends the hostname to the name of the log files..value is yes or no
+void libcutil_logger_set_appendhostname(char *flags)
+{
+  struct libcutil *instance = libcutil_instance();
+
+  snprintf(instance->logger_cfg->append_hostname,
+           sizeof(instance->logger_cfg->append_hostname), "%s", flags);
+}
+
+const char* libcutil_logger_get_appendhostname(void)
+{
+  struct libcutil *instance = libcutil_instance();
+
+  return instance->logger_cfg->append_hostname;
+}
+
+void libcutil_logger_set_rotate_strategy(
+  enum libcuti_logger_rotate_strategy strategy)
+{
+  struct libcutil *instance = libcutil_instance();
+
+  instan->logger_cfg->rotate_strategy = strategy;
+
+  // switch (strategy) {
+  // case LOGGER_ROTATE_STRATEGY_NONE:
+  // {} break;
+  //
+  // case LOGGER_ROTATE_STRATEGY_SEQUENTIAL:
+  // {} break;
+  //
+  // case LOGGER_ROTATE_STRATEGY_ROTATE:
+  // {} break;
+  //
+  // case LOGGER_ROTATE_STRATEGY_TIMESTAMP:
+  // {} break;
+  //
+  // default: {} break;
+  // }
+}
+
+enum libcuti_logger_rotate_strategy strategy libcutil_logger_get_rotate_strategy(
+  void)
+{
+  struct libcutil *instance = libcutil_instance();
+
+  return instance->logger_cfg->rotate_strategy;
+}
+
+void libcutil_logger_append_logfiles_line(char *line)
+struct libcutil *instance = libcutil_instance();
+{
+  struct logger_files_line *console_line =
+    calloc(1, sizeof(struct logger_files_line));
+
+  if (!console_line) {
+    goto err;
+  }
+
+  snprintf(console_line->logfiles,
+           sizeof(console_line->logfiles),
+           "line");
+
+  AST_LIST_INSERT_TAIL(instance->logger_cfg->lines, console_line, lines);
 }
 
 static void print_intro_message(const char *runuser, const char *rungroup)

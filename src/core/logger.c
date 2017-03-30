@@ -675,6 +675,8 @@ static struct logchannel* make_logchannel(const char *channel,
   return chan;
 }
 
+#if 0
+
 /* \brief Read config, setup channels.
  * \param altconf Alternate configuration file to read.
  *
@@ -768,12 +770,12 @@ static int init_logger_chain(const char *altconf)
   if ((s = ast_variable_retrieve(cfg, "general", "queue_log_realtime_use_gmt"))) {
     logfiles.queue_log_realtime_use_gmt = ast_true(s);
   }
-#if 0
+# if 0
 
   if ((s = ast_variable_retrieve(cfg, "general", "exec_after_rotate"))) {
     ast_copy_string(exec_after_rotate, s, sizeof(exec_after_rotate));
   }
-#endif /* if 0 */
+# endif /* if 0 */
 
   if ((s = ast_variable_retrieve(cfg, "general", "rotatestrategy"))) {
     if (strcasecmp(s, "timestamp") == 0) {
@@ -822,6 +824,133 @@ static int init_logger_chain(const char *altconf)
 
   return 0;
 }
+
+#else /* if 0 */
+
+/* \brief Read config, setup channels.
+ * \param altconf Alternate configuration file to read.
+ *
+ * \pre logchannels list is write locked
+ *
+ * \retval 0 Success
+ * \retval -1 No config found or Failed
+ */
+static int init_logger_chain(const char *altconf)
+{
+  struct logchannel *chan;
+  const char *s;
+  struct ast_flags config_flags = { 0 };
+
+  /* Set defaults */
+  hostname[0]     = '\0';
+  display_callids = 1;
+  memset(&logfiles, 0, sizeof(logfiles));
+  logfiles.queue_log = 1;
+  ast_copy_string(dateformat,     "%b %e %T", sizeof(dateformat));
+  ast_copy_string(queue_log_name, QUEUELOG,   sizeof(queue_log_name));
+  exec_after_rotate[0] = '\0';
+  rotatestrategy       = SEQUENTIAL;
+
+  /* delete our list of log channels */
+  while ((chan = AST_RWLIST_REMOVE_HEAD(&logchannels, list))) {
+    ast_free(chan);
+  }
+  global_logmask = 0;
+
+  errno = 0;
+
+  /* close syslog */
+  closelog();
+
+
+  if ((s = libcutil_logg)) {
+    if (ast_true(s)) {
+      if (gethostname(hostname, sizeof(hostname) - 1)) {
+        ast_copy_string(hostname, "unknown", sizeof(hostname));
+        fprintf(stderr, "What box has no hostname???\n");
+      }
+    }
+  }
+
+  if ((s = ast_variable_retrieve(cfg, "general", "display_callids"))) {
+    display_callids = ast_true(s);
+  }
+
+  if ((s = ast_variable_retrieve(cfg, "general", "dateformat"))) {
+    ast_copy_string(dateformat, s, sizeof(dateformat));
+  }
+
+  if ((s = ast_variable_retrieve(cfg, "general", "queue_log"))) {
+    logfiles.queue_log = ast_true(s);
+  }
+
+  if ((s = ast_variable_retrieve(cfg, "general", "queue_log_to_file"))) {
+    logfiles.queue_log_to_file = ast_true(s);
+  }
+
+  if ((s = ast_variable_retrieve(cfg, "general", "queue_log_name"))) {
+    ast_copy_string(queue_log_name, s, sizeof(queue_log_name));
+  }
+
+  if ((s = ast_variable_retrieve(cfg, "general", "queue_log_realtime_use_gmt"))) {
+    logfiles.queue_log_realtime_use_gmt = ast_true(s);
+  }
+# if 0
+
+  if ((s = ast_variable_retrieve(cfg, "general", "exec_after_rotate"))) {
+    ast_copy_string(exec_after_rotate, s, sizeof(exec_after_rotate));
+  }
+# endif /* if 0 */
+
+  if ((s = ast_variable_retrieve(cfg, "general", "rotatestrategy"))) {
+    if (strcasecmp(s, "timestamp") == 0) {
+      rotatestrategy = TIMESTAMP;
+    } else if (strcasecmp(s, "rotate") == 0) {
+      rotatestrategy = ROTATE;
+    } else if (strcasecmp(s, "sequential") == 0) {
+      rotatestrategy = SEQUENTIAL;
+    } else if (strcasecmp(s, "none") == 0) {
+      rotatestrategy = NONE;
+    } else {
+      fprintf(stderr, "Unknown rotatestrategy: %s\n", s);
+    }
+  } else {
+    if ((s = ast_variable_retrieve(cfg, "general", "rotatetimestamp"))) {
+      rotatestrategy = ast_true(s) ? TIMESTAMP : SEQUENTIAL;
+      fprintf(stderr,
+              "rotatetimestamp option has been deprecated.  Please use rotatestrategy instead.\n");
+    }
+  }
+
+  var = ast_variable_browse(cfg, "logfiles");
+
+  for (; var; var = var->next) {
+    if (!(chan = make_logchannel(var->name, var->value, var->lineno, 0))) {
+      /* Print error message directly to the consoles since the lock is held
+       * and we don't want to unlock with the list partially built */
+      ast_console_puts_mutable("ERROR: Unable to create log channel '",
+                               __LOG_ERROR);
+      ast_console_puts_mutable(var->name,
+                               __LOG_ERROR);
+      ast_console_puts_mutable("'\n",
+                               __LOG_ERROR);
+      continue;
+    }
+    AST_RWLIST_INSERT_HEAD(&logchannels, chan, list);
+    global_logmask |= chan->logmask;
+  }
+
+  if (qlog) {
+    fclose(qlog);
+    qlog = NULL;
+  }
+
+  ast_config_destroy(cfg);
+
+  return 0;
+}
+
+#endif /* if 0 */
 
 void ast_child_verbose(int level, const char *fmt, ...)
 {
@@ -2292,7 +2421,7 @@ void ast_log_backtrace(void)
 #else /* ifdef HAVE_BKTR */
   ast_log(LOG_WARNING,
           "Must run configure with '--with-execinfo' for stack backtraces.\n");
-#endif /* defined(HAVE_BKTR) */
+#endif  /* defined(HAVE_BKTR) */
 }
 
 void __ast_verbose_ap(const char *file,

@@ -427,4 +427,103 @@ void                              libcutil_process(void);
 void __attribute__((constructor)) libcutil_init(void);
 void __attribute__((destructor))  libcutil_free(void);
 
+
+// ses strftime(3) for details. eg '%F %T' is ISO 8601 date format
+void        libcutil_logger_set_date_format(char *dataformat);
+const char* libcutil_logger_get_date_format(void);
+
+// This makes  write callids to log messages.value is yes or no
+void        libcutil_logger_set_use_callids(char *flags);
+const char* libcutil_logger_get_use_callids(void);
+
+// This appends the hostname to the name of the log files..value is yes or no
+void        libcutil_logger_set_appendhostname(char *flags);
+const char* libcutil_logger_get_appendhostname(void);
+
+enum libcuti_logger_rotate_strategy {
+  /*  none:  Do not perform any logrotation at all.  You should make
+             very sure to set up some external logrotate mechanism
+             as the asterisk logs can get very large, very quickly.
+   */
+  LOGGER_ROTATE_STRATEGY_NONE = 0,
+
+  /*
+     ; sequential:  Rename archived logs in order, such that the newest
+     ;              has the highest sequence number [default].  When
+     ;              exec_after_rotate is set, ${filename} will specify
+     ;              the new archived logfile.
+   */
+  LOGGER_ROTATE_STRATEGY_SEQUENTIAL,
+
+  /*
+     ; rotate:  Rotate all the old files, such that the oldest has the
+     ;          highest sequence number [this is the expected behavior
+     ;          for Unix administrators].  When exec_after_rotate is
+     ;          set, ${filename} will specify the original root filename.
+   */
+  LOGGER_ROTATE_STRATEGY_ROTATE,
+
+  /*
+     ; timestamp:  Rename the logfiles using a timestamp instead of a
+     ;             sequence number when "logger rotate" is executed.
+     ;             When exec_after_rotate is set, ${filename} will
+     ;             specify the new archived logfile.
+   */
+  LOGGER_ROTATE_STRATEGY_TIMESTAMP,
+};
+
+
+void                                libcutil_logger_set_rotate_strategy(
+  enum libcuti_logger_rotate_strategy strategy);
+enum libcuti_logger_rotate_strategy libcutil_logger_get_rotate_strategy(
+  void);
+
+/*
+   ; Format is:
+   ;
+   ; logger_name => [formatter]levels
+   ;
+   ; The name of the logger dictates not only the name of the logging
+   ; channel, but also its type. Valid types are:
+   ;   - 'console'  - The root console of Asterisk
+   ;   - 'syslog'   - Linux syslog, with facilities specified afterwards with
+   ;                  a period delimiter, e.g., 'syslog.local0'
+   ;   - 'filename' - The name of the log file to create. This is the default
+   ;                  for log channels.
+   ;
+   ; Filenames can either be relative to the standard Asterisk log directory
+   ; (see 'astlogdir' in asterisk.conf), or absolute paths that begin with
+   ; '/'.
+   ;
+   ; An optional formatter can be specified prior to the log levels sent
+   ; to the log channel. The formatter is defined immediately preceeding the
+   ; levels, and is enclosed in square brackets. Valid formatters are:
+   ;   - [default] - The default formatter, this outputs log messages using a
+   ;                 human readable format.
+   ;   - [json]    - Log the output in JSON. Note that JSON formatted log
+      entries,
+   ;                 if specified for a logger type of 'console', will be
+      formatted
+   ;                 per the 'default' formatter for log messages of type
+      VERBOSE.
+   ;                 This is due to the remote consoles intepreting verbosity
+   ;                 outside of the logging subsystem.
+   ;
+   ; Log levels include the following, and are specified in a comma delineated
+   ; list:
+   ;    debug
+   ;    notice
+   ;    warning
+   ;    error
+   ;    verbose(<level>)
+   ;    dtmf
+   ;    fax
+   ;    security
+   ;
+
+ */
+void libcutil_logger_append_logfiles_line(
+  char *line);
+
+
 #endif /* _LIBCUTIL_H */

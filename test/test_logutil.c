@@ -40,7 +40,9 @@ int main(int argc, char *argv[])
   libcutil_set_config_run_group("seanchann");
   libcutil_enable_console();
 
+  libcutil_set_config_dir("/var/run/testcutil");
   libcutil_set_config_run_dir("/var/run/testcutil");
+
 
   libcutil_process();
 
