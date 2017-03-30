@@ -377,6 +377,10 @@ const char   * libcutil_get_ctl_group(void);
 const char   * libcutil_get_ctl_filename(void);
 
 
+void           libcutil_enable_console(void);
+void           libcutil_enable_remote(void);
+
+
 #define ast_opt_remote                  libcutil_test_option(AST_OPT_FLAG_REMOTE)
 #define ast_opt_exec                    libcutil_test_option(AST_OPT_FLAG_EXEC)
 #define ast_opt_no_color                libcutil_test_option(AST_OPT_FLAG_NO_COLOR)

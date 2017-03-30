@@ -44,10 +44,8 @@ set(SOURCES
   ${CMAKE_CURRENT_SOURCE_DIR}/../asterisk/io.c
   ${CMAKE_CURRENT_SOURCE_DIR}/../asterisk/threadstorage.c
   ${CMAKE_CURRENT_SOURCE_DIR}/../asterisk/stdtime/localtime.c
-  ${CMAKE_CURRENT_SOURCE_DIR}/astcore_dummy.c
   ${CMAKE_CURRENT_SOURCE_DIR}/cli.c
-  ${CMAKE_CURRENT_SOURCE_DIR}/console.c
-  ${CMAKE_CURRENT_SOURCE_DIR}/daemon.c
+  ${CMAKE_CURRENT_SOURCE_DIR}/core.c
   ${CMAKE_CURRENT_SOURCE_DIR}/elhelper.c
   ${CMAKE_CURRENT_SOURCE_DIR}/version.c
   ${CMAKE_CURRENT_SOURCE_DIR}/logger.c

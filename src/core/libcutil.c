@@ -12,7 +12,6 @@
 #include "libcutil.h"
 
 #include "libcutil/utils.h"
-#include "daemon.h"
 
 struct libcutil {
   const char *config_CONFIG_DIR;
@@ -277,4 +276,20 @@ const char* libcutil_get_remotehostname(void)
   struct libcutil *instance = libcutil_instance();
 
   return instance->remotehostname;
+}
+
+// libcutil_enable_console enable console when program start
+// default not start a console when main up.
+void libcutil_enable_console(void)
+{
+  struct libcutil *instance = libcutil_instance();
+
+  ast_set_flag(&instance->options, AST_OPT_FLAG_NO_FORK | AST_OPT_FLAG_CONSOLE);
+}
+
+void libcutil_enable_remote(void)
+{
+  struct libcutil *instance = libcutil_instance();
+
+  ast_set_flag(&instance->options, AST_OPT_FLAG_NO_FORK | AST_OPT_FLAG_REMOTE);
 }
