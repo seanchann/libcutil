@@ -339,6 +339,9 @@ enum cutil_option_flags {
 
   /*! Disable log/verbose output to remote consoles */
   AST_OPT_FLAG_MUTE = (1 << 20),
+
+  /*! Dump core on a seg fault */
+  AST_OPT_FLAG_DUMP_CORE = (1 << 21),
 };
 
 
@@ -371,6 +374,8 @@ const char   * libcutil_get_ctl_permissions(void);
 void           libcutil_set_ctl_permissions(char *permissions);
 
 const char   * libcutil_get_remotehostname(void);
+void           libcutil_set_remotehostname(const char *hostname);
+
 
 const char   * libcutil_get_ctl_owner(void);
 const char   * libcutil_get_ctl_group(void);
@@ -402,7 +407,8 @@ void           libcutil_enable_remote(void);
 #define ast_opt_hide_connect            libcutil_test_option( \
     AST_OPT_FLAG_HIDE_CONSOLE_CONNECT)
 #define ast_opt_mute                    libcutil_test_option(AST_OPT_FLAG_MUTE)
-
+#define ast_opt_dump_core               libcutil_test_option( \
+    AST_OPT_FLAG_DUMP_CORE)
 
 /*libcutil init and free api.not use "-nonstartfiles" or "-nostdlib" for build
    flag*/

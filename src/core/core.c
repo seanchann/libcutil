@@ -40,7 +40,7 @@
 #include "libcutil/lock.h"
 #include "libcutil/localtime.h"
 #include "libcutil/term.h"
-
+#include "internal.h"
 
 struct ast_atexit {
   void (*func)(void);
@@ -62,12 +62,7 @@ struct thread_list_t {
 static AST_RWLIST_HEAD_STATIC(thread_list, thread_list_t);
 
 
-/*! \brief Welcome message when starting a CLI interface */
-# define WELCOME_MESSAGE                                                                          \
-  ast_verbose("libcutil console interface %s, Copyright (C) 2016 - 2017, JYD, Inc. and others.\n" \
-              "Created by seanchann.zhou <xqzhou@bj-jyd.cn>\n"                                    \
-              "=========================================================================\n",      \
-              ast_get_version())                                                                  \
+\
 
 
 /*console prompt string. set env(CUTIL_PROMPT) will be overried default*/
@@ -137,6 +132,8 @@ static shutdown_nice_t shuttingdown = NOT_SHUTTING_DOWN;
 static pthread_t mon_sig_flags;
 
 pid_t ast_mainpid;
+
+static int multi_thread_safe;
 
 
 static int console_print(const char *s);
@@ -550,7 +547,7 @@ static int ast_makesocket(void)
   return 0;
 }
 
-static int ast_tryconnect(void)
+int ast_tryconnect(void)
 {
   struct sockaddr_un sunaddr;
   int res;
@@ -1670,6 +1667,17 @@ void quit_handler(int num, shutdown_nice_t niceness, int restart)
   /* It wasn't our time. */
 }
 
+void shutdown_fast_wrap(int num,  int restart)
+{
+  if (can_safely_quit(SHUTDOWN_FAST, restart)) {
+    really_quit(num, SHUTDOWN_FAST, restart);
+
+    /* No one gets here. */
+  }
+
+  /* It wasn't our time. */
+}
+
 /*! \brief Urgent handler
  *
  * Called by soft_hangup to interrupt the poll, read, or other
@@ -1780,98 +1788,6 @@ static inline void check_init(int init_result, const char *name)
     ast_run_atexits(0);
     exit(init_result == -2 ? 2 : 1);
   }
-}
-
-void daemon_run(int isroot, const char *runuser, const char *rungroup)
-{
-  sigset_t sigs;
-  int      num;
-  char    *buf;
-
-  ast_mainpid = getpid();
-
-  printf("run 1\r\n");
-
-  /* Initialize the terminal.  Since all processes have been forked,
-   * we can now start using the standard log messages.
-   */
-  ast_term_init();
-  printf("%s", ast_insteadof_term_end());
-  fflush(stdout);
-
-
-  ast_json_init();
-  threadstorage_init();
-  check_init(init_logger(), "Logger");
-
-  if (ast_opt_console) {
-    console_el_init();
-  }
-
-
-  if (ast_opt_no_fork) {
-    console_set_thread(pthread_self());
-  }
-
-  /* GCC 4.9 gives a bogus "right-hand operand of comma expression has
-   * no effect" warning */
-  (void)sigemptyset(&sigs);
-  (void)sigaddset(&sigs, SIGHUP);
-  (void)sigaddset(&sigs, SIGTERM);
-  (void)sigaddset(&sigs, SIGINT);
-  (void)sigaddset(&sigs, SIGPIPE);
-  (void)sigaddset(&sigs, SIGWINCH);
-  pthread_sigmask(SIG_BLOCK, &sigs, NULL);
-  sigaction(SIGURG, &urg_handler, NULL);
-  signal(SIGINT,  __quit_handler);
-  signal(SIGTERM, __quit_handler);
-  sigaction(SIGHUP,  &hup_handler,        NULL);
-  sigaction(SIGPIPE, &ignore_sig_handler, NULL);
-
-  if (ast_opt_console) {
-    /* Console stuff now... */
-    /* Register our quit function */
-    char title[256];
-    char hostname[MAXHOSTNAMELEN] = "";
-
-    if (gethostname(hostname, sizeof(hostname) - 1)) {
-      ast_copy_string(hostname, "<Unknown>", sizeof(hostname));
-    }
-
-    ast_pthread_create_detached(&mon_sig_flags, NULL, monitor_sig_flags, NULL);
-
-    set_icon("Asterisk");
-    snprintf(title,
-             sizeof(title),
-             "Asterisk Console on '%s' (pid %ld)",
-             hostname,
-             (long)ast_mainpid);
-    set_title(title);
-
-    /*el_set(el, EL_GETCFN, ast_el_read_char);*/
-    console_set_el_gchar_fn();
-
-    for (;;) {
-      if (sig_flags.need_quit || sig_flags.need_quit_handler) {
-        quit_handler(0, SHUTDOWN_FAST, 0);
-        break;
-      }
-
-      /*buf = (char *) el_gets(el, &num);*/
-      buf = console_el_get_buf(&num);
-
-      if (!buf && (write(1, "", 1) < 0)) return;  /* quit */
-
-      if (buf) {
-        if (buf[strlen(buf) - 1] == '\n') buf[strlen(buf) - 1] = '\0';
-
-        consolehandler(buf);
-      }
-    }
-  }
-
-  /* Stall until a quit signal is given */
-  monitor_sig_flags(NULL);
 }
 
 int console_quit(pthread_t main_thread)
@@ -2115,4 +2031,337 @@ static int console_print(const char *s)
   }
 
   return res;
+}
+
+void daemon_run(int isroot, const char *runuser, const char *rungroup)
+{
+  sigset_t sigs;
+  int      num;
+  char    *buf;
+
+  ast_mainpid = getpid();
+
+  printf("run 1\r\n");
+
+  /* Initialize the terminal.  Since all processes have been forked,
+   * we can now start using the standard log messages.
+   */
+  ast_term_init();
+  printf("%s", ast_insteadof_term_end());
+  fflush(stdout);
+
+
+  ast_json_init();
+  threadstorage_init();
+  check_init(init_logger(), "Logger");
+
+  if (ast_opt_console) {
+    console_el_init();
+  }
+
+
+  if (ast_opt_no_fork) {
+    console_set_thread(pthread_self());
+  }
+
+  /* GCC 4.9 gives a bogus "right-hand operand of comma expression has
+   * no effect" warning */
+  (void)sigemptyset(&sigs);
+  (void)sigaddset(&sigs, SIGHUP);
+  (void)sigaddset(&sigs, SIGTERM);
+  (void)sigaddset(&sigs, SIGINT);
+  (void)sigaddset(&sigs, SIGPIPE);
+  (void)sigaddset(&sigs, SIGWINCH);
+  pthread_sigmask(SIG_BLOCK, &sigs, NULL);
+  sigaction(SIGURG, &urg_handler, NULL);
+  signal(SIGINT,  __quit_handler);
+  signal(SIGTERM, __quit_handler);
+  sigaction(SIGHUP,  &hup_handler,        NULL);
+  sigaction(SIGPIPE, &ignore_sig_handler, NULL);
+
+  if (ast_opt_console) {
+    /* Console stuff now... */
+    /* Register our quit function */
+    char title[256];
+    char hostname[MAXHOSTNAMELEN] = "";
+
+    if (gethostname(hostname, sizeof(hostname) - 1)) {
+      ast_copy_string(hostname, "<Unknown>", sizeof(hostname));
+    }
+
+    ast_pthread_create_detached(&mon_sig_flags, NULL, monitor_sig_flags, NULL);
+
+    set_icon("Asterisk");
+    snprintf(title,
+             sizeof(title),
+             "Asterisk Console on '%s' (pid %ld)",
+             hostname,
+             (long)ast_mainpid);
+    set_title(title);
+
+    /*el_set(el, EL_GETCFN, ast_el_read_char);*/
+    console_set_el_gchar_fn();
+
+    for (;;) {
+      if (sig_flags.need_quit || sig_flags.need_quit_handler) {
+        quit_handler(0, SHUTDOWN_FAST, 0);
+        break;
+      }
+
+      /*buf = (char *) el_gets(el, &num);*/
+      buf = console_el_get_buf(&num);
+
+      if (!buf && (write(1, "", 1) < 0)) return;  /* quit */
+
+      if (buf) {
+        if (buf[strlen(buf) - 1] == '\n') buf[strlen(buf) - 1] = '\0';
+
+        consolehandler(buf);
+      }
+    }
+  }
+
+  /* Stall until a quit signal is given */
+  monitor_sig_flags(NULL);
+}
+
+static void __remote_quit_handler(int num)
+{
+  sig_flags.need_quit = 1;
+}
+
+static int remoteconsolehandler(const char *s)
+{
+  int ret = 0;
+
+  /* Called when readline data is available */
+  if (!ast_all_zeros(s)) ast_el_add_history(s);
+
+  while (isspace(*s)) {
+    s++;
+  }
+
+  /* The real handler for bang */
+  if (s[0] == '!') {
+    if (s[1]) ast_safe_system(s + 1);
+    else ast_safe_system(getenv("SHELL") ? getenv("SHELL") : "/bin/sh");
+    ret = 1;
+  } else if (((strncasecmp(s, "quit",
+                           4) == 0) || (strncasecmp(s, "exit", 4) == 0)) &&
+             ((s[4] == '\0') || isspace(s[4]))) {
+    quit_handler(0, SHUTDOWN_FAST, 0);
+    ret = 1;
+  } else if (s[0]) {
+    char *shrunk = ast_strdupa(s);
+    char *cur;
+    char *prev;
+
+    /*
+     * Remove duplicate spaces from shrunk for matching purposes.
+     *
+     * shrunk has at least one character in it to start with or we
+     * couldn't get here.
+     */
+    for (prev = shrunk, cur = shrunk + 1; *cur; ++cur) {
+      if ((*prev == ' ') && (*cur == ' ')) {
+        /* Skip repeated space delimiter. */
+        continue;
+      }
+      *++prev = *cur;
+    }
+    *++prev = '\0';
+
+    if (strncasecmp(shrunk, "core set verbose ", 17) == 0) {
+      /*
+       * We need to still set the rasterisk option_verbose in case we are
+       * talking to an earlier version which doesn't prefilter verbose
+       * levels.  This is really a compromise as we should always take
+       * whatever the server sends.
+       */
+
+      if (!strncasecmp(shrunk + 17, "off", 3)) {
+        ast_verb_console_set(0);
+      } else {
+        int verbose_new;
+        int atleast;
+
+        atleast = 8;
+
+        if (strncasecmp(shrunk + 17, "atleast ", atleast)) {
+          atleast = 0;
+        }
+
+        if (sscanf(shrunk + 17 + atleast, "%30d", &verbose_new) == 1) {
+          if (!atleast || (ast_verb_console_get() < verbose_new)) {
+            ast_verb_console_set(verbose_new);
+          }
+        }
+      }
+    }
+  }
+
+  return ret;
+}
+
+void ast_remotecontrol(char *data)
+{
+  char  buf[256] = "";
+  int   res;
+  char *hostname;
+  char *cpid;
+  char *version;
+  int   pid;
+  char *stringp = NULL;
+
+  char *ebuf;
+  int   num = 0;
+
+  ast_term_init();
+  printf("%s", term_end());
+  fflush(stdout);
+
+  memset(&sig_flags, 0, sizeof(sig_flags));
+  signal(SIGINT,  __remote_quit_handler);
+  signal(SIGTERM, __remote_quit_handler);
+  signal(SIGHUP,  __remote_quit_handler);
+
+  if (read(libcutil_get_consock(), buf, sizeof(buf) - 1) < 0) {
+    ast_log(LOG_ERROR, "read() failed: %s\n", strerror(errno));
+    return;
+  }
+
+  if (data) {
+    char  prefix[] = "cli quit after ";
+    char *tmp      = ast_alloca(strlen(data) + strlen(prefix) + 1);
+    sprintf(tmp, "%s%s", prefix, data);
+
+    if (write(libcutil_get_consock(), tmp, strlen(tmp) + 1) < 0) {
+      ast_log(LOG_ERROR, "write() failed: %s\n", strerror(errno));
+
+      if (sig_flags.need_quit || sig_flags.need_quit_handler) {
+        return;
+      }
+    }
+  }
+  stringp  = buf;
+  hostname = strsep(&stringp, "/");
+  cpid     = strsep(&stringp, "/");
+  version  = strsep(&stringp, "\n");
+
+  if (!version) version = "<Version Unknown>";
+  stringp = hostname;
+  strsep(&stringp, ".");
+
+  if (cpid) pid = atoi(cpid);
+  else pid = -1;
+
+  if (!data) {
+    send_rasterisk_connect_commands();
+  }
+
+  if (ast_opt_exec && data) { /* hack to print output then exit if asterisk -rx
+                                 is used */
+    int linefull = 1, prev_linefull = 1, prev_line_verbose = 0;
+    struct pollfd fds;
+    fds.fd      = libcutil_get_consock();
+    fds.events  = POLLIN;
+    fds.revents = 0;
+
+    while (ast_poll(&fds, 1, 60000) > 0) {
+      char buffer[512] = "", *curline = buffer, *nextline;
+      int  not_written = 1;
+
+      if (sig_flags.need_quit || sig_flags.need_quit_handler) {
+        break;
+      }
+
+      if (read(libcutil_get_consock(), buffer, sizeof(buffer) - 1) <= 0) {
+        break;
+      }
+
+      do {
+        prev_linefull = linefull;
+
+        if ((nextline = strchr(curline, '\n'))) {
+          linefull = 1;
+          nextline++;
+        } else {
+          linefull = 0;
+          nextline = strchr(curline, '\0');
+        }
+
+        /* Skip verbose lines */
+
+        /* Prev line full? | Line is verbose | Last line verbose? | Print
+         * TRUE            | TRUE*           | TRUE               | FALSE
+         * TRUE            | TRUE*           | FALSE              | FALSE
+         * TRUE            | FALSE*          | TRUE               | TRUE
+         * TRUE            | FALSE*          | FALSE              | TRUE
+         * FALSE           | TRUE            | TRUE*              | FALSE
+         * FALSE           | TRUE            | FALSE*             | TRUE
+         * FALSE           | FALSE           | TRUE*              | FALSE
+         * FALSE           | FALSE           | FALSE*             | TRUE
+         */
+        if ((!prev_linefull && !prev_line_verbose) ||
+            (prev_linefull && (*curline > 0))) {
+          prev_line_verbose = 0;
+          not_written       = 0;
+
+          if (write(STDOUT_FILENO, curline, nextline - curline) < 0) {
+            ast_log(LOG_WARNING, "write() failed: %s\n", strerror(errno));
+          }
+        } else {
+          prev_line_verbose = 1;
+        }
+        curline = nextline;
+      } while (!ast_strlen_zero(curline));
+
+      /* No non-verbose output in 60 seconds. */
+      if (not_written) {
+        break;
+      }
+    }
+    return;
+  }
+
+  ast_verbose("Connected to Asterisk %s currently running on %s (pid = %d)\n",
+              version,
+              hostname,
+              pid);
+  libcutil_set_remotehostname(hostname);
+
+
+  ast_el_initialize_wrap(cli_prompt, cli_complete);
+  ast_el_read_default_histfile();
+
+  console_set_el_gchar_fn();
+
+  for (;;) {
+    ebuf = console_el_get_buf(&num);
+
+    if (sig_flags.need_quit || sig_flags.need_quit_handler) {
+      break;
+    }
+
+    if (!ebuf && (write(1, "", 1) < 0)) break;
+
+    if (!ast_strlen_zero(ebuf)) {
+      if (ebuf[strlen(ebuf) - 1] == '\n') ebuf[strlen(ebuf) - 1] = '\0';
+
+      if (!remoteconsolehandler(ebuf)) {
+        res = write(libcutil_get_consock(), ebuf, strlen(ebuf) + 1);
+
+        if (res < 1) {
+          ast_log(LOG_WARNING, "Unable to write: %s\n", strerror(errno));
+          break;
+        }
+      }
+    }
+  }
+  printf("\nDisconnected from Asterisk server\n");
+}
+
+void enable_multi_thread_safe(void)
+{
+  multi_thread_safe = 1;
 }
