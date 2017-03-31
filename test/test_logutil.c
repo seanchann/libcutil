@@ -51,6 +51,24 @@ static struct ast_cli_entry cli_test[] = {
 };
 
 
+static int show_cli_help(void)
+{
+  printf(
+    "test_logutil, Copyright (C) 2017 - 2018, JYD, Inc. and others.\n");
+  printf("Usage: test_logutil [OPTIONS]\n");
+  printf("Valid Options:\n");
+  printf("   -c              Provide console CLI\n");
+  printf("   -d              Increase debugging (multiple d's = more debugging)\n");
+  printf("   -h              This help screen\n");
+  printf("   -r              Connect to test_logutil on this machine\n");
+  printf(
+    "   -R              Same as -r, except attempt to reconnect if disconnected\n");
+  printf("   -v              Increase verbosity (multiple v's = more verbose)\n");
+  printf("   -X              Enable use of #exec in asterisk.conf\n");
+  printf("\n");
+  return 0;
+}
+
 int main(int argc, char *argv[])
 {
   int isroot = 1, rundir_exists = 0;
@@ -66,7 +84,9 @@ int main(int argc, char *argv[])
   libcutil_set_option_verbose(5);
   libcutil_set_config_run_user("seanchann");
   libcutil_set_config_run_group("seanchann");
-  libcutil_enable_console();
+  libcutil_set_config_socket();
+
+  //
 
   libcutil_set_config_dir("/var/run/testcutil");
   libcutil_set_config_run_dir("/var/run/testcutil");
@@ -75,10 +95,63 @@ int main(int argc, char *argv[])
   /* register the logger cli commands */
   ast_cli_register_multiple(cli_test, ARRAY_LEN(cli_test));
 
-  cutil_log(LOG_NOTICE, "test %s level log\r\n", "notice");
-  cutil_debug(1, "debug test\n");
-  cutil_verbose("cutil verbose test. current verbose level(%d)\n",
-                libcutil_get_option_verbose());
+  /* Remember original args for restart */
+  if (argc > ARRAY_LEN(_argv) - 1) {
+    fprintf(stderr, "Truncating argument size to %d\n",
+            (int)ARRAY_LEN(_argv) - 1);
+    argc = ARRAY_LEN(_argv) - 1;
+  }
+
+  for (x = 0; x < argc; x++) _argv[x] = argv[x];
+  _argv[x] = NULL;
+
+
+  /* if the progname is rtest_logutil consider it a remote console */
+  if (argv[0] && ((strstr(argv[0], "rtest_logutil")) != NULL)) {
+    libcutil_enable_remote();
+  }
+
+
+  /* Process command-line options that effect asterisk.conf load. */
+  while ((c = getopt(argc, argv, getopt_settings)) != -1) {
+    switch (c) {
+    case 'd':
+      libcutil_set_option_debug(libcutil_get_option_debug() + 1);
+      break;
+
+    case 'h':
+
+      show_cli_help();
+      exit(0);
+
+    case 'R':
+    case 'r':
+    case 'x':
+
+      /* ast_opt_remote is checked during config load.  This is only part
+         of
+         what
+       * these options do, see the second loop for the rest of the actions.
+       */
+      libcutil_enable_remote();
+      break;
+
+    case 'V':
+      show_version();
+      exit(0);
+
+    case 'v':
+      libcutil_set_option_verbose(libcutil_get_option_verbose() + 1);
+      break;
+
+    case 'c':
+      libcutil_enable_console();
+      break;
+
+    case '?':
+      exit(1);
+    }
+  }
 
   libcutil_process();
 

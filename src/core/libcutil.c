@@ -18,6 +18,7 @@
 #include <pwd.h>
 
 
+#include "libcutil/term.h"
 #include "libcutil/utils.h"
 #include "libcutil/linkedlists.h"
 #include "internal.h"
@@ -752,6 +753,7 @@ void libcutil_process(void)
   if (ast_tryconnect()) {
     /* One is already running */
     if (ast_opt_remote) {
+      printf("in remote\r\n");
       enable_multi_thread_safe();
 
       if (ast_opt_exec) {
@@ -759,10 +761,13 @@ void libcutil_process(void)
         shutdown_fast_wrap(0, 0);
         exit(0);
       }
+      printf("in term\r\n");
       ast_term_init();
+      printf("init term done\r\n");
       printf("%s", term_end());
       fflush(stdout);
 
+      printf("in term 222\r\n");
       print_intro_message(runuser, rungroup);
       printf("%s", term_quit());
       ast_remotecontrol(NULL);

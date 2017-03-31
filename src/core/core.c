@@ -455,6 +455,8 @@ static int ast_makesocket(void)
 
   for (x = 0; x < AST_MAX_CONNECTS; x++) consoles[x].fd = -1;
   unlink(libcutil_get_config_socket());
+  printf("config socket socket: %s\n",
+         libcutil_get_config_socket());
   libcutil_set_socket(socket(PF_LOCAL, SOCK_STREAM, 0));
 
   if (libcutil_get_socket() < 0) {
@@ -551,10 +553,13 @@ int ast_tryconnect(void)
 
   libcutil_set_consock(socket(PF_LOCAL, SOCK_STREAM, 0));
 
+  printf("connection sock done 1\r\n");
+
   if (libcutil_get_consock() < 0) {
     fprintf(stderr, "Unable to create socket: %s\n", strerror(errno));
     return 0;
   }
+  printf("connection sock done\r\n");
   memset(&sunaddr, 0, sizeof(sunaddr));
   sunaddr.sun_family = AF_LOCAL;
   ast_copy_string(sunaddr.sun_path,
@@ -564,6 +569,7 @@ int ast_tryconnect(void)
     connect(libcutil_get_consock(), (struct sockaddr *)&sunaddr, sizeof(sunaddr));
 
   if (res) {
+    printf("connection sock done error %d\r\n", res);
     close(libcutil_get_consock());
     libcutil_set_consock(-1);
     return 0;
@@ -1158,38 +1164,11 @@ const char* console_el_get_buf(int *num)
   return ast_el_get_buf(num);
 }
 
-int console_set_thread(pthread_t thread)
-{
-  consolethread = thread;
-  return 0;
-}
-
 int console_el_init(void)
 {
   ast_el_initialize_wrap(cli_prompt, cli_complete);
 
   ast_el_read_default_histfile();
-  return 0;
-}
-
-int console_initialize(void)
-{
-  return ast_makesocket();
-}
-
-int console_uninitialize(void)
-{
-  if (libcutil_get_socket() > -1) {
-    pthread_cancel(lthread);
-    close(libcutil_get_socket());
-    libcutil_set_socket(-1);
-    unlink(libcutil_get_config_socket());
-    pthread_kill(lthread, SIGURG);
-    pthread_join(lthread, NULL);
-  }
-
-  if (libcutil_get_consock() > -1) close(libcutil_get_consock());
-
   return 0;
 }
 
@@ -1547,28 +1526,26 @@ static void really_quit(int num, shutdown_nice_t niceness, int restart)
   }
 
   if (ast_opt_console || (ast_opt_remote && !ast_opt_exec)) {
-                #if 0
     ast_el_write_default_histfile();
 
     if ((consolethread == AST_PTHREADT_NULL) ||
         (consolethread == pthread_self())) {
       /* Only end if we are the consolethread, otherwise there's a race with
          that thread. */
-      if (el != NULL) {
-        el_end(el);
-      }
 
-      if (el_hist != NULL) {
-        history_end(el_hist);
-      }
+      // if (el != NULL) {
+      //   el_end(el);
+      // }
+      //
+      // if (el_hist != NULL) {
+      //   history_end(el_hist);
+      // }
+      ast_el_uninitialize();
     } else if (mon_sig_flags == pthread_self()) {
       if (consolethread != AST_PTHREADT_NULL) {
         pthread_kill(consolethread, SIGURG);
       }
     }
-                #else /* if 0 */
-    console_quit(mon_sig_flags);
-                #endif /* if 0 */
   }
 
   /* Don't publish messages if we're a remote console - we won't have all of the
@@ -1588,22 +1565,16 @@ static void really_quit(int num, shutdown_nice_t niceness, int restart)
   ast_verb(0, "Executing last minute cleanups\n");
   ast_run_atexits(run_cleanups);
 
-  ast_debug(1, "libcutil ending (%d).\n", num);
-#if 0
-
-  if (ast_socket > -1) {
+  if (libcutil_get_socket() > -1) {
     pthread_cancel(lthread);
-    close(ast_socket);
-    ast_socket = -1;
-    unlink(ast_config_AST_SOCKET);
+    close(libcutil_get_socket());
+    libcutil_set_socket(-1);
+    unlink(libcutil_get_socket());
     pthread_kill(lthread, SIGURG);
     pthread_join(lthread, NULL);
   }
 
-  if (ast_consock > -1) close(ast_consock);
-#else /* if 0 */
-  console_uninitialize();
-#endif /* if 0 */
+  if (libcutil_get_socket() > -1) close(libcutil_get_socket());
 
 
   if (!ast_opt_remote) unlink(libcutil_get_config_pid());
@@ -1612,6 +1583,7 @@ static void really_quit(int num, shutdown_nice_t niceness, int restart)
 
   if (sig_alert_pipe[1]) close(sig_alert_pipe[1]);
   printf("%s", term_quit());
+
 #if 0
 
   if (restart) {
@@ -1765,8 +1737,10 @@ static void* monitor_sig_flags(void *unused)
     if (sig_flags.need_quit) {
       sig_flags.need_quit = 0;
 
-      if (console_check_quit()) {
+      if ((consolethread != AST_PTHREADT_NULL) &&
+          (consolethread != pthread_self())) {
         sig_flags.need_quit_handler = 1;
+        pthread_kill(consolethread, SIGURG);
       } else {
         quit_handler(0, SHUTDOWN_NORMAL, 0);
       }
@@ -1785,34 +1759,6 @@ static inline void check_init(int init_result, const char *name)
     ast_run_atexits(0);
     exit(init_result == -2 ? 2 : 1);
   }
-}
-
-int console_quit(pthread_t main_thread)
-{
-  ast_el_write_default_histfile();
-
-  if ((consolethread == AST_PTHREADT_NULL) || (consolethread == pthread_self())) {
-    /* Only end if we are the consolethread, otherwise there's a race with that
-       thread. */
-    ast_el_uninitialize();
-  } else if (main_thread == pthread_self()) {
-    if (consolethread != AST_PTHREADT_NULL) {
-      pthread_kill(consolethread, SIGURG);
-    }
-  }
-  return 0;
-}
-
-int console_check_quit(void)
-{
-  int ret = 0;
-
-  if ((consolethread != AST_PTHREADT_NULL) && (consolethread != pthread_self())) {
-    ret = 1;
-    pthread_kill(consolethread, SIGURG);
-  }
-
-  return ret;
 }
 
 /*!
@@ -2058,8 +2004,10 @@ void daemon_run(int isroot, const char *runuser, const char *rungroup)
 
 
   if (ast_opt_no_fork) {
-    console_set_thread(pthread_self());
+    consolethread = pthread_self();
   }
+
+  ast_makesocket();
 
   /* GCC 4.9 gives a bogus "right-hand operand of comma expression has
    * no effect" warning */
