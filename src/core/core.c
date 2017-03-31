@@ -62,9 +62,6 @@ struct thread_list_t {
 static AST_RWLIST_HEAD_STATIC(thread_list, thread_list_t);
 
 
-\
-
-
 /*console prompt string. set env(CUTIL_PROMPT) will be overried default*/
 # define CUTIL_PROMPT "*CLI> "
 

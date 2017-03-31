@@ -19,12 +19,13 @@
 
 
 #include "libcutil/utils.h"
+#include "libcutil/linkedlists.h"
 #include "internal.h"
 
-#define LOGFILES_MAX 10
-
 struct logger_files_line {
-  char logfiles[128];
+  char chan_name[64];
+  char chan_value[128];
+  int  index;
 
   // refer logger files line
   AST_LIST_ENTRY(logger_files_line) list; /*!< Linked list information */
@@ -36,6 +37,7 @@ struct logger_config {
   char                                append_hostname[16];
   enum libcuti_logger_rotate_strategy rotate_strategy;
 
+  int line_count;
   AST_LIST_HEAD_NOLOCK(, logger_files_line) lines;
 };
 
@@ -118,13 +120,16 @@ void __attribute__((constructor)) libcutil_init(void)
           goto err;
         }
 
-        snprintf(console_line->logfiles,
-                 sizeof(console_line->logfiles),
-                 "console => notice,warning,error");
+        snprintf(console_line->chan_name,
+                 sizeof(console_line->chan_name),
+                 "console");
+        snprintf(console_line->chan_value,
+                 sizeof(console_line->chan_value),
+                 "notice,warning,error");
 
-        g_libcutil->logger_cfg->lines = AST_LIST_HEAD_NOLOCK_INIT_VALUE;
-        AST_LIST_INSERT_TAIL(g_libcutil->logger_cfg->lines, console_line, lines);
-
+        AST_LIST_HEAD_INIT_NOLOCK(&g_libcutil->logger_cfg->lines);
+        AST_LIST_INSERT_TAIL(&g_libcutil->logger_cfg->lines, console_line, list);
+        g_libcutil->logger_cfg->line_count++;
 
         snprintf(g_libcutil->logger_cfg->date_format,
                  sizeof(g_libcutil->logger_cfg->date_format), "%%F %%T.%%3q");
@@ -156,10 +161,10 @@ void __attribute__((destructor)) libcutil_free(void)
   if (g_libcutil) {
     if (g_libcutil->logger_cfg) {
       struct logger_files_line *current = NULL;
-      struct logger_config     *head    = g_libcutil->logger_cfg;
 
 
-      while ((current = AST_LIST_REMOVE_HEAD(head, lines))) {
+      while ((current =
+                AST_LIST_REMOVE_HEAD(&g_libcutil->logger_cfg->lines, list))) {
         free(current);
       }
 
@@ -509,26 +514,10 @@ void libcutil_logger_set_rotate_strategy(
 {
   struct libcutil *instance = libcutil_instance();
 
-  instan->logger_cfg->rotate_strategy = strategy;
-
-  // switch (strategy) {
-  // case LOGGER_ROTATE_STRATEGY_NONE:
-  // {} break;
-  //
-  // case LOGGER_ROTATE_STRATEGY_SEQUENTIAL:
-  // {} break;
-  //
-  // case LOGGER_ROTATE_STRATEGY_ROTATE:
-  // {} break;
-  //
-  // case LOGGER_ROTATE_STRATEGY_TIMESTAMP:
-  // {} break;
-  //
-  // default: {} break;
-  // }
+  instance->logger_cfg->rotate_strategy = strategy;
 }
 
-enum libcuti_logger_rotate_strategy strategy libcutil_logger_get_rotate_strategy(
+enum libcuti_logger_rotate_strategy libcutil_logger_get_rotate_strategy(
   void)
 {
   struct libcutil *instance = libcutil_instance();
@@ -536,21 +525,36 @@ enum libcuti_logger_rotate_strategy strategy libcutil_logger_get_rotate_strategy
   return instance->logger_cfg->rotate_strategy;
 }
 
-void libcutil_logger_append_logfiles_line(char *line)
-struct libcutil *instance = libcutil_instance();
+void libcutil_logger_append_logfiles_line(char *name, char *value)
 {
+  struct libcutil *instance              = libcutil_instance();
   struct logger_files_line *console_line =
     calloc(1, sizeof(struct logger_files_line));
 
   if (!console_line) {
-    goto err;
+    return;
   }
 
-  snprintf(console_line->logfiles,
-           sizeof(console_line->logfiles),
-           "line");
+  snprintf(console_line->chan_name,
+           sizeof(console_line->chan_name),
+           "%s", name);
 
-  AST_LIST_INSERT_TAIL(instance->logger_cfg->lines, console_line, lines);
+  snprintf(console_line->chan_value,
+           sizeof(console_line->chan_value),
+           "%s", value);
+  console_line->index = ++instance->logger_cfg->line_count;
+  AST_LIST_INSERT_TAIL(&instance->logger_cfg->lines, console_line, list);
+}
+
+void libcutil_logger_create_log_channel(logger_channel_cb cb)
+{
+  struct libcutil *instance = libcutil_instance();
+  struct logger_files_line *cfg;
+
+
+  AST_LIST_TRAVERSE(&instance->logger_cfg->lines, cfg, list) {
+    cb(cfg->chan_name, cfg->chan_value, cfg->index, 0);
+  }
 }
 
 static void print_intro_message(const char *runuser, const char *rungroup)

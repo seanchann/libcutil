@@ -523,7 +523,13 @@ enum libcuti_logger_rotate_strategy libcutil_logger_get_rotate_strategy(
 
  */
 void libcutil_logger_append_logfiles_line(
-  char *line);
+  char *name,
+  char *value);
 
+typedef int (*logger_channel_cb)(const char *channel,
+                                 const char *components,
+                                 int         lineno,
+                                 int         dynamic);
+void libcutil_logger_create_log_channel(logger_channel_cb cb);
 
 #endif /* _LIBCUTIL_H */

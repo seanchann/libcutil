@@ -307,23 +307,9 @@ static int logger_add_verbose_magic(struct logmsg *logmsg, char *buf, size_t siz
   const char *p;
   const char *fmt;
   struct ast_str *prefixed;
-  signed char     magic = logmsg->sublevel > 9 ? -10 : -logmsg->sublevel - 1; /*
-                                                                                 0
-                                                                                 =>
-                                                                                 -1,
-                                                                                 1
-                                                                                 =>
-                                                                                 -2,
-                                                                                 etc.
 
-                                                                                 Can't
-                                                                                 pass
-                                                                                 NUL,
-                                                                                 as
-                                                                                 it
-                                                                                 is
-                                                                                 EOS-delimiter
-                                                                               */
+  /* 0 => -1, 1 => -2, etc.  Can't pass NUL, as it is EOS-delimiter */
+  signed char magic = logmsg->sublevel > 9 ? -10 : -logmsg->sublevel - 1;
 
   /* For compatibility with modules still calling ast_verbose() directly instead
      of using ast_verb() */
@@ -827,6 +813,31 @@ static int init_logger_chain(const char *altconf)
 
 #else /* if 0 */
 
+
+static int make_logchannel_cb(const char *channel,
+                              const char *components,
+                              int         lineno,
+                              int         dynamic)
+{
+  struct logchannel *chan;
+
+  if (!(chan = make_logchannel(channel, components, lineno, dynamic))) {
+    /* Print error message directly to the consoles since the lock is held
+     * and we don't want to unlock with the list partially built */
+    ast_console_puts_mutable("ERROR: Unable to create log channel '",
+                             __LOG_ERROR);
+    ast_console_puts_mutable(channel,
+                             __LOG_ERROR);
+    ast_console_puts_mutable("'\n",
+                             __LOG_ERROR);
+    return -1;
+  }
+  AST_RWLIST_INSERT_HEAD(&logchannels, chan, list);
+  global_logmask |= chan->logmask;
+
+  return 0;
+}
+
 /* \brief Read config, setup channels.
  * \param altconf Alternate configuration file to read.
  *
@@ -863,7 +874,7 @@ static int init_logger_chain(const char *altconf)
   closelog();
 
 
-  if ((s = libcutil_logg)) {
+  if ((s = libcutil_logger_get_appendhostname())) {
     if (ast_true(s)) {
       if (gethostname(hostname, sizeof(hostname) - 1)) {
         ast_copy_string(hostname, "unknown", sizeof(hostname));
@@ -872,80 +883,45 @@ static int init_logger_chain(const char *altconf)
     }
   }
 
-  if ((s = ast_variable_retrieve(cfg, "general", "display_callids"))) {
+  if ((s = libcutil_logger_get_use_callids())) {
     display_callids = ast_true(s);
   }
 
-  if ((s = ast_variable_retrieve(cfg, "general", "dateformat"))) {
+  if ((s = libcutil_logger_get_date_format())) {
     ast_copy_string(dateformat, s, sizeof(dateformat));
   }
+  logfiles.queue_log = 0;
 
-  if ((s = ast_variable_retrieve(cfg, "general", "queue_log"))) {
-    logfiles.queue_log = ast_true(s);
+  switch (libcutil_logger_get_rotate_strategy()) {
+  case LOGGER_ROTATE_STRATEGY_SEQUENTIAL:
+  {
+    rotatestrategy = SEQUENTIAL;
+  } break;
+
+  case LOGGER_ROTATE_STRATEGY_ROTATE:
+  {
+    rotatestrategy = ROTATE;
+  } break;
+
+  case LOGGER_ROTATE_STRATEGY_TIMESTAMP:
+  {
+    rotatestrategy = TIMESTAMP;
+  } break;
+
+  case LOGGER_ROTATE_STRATEGY_NONE:
+  default:
+  {
+    rotatestrategy = NONE;
+  } break;
   }
 
-  if ((s = ast_variable_retrieve(cfg, "general", "queue_log_to_file"))) {
-    logfiles.queue_log_to_file = ast_true(s);
-  }
+  libcutil_logger_create_log_channel(make_logchannel_cb);
 
-  if ((s = ast_variable_retrieve(cfg, "general", "queue_log_name"))) {
-    ast_copy_string(queue_log_name, s, sizeof(queue_log_name));
-  }
-
-  if ((s = ast_variable_retrieve(cfg, "general", "queue_log_realtime_use_gmt"))) {
-    logfiles.queue_log_realtime_use_gmt = ast_true(s);
-  }
-# if 0
-
-  if ((s = ast_variable_retrieve(cfg, "general", "exec_after_rotate"))) {
-    ast_copy_string(exec_after_rotate, s, sizeof(exec_after_rotate));
-  }
-# endif /* if 0 */
-
-  if ((s = ast_variable_retrieve(cfg, "general", "rotatestrategy"))) {
-    if (strcasecmp(s, "timestamp") == 0) {
-      rotatestrategy = TIMESTAMP;
-    } else if (strcasecmp(s, "rotate") == 0) {
-      rotatestrategy = ROTATE;
-    } else if (strcasecmp(s, "sequential") == 0) {
-      rotatestrategy = SEQUENTIAL;
-    } else if (strcasecmp(s, "none") == 0) {
-      rotatestrategy = NONE;
-    } else {
-      fprintf(stderr, "Unknown rotatestrategy: %s\n", s);
-    }
-  } else {
-    if ((s = ast_variable_retrieve(cfg, "general", "rotatetimestamp"))) {
-      rotatestrategy = ast_true(s) ? TIMESTAMP : SEQUENTIAL;
-      fprintf(stderr,
-              "rotatetimestamp option has been deprecated.  Please use rotatestrategy instead.\n");
-    }
-  }
-
-  var = ast_variable_browse(cfg, "logfiles");
-
-  for (; var; var = var->next) {
-    if (!(chan = make_logchannel(var->name, var->value, var->lineno, 0))) {
-      /* Print error message directly to the consoles since the lock is held
-       * and we don't want to unlock with the list partially built */
-      ast_console_puts_mutable("ERROR: Unable to create log channel '",
-                               __LOG_ERROR);
-      ast_console_puts_mutable(var->name,
-                               __LOG_ERROR);
-      ast_console_puts_mutable("'\n",
-                               __LOG_ERROR);
-      continue;
-    }
-    AST_RWLIST_INSERT_HEAD(&logchannels, chan, list);
-    global_logmask |= chan->logmask;
-  }
 
   if (qlog) {
     fclose(qlog);
     qlog = NULL;
   }
-
-  ast_config_destroy(cfg);
 
   return 0;
 }
@@ -2400,7 +2376,8 @@ void ast_log_backtrace(void)
   char **strings;
 
   if (!(bt = ast_bt_create())) {
-    ast_log(LOG_WARNING, "Unable to allocate space for backtrace structure\n");
+    ast_log(LOG_WARNING,
+            "Unable to allocate space for backtrace structure\n");
     return;
   }
 

@@ -19,8 +19,36 @@
 #include "libcutil/poll-compat.h"
 #include "libcutil/utils.h"
 #include "libcutil/api.h"
+#include "libcutil/cli.h"
 
 static char *_argv[256];
+
+
+static char* handle_cli_test(struct ast_cli_entry *e,
+                             int                   cmd,
+                             struct ast_cli_args  *a)
+{
+  switch (cmd) {
+  case CLI_INIT:
+    e->command = "test show debug";
+    e->usage   =
+      "Usage: test show debug\n"
+      "       List current debug level\n";
+    return NULL;
+
+  case CLI_GENERATE:
+    return NULL;
+  }
+
+  cutil_log(LOG_NOTICE, "get debug level\r\n");
+  ast_cli(a->fd, "current debug leve %d\n", libcutil_get_option_debug());
+
+  return CLI_SUCCESS;
+}
+
+static struct ast_cli_entry cli_test[] = {
+  AST_CLI_DEFINE(handle_cli_test, "get logger debug level"),
+};
 
 
 int main(int argc, char *argv[])
@@ -44,14 +72,20 @@ int main(int argc, char *argv[])
   libcutil_set_config_run_dir("/var/run/testcutil");
 
 
-  libcutil_process();
+  /* register the logger cli commands */
+  ast_cli_register_multiple(cli_test, ARRAY_LEN(cli_test));
 
   cutil_log(LOG_NOTICE, "test %s level log\r\n", "notice");
   cutil_debug(1, "debug test\n");
   cutil_verbose("cutil verbose test. current verbose level(%d)\n",
                 libcutil_get_option_verbose());
 
+  libcutil_process();
+
+
   sleep(5);
+
+  ast_cli_unregister_multiple(cli_test, ARRAY_LEN(cli_test));
 
   // libcutil_free();
   return 0;
