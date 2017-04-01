@@ -754,7 +754,6 @@ static char* cli_complete(EditLine *editline, int ch)
   char   buf[2048], savechr;
   int    res;
 
-  printf("cli complete read char\r\n");
 
   LineInfo *lf = (LineInfo *)el_line(editline);
 
@@ -775,7 +774,6 @@ static char* cli_complete(EditLine *editline, int ch)
   len = lf->cursor - ptr;
 
   if (ast_opt_remote) {
-    printf("cli complete read char\r\n");
     snprintf(buf,
              sizeof(buf),
              "_COMMAND NUMMATCHES \"%s\" \"%s\"",
