@@ -48,7 +48,6 @@
 #include "libcutil/localtime.h"
 #include "libcutil/term.h"
 #include "libcutil/ast_version.h"
-#include "internal.h"
 
 struct ast_atexit {
   void (*func)(void);
@@ -564,7 +563,7 @@ static int ast_makesocket(void)
   return 0;
 }
 
-int ast_tryconnect(void)
+static int ast_tryconnect(void)
 {
   struct sockaddr_un sunaddr;
   int res;
@@ -1997,7 +1996,10 @@ static int console_print(const char *s)
   return res;
 }
 
-void daemon_run(int isroot, const char *runuser, const char *rungroup)
+static void daemon_run(int                isroot,
+                       const char        *runuser,
+                       const char        *rungroup,
+                       fully_booted_event fully_booted)
 {
   sigset_t sigs;
   int      num;
@@ -2043,6 +2045,9 @@ void daemon_run(int isroot, const char *runuser, const char *rungroup)
   signal(SIGTERM, __quit_handler);
   sigaction(SIGHUP,  &hup_handler,        NULL);
   sigaction(SIGPIPE, &ignore_sig_handler, NULL);
+
+
+  fully_booted();
 
   if (ast_opt_console) {
     /* Console stuff now... */
@@ -2168,7 +2173,7 @@ static int remoteconsolehandler(const char *s)
   return ret;
 }
 
-void ast_remotecontrol(char *data)
+static void ast_remotecontrol(char *data)
 {
   char  buf[256] = "";
   int   res;
@@ -2329,7 +2334,7 @@ void ast_remotecontrol(char *data)
   printf("\nDisconnected from LibCutil CLI server\n");
 }
 
-void enable_multi_thread_safe(void)
+static void enable_multi_thread_safe(void)
 {
   multi_thread_safe = 1;
 }
@@ -2351,7 +2356,7 @@ static void print_intro_message(const char *runuser, const char *rungroup)
 }
 
 /*libcutil_process when lib init done. call this function in your main loop*/
-void libcutil_process(void)
+void libcutil_process(fully_booted_event event_handle)
 {
   int isroot = 1, rundir_exists = 0;
   const char *runuser = NULL, *rungroup = NULL;
@@ -2541,5 +2546,5 @@ void libcutil_process(void)
   }
 
 
-  daemon_run(isroot, runuser, rungroup);
+  daemon_run(isroot, runuser, rungroup, event_handle);
 }

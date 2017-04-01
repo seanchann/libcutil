@@ -428,7 +428,8 @@ void           libcutil_enable_coredump(void);
 #define ast_opt_dump_core               libcutil_test_option( \
     AST_OPT_FLAG_DUMP_CORE)
 
-void                              libcutil_process(void);
+typedef void (*fully_booted_event) (void);
+void                              libcutil_process(fully_booted_event event_handle);
 
 /*libcutil init and free api.not use "-nonstartfiles" or "-nostdlib" for build
    flag*/

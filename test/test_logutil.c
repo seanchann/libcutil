@@ -69,6 +69,11 @@ static int show_cli_help(void)
   return 0;
 }
 
+static void fully_booted_event_cb(void)
+{
+  ast_verbose("libcutil fully booted\r\n");
+}
+
 int main(int argc, char *argv[])
 {
   int isroot = 1, rundir_exists = 0;
@@ -157,7 +162,7 @@ int main(int argc, char *argv[])
     }
   }
 
-  libcutil_process();
+  libcutil_process(fully_booted_event_cb);
 
 
   sleep(5);
