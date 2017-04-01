@@ -394,6 +394,7 @@ const char   * libcutil_get_ctl_filename(void);
 
 void           libcutil_enable_console(void);
 void           libcutil_enable_remote(void);
+void           libcutil_enable_coredump(void);
 
 
 #define ast_opt_remote                  libcutil_test_option(AST_OPT_FLAG_REMOTE)

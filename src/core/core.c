@@ -30,6 +30,13 @@
 #include <sys/un.h>
 #include <histedit.h>
 #include <fcntl.h>
+#include <grp.h>
+#include <pwd.h>
+
+#ifdef linux
+# include <sys/prctl.h>
+#endif /* ifdef linux */
+
 
 /* we define here the variables so to better agree on the prototype */
 #include "libcutil/utils.h"
@@ -40,6 +47,7 @@
 #include "libcutil/lock.h"
 #include "libcutil/localtime.h"
 #include "libcutil/term.h"
+#include "libcutil/ast_version.h"
 #include "internal.h"
 
 struct ast_atexit {
@@ -133,6 +141,15 @@ pid_t ast_mainpid;
 static int multi_thread_safe;
 
 
+/*! \brief Welcome message when starting a CLI interface */
+# define WELCOME_MESSAGE                                                                          \
+  ast_verbose("LibCutil %s console interface, Copyright (C) 2016 - 2017, JYD, Inc. and others.\n" \
+              "Created by seanchann.zhou <xqzhou@bj-jyd.cn>\n"                                    \
+              "=========================================================================\n",      \
+              ast_get_version())                                                                  \
+
+
+
 static int console_print(const char *s);
 
 
@@ -180,7 +197,7 @@ static int read_credentials(int fd, char *buffer, size_t size,
   struct sockpeercred cred;
 #  else /* ifdef HAVE_STRUCT_SOCKPEERCRED_UID */
   struct ucred cred;
-#  endif /* ifdef HAVE_STRUCT_SOCKPEERCRED_UID */
+#  endif  /* ifdef HAVE_STRUCT_SOCKPEERCRED_UID */
   socklen_t len = sizeof(cred);
 # endif /* if defined(SO_PEERCRED) */
 # if defined(HAVE_GETPEEREID)
@@ -188,7 +205,7 @@ static int read_credentials(int fd, char *buffer, size_t size,
   gid_t gid;
 # else /* if defined(HAVE_GETPEEREID) */
   int uid, gid;
-# endif /* if defined(HAVE_GETPEEREID) */
+# endif  /* if defined(HAVE_GETPEEREID) */
   int result;
 
   result = read(fd, buffer, size);
@@ -209,7 +226,7 @@ static int read_credentials(int fd, char *buffer, size_t size,
 #  else /* defined(HAVE_STRUCT_UCRED_CR_UID) */
   uid = cred.cr_uid;
   gid = cred.cr_gid;
-#  endif /* defined(HAVE_STRUCT_UCRED_UID) */
+#  endif  /* defined(HAVE_STRUCT_UCRED_UID) */
 
 # elif defined(HAVE_GETPEEREID)
 
@@ -220,8 +237,8 @@ static int read_credentials(int fd, char *buffer, size_t size,
           defined(HAVE_STRUCT_UCRED_CR_UID)) */
   return result;
 
-# endif /* if defined(SO_PEERCRED) && (defined(HAVE_STRUCT_UCRED_UID) ||
-           defined(HAVE_STRUCT_UCRED_CR_UID)) */
+# endif  /* if defined(SO_PEERCRED) && (defined(HAVE_STRUCT_UCRED_UID) ||
+            defined(HAVE_STRUCT_UCRED_CR_UID)) */
   con->uid = uid;
   con->gid = gid;
 
@@ -270,6 +287,7 @@ static void* netconsole(void *vconsole)
 
     if (fds[0].revents) {
       int cmds_read, bytes_read;
+
 
       if ((bytes_read =
              read_credentials(con->fd, start_read, end_buf - start_read,
@@ -343,6 +361,7 @@ static void* netconsole(void *vconsole)
   if (!ast_opt_hide_connect) {
     ast_verb(3, "Remote UNIX connection disconnected\n");
   }
+
   close(con->fd);
   close(con->p[0]);
   close(con->p[1]);
@@ -418,6 +437,7 @@ static void* listener(void *unused)
           consoles[x].option_verbose = 0;
           consoles[x].fd             = s;
 
+
           if (ast_pthread_create_detached_background(&consoles[x].t, NULL,
                                                      netconsole, &consoles[x])) {
             consoles[x].fd = -1;
@@ -455,8 +475,6 @@ static int ast_makesocket(void)
 
   for (x = 0; x < AST_MAX_CONNECTS; x++) consoles[x].fd = -1;
   unlink(libcutil_get_config_socket());
-  printf("config socket socket: %s\n",
-         libcutil_get_config_socket());
   libcutil_set_socket(socket(PF_LOCAL, SOCK_STREAM, 0));
 
   if (libcutil_get_socket() < 0) {
@@ -553,13 +571,11 @@ int ast_tryconnect(void)
 
   libcutil_set_consock(socket(PF_LOCAL, SOCK_STREAM, 0));
 
-  printf("connection sock done 1\r\n");
 
   if (libcutil_get_consock() < 0) {
     fprintf(stderr, "Unable to create socket: %s\n", strerror(errno));
     return 0;
   }
-  printf("connection sock done\r\n");
   memset(&sunaddr, 0, sizeof(sunaddr));
   sunaddr.sun_family = AF_LOCAL;
   ast_copy_string(sunaddr.sun_path,
@@ -569,7 +585,6 @@ int ast_tryconnect(void)
     connect(libcutil_get_consock(), (struct sockaddr *)&sunaddr, sizeof(sunaddr));
 
   if (res) {
-    printf("connection sock done error %d\r\n", res);
     close(libcutil_get_consock());
     libcutil_set_consock(-1);
     return 0;
@@ -740,6 +755,8 @@ static char* cli_complete(EditLine *editline, int ch)
   char   buf[2048], savechr;
   int    res;
 
+  printf("cli complete read char\r\n");
+
   LineInfo *lf = (LineInfo *)el_line(editline);
 
   savechr             = *(char *)lf->cursor;
@@ -759,6 +776,7 @@ static char* cli_complete(EditLine *editline, int ch)
   len = lf->cursor - ptr;
 
   if (ast_opt_remote) {
+    printf("cli complete read char\r\n");
     snprintf(buf,
              sizeof(buf),
              "_COMMAND NUMMATCHES \"%s\" \"%s\"",
@@ -1024,7 +1042,7 @@ static char* cli_prompt(EditLine *editline)
 static int ast_el_read_char(EditLine *editline, wchar_t *cp)
 # else /* ifdef HAVE_LIBEDIT_IS_UNICODE */
 static int ast_el_read_char(EditLine * editline, char * cp)
-# endif /* ifdef HAVE_LIBEDIT_IS_UNICODE */
+# endif  /* ifdef HAVE_LIBEDIT_IS_UNICODE */
 {
   int num_read = 0;
   int lastpos  = 0;
@@ -1047,6 +1065,7 @@ static int ast_el_read_char(EditLine * editline, char * cp)
     }
     res = ast_poll(fds, max, -1);
 
+
     if (res < 0) {
       /*if (sig_flags.need_quit || sig_flags.need_quit_handler)*/
       if (sig_need_quit() || sig_need_quit_handler()) break;
@@ -1060,6 +1079,7 @@ static int ast_el_read_char(EditLine * editline, char * cp)
       char c = '\0';
       num_read = read(STDIN_FILENO, &c, 1);
 
+
       if (num_read < 1) {
         break;
       } else {
@@ -1067,7 +1087,7 @@ static int ast_el_read_char(EditLine * editline, char * cp)
         *cp = btowc(c);
 # else /* ifdef  HAVE_LIBEDIT_IS_UNICODE */
         *cp = c;
-# endif /* ifdef  HAVE_LIBEDIT_IS_UNICODE */
+# endif  /* ifdef  HAVE_LIBEDIT_IS_UNICODE */
         return num_read;
       }
     }
@@ -1077,7 +1097,7 @@ static int ast_el_read_char(EditLine * editline, char * cp)
 
       /* if the remote side disappears exit */
       if (res < 1) {
-        fprintf(stderr, "\nDisconnected from Asterisk server\n");
+        fprintf(stderr, "\nDisconnected from LibCutil CLI server\n");
 
         if (!ast_opt_reconnect) {
           quit_handler(0, SHUTDOWN_FAST, 0);
@@ -1121,7 +1141,7 @@ static int ast_el_read_char(EditLine * editline, char * cp)
         *cp = btowc(CC_REFRESH);
 # else /* ifdef  HAVE_LIBEDIT_IS_UNICODE */
         *cp = CC_REFRESH;
-# endif /* ifdef  HAVE_LIBEDIT_IS_UNICODE */
+# endif  /* ifdef  HAVE_LIBEDIT_IS_UNICODE */
         return 1;
       } else {
         lastpos = 1;
@@ -1133,8 +1153,9 @@ static int ast_el_read_char(EditLine * editline, char * cp)
   *cp = btowc('\0');
 # else /* ifdef  HAVE_LIBEDIT_IS_UNICODE */
   *cp = '\0';
-# endif /* ifdef  HAVE_LIBEDIT_IS_UNICODE */
+# endif  /* ifdef  HAVE_LIBEDIT_IS_UNICODE */
 
+  printf("el read out\r\n");
   return 0;
 }
 
@@ -1308,7 +1329,7 @@ int ast_safe_system(const char *s)
   pid = fork();
 # else /* ifdef HAVE_WORKING_FORK */
   pid = vfork();
-# endif /* ifdef HAVE_WORKING_FORK */
+# endif  /* ifdef HAVE_WORKING_FORK */
 
   if (pid == 0) {
 # ifdef HAVE_CAP
@@ -1346,7 +1367,7 @@ int ast_safe_system(const char *s)
   ast_unreplace_sigchld();
 #else /* !defined(HAVE_WORKING_FORK) && !defined(HAVE_WORKING_VFORK) */
   res = -1;
-#endif /* if defined(HAVE_WORKING_FORK) || defined(HAVE_WORKING_VFORK) */
+#endif  /* if defined(HAVE_WORKING_FORK) || defined(HAVE_WORKING_VFORK) */
 
   return res;
 }
@@ -1402,7 +1423,7 @@ int ast_all_zeros(const char *s)
 
 int show_version(void)
 {
-  printf("Asterisk %s\n", ast_get_version());
+  printf("LibCutil CLI %s\n", ast_get_version());
   return 0;
 }
 
@@ -1469,7 +1490,7 @@ static int can_safely_quit(shutdown_nice_t niceness, int restart)
   if ((shuttingdown != NOT_SHUTTING_DOWN) && (niceness >= shuttingdown)) {
     /* Already in progress and other request was less nice. */
     ast_mutex_unlock(&safe_system_lock);
-    ast_verbose("Ignoring asterisk %s request, already in progress.\n",
+    ast_verbose("Ignoring LibCutil %s request, already in progress.\n",
                 restart ? "restart" : "shutdown");
     return 0;
   }
@@ -1484,7 +1505,7 @@ static int can_safely_quit(shutdown_nice_t niceness, int restart)
 
   if (shuttingdown != niceness) {
     if ((shuttingdown == NOT_SHUTTING_DOWN) && ast_opt_console) {
-      ast_verb(0, "Asterisk %s cancelled.\n", restart ? "restart" : "shutdown");
+      ast_verb(0, "LibCutil %s cancelled.\n", restart ? "restart" : "shutdown");
     }
     ast_mutex_unlock(&safe_system_lock);
     return 0;
@@ -1984,8 +2005,6 @@ void daemon_run(int isroot, const char *runuser, const char *rungroup)
 
   ast_mainpid = getpid();
 
-  printf("run 1\r\n");
-
   /* Initialize the terminal.  Since all processes have been forked,
    * we can now start using the standard log messages.
    */
@@ -1997,6 +2016,7 @@ void daemon_run(int isroot, const char *runuser, const char *rungroup)
   ast_json_init();
   threadstorage_init();
   check_init(init_logger(), "Logger");
+  ast_builtins_init();
 
   if (ast_opt_console) {
     console_el_init();
@@ -2036,10 +2056,10 @@ void daemon_run(int isroot, const char *runuser, const char *rungroup)
 
     ast_pthread_create_detached(&mon_sig_flags, NULL, monitor_sig_flags, NULL);
 
-    set_icon("Asterisk");
+    set_icon("LibCutil");
     snprintf(title,
              sizeof(title),
-             "Asterisk Console on '%s' (pid %ld)",
+             "LibCutil Console on '%s' (pid %ld)",
              hostname,
              (long)ast_mainpid);
     set_title(title);
@@ -2162,13 +2182,15 @@ void ast_remotecontrol(char *data)
   int   num = 0;
 
   ast_term_init();
-  printf("%s", term_end());
+  printf("%s", ast_insteadof_term_end());
   fflush(stdout);
+
 
   memset(&sig_flags, 0, sizeof(sig_flags));
   signal(SIGINT,  __remote_quit_handler);
   signal(SIGTERM, __remote_quit_handler);
   signal(SIGHUP,  __remote_quit_handler);
+
 
   if (read(libcutil_get_consock(), buf, sizeof(buf) - 1) < 0) {
     ast_log(LOG_ERROR, "read() failed: %s\n", strerror(errno));
@@ -2203,6 +2225,7 @@ void ast_remotecontrol(char *data)
   if (!data) {
     send_rasterisk_connect_commands();
   }
+
 
   if (ast_opt_exec && data) { /* hack to print output then exit if asterisk -rx
                                  is used */
@@ -2269,7 +2292,7 @@ void ast_remotecontrol(char *data)
     return;
   }
 
-  ast_verbose("Connected to Asterisk %s currently running on %s (pid = %d)\n",
+  ast_verbose("Connected to LibCutil CLI %s currently running on %s (pid = %d)\n",
               version,
               hostname,
               pid);
@@ -2303,10 +2326,220 @@ void ast_remotecontrol(char *data)
       }
     }
   }
-  printf("\nDisconnected from Asterisk server\n");
+  printf("\nDisconnected from LibCutil CLI server\n");
 }
 
 void enable_multi_thread_safe(void)
 {
   multi_thread_safe = 1;
+}
+
+static void print_intro_message(const char *runuser, const char *rungroup)
+{
+  if (ast_opt_console || libcutil_get_option_verbose() ||
+      (ast_opt_remote && !ast_opt_exec)) {
+    WELCOME_MESSAGE;
+
+    if (runuser) {
+      ast_verbose("Running as user '%s'\n", runuser);
+    }
+
+    if (rungroup) {
+      ast_verbose("Running under group '%s'\n", rungroup);
+    }
+  }
+}
+
+/*libcutil_process when lib init done. call this function in your main loop*/
+void libcutil_process(void)
+{
+  int isroot = 1, rundir_exists = 0;
+  const char *runuser = NULL, *rungroup = NULL;
+  char *xarg = NULL;
+  int   x;
+
+
+  if (geteuid() != 0) isroot = 0;
+
+  /* Must install this signal handler up here to ensure that if the canary
+   * fails to execute that it doesn't kill the Asterisk process.
+   */
+  sigaction(SIGCHLD, &child_handler, NULL);
+
+  /* It's common on some platforms to clear /var/run at boot.  Create the
+   * socket file directory before we drop privileges. */
+  if (mkdir(libcutil_get_config_run_dir(), 0755)) {
+    if (errno == EEXIST) {
+      rundir_exists = 1;
+      libcutil_set_config_socket();
+    } else {
+      fprintf(stderr,
+              "Unable to create socket file directory.  Remote consoles will not be able to connect! (%s)\n",
+              strerror(x));
+      exit(1);
+    }
+  }
+
+  if ((!rungroup) &&
+      !ast_strlen_zero(libcutil_get_config_run_group())) rungroup =
+      libcutil_get_config_run_group();
+
+
+  if ((!runuser) &&
+      !ast_strlen_zero(libcutil_get_config_run_user())) runuser =
+      libcutil_get_config_run_user();
+
+
+#ifndef __CYGWIN__
+
+  if (isroot) {
+    ast_set_priority(ast_opt_high_priority);
+  }
+
+  if (isroot && rungroup) {
+    struct group *gr;
+    gr = getgrnam(rungroup);
+
+    if (!gr) {
+      fprintf(stderr, "No such group '%s'!\n", rungroup);
+      exit(1);
+    }
+
+    if (!rundir_exists && chown(libcutil_get_config_run_dir(), -1, gr->gr_gid)) {
+      fprintf(stderr,
+              "Unable to chgrp run directory to %d (%s)\n",
+              (int)gr->gr_gid,
+              rungroup);
+    }
+
+    if (setgid(gr->gr_gid)) {
+      fprintf(stderr, "Unable to setgid to %d (%s)\n", (int)gr->gr_gid, rungroup);
+      exit(1);
+    }
+
+    if (setgroups(0, NULL)) {
+      fprintf(stderr, "Unable to drop unneeded groups\n");
+      exit(1);
+    }
+  }
+
+  if (runuser && !ast_opt_remote) {
+  # ifdef HAVE_CAP
+    int has_cap = 1;
+  # endif /* HAVE_CAP */
+    struct passwd *pw;
+    pw = getpwnam(runuser);
+
+    if (!pw) {
+      fprintf(stderr, "No such user '%s'!\n", runuser);
+      exit(1);
+    }
+
+    if (chown(libcutil_get_config_run_dir(), pw->pw_uid, -1)) {
+      fprintf(stderr,
+              "Unable to chown run directory to %d (%s)\n",
+              (int)pw->pw_uid,
+              runuser);
+    }
+  # ifdef HAVE_CAP
+
+    if (prctl(PR_SET_KEEPCAPS, 1, 0, 0, 0)) {
+      ast_log(LOG_WARNING, "Unable to keep capabilities.\n");
+      has_cap = 0;
+    }
+  # endif /* HAVE_CAP */
+
+    if (!isroot && (pw->pw_uid != geteuid())) {
+      fprintf(stderr,
+              "main started as nonroot, but runuser '%s' requested.\n",
+              runuser);
+      exit(1);
+    }
+
+    if (!rungroup) {
+      if (setgid(pw->pw_gid)) {
+        fprintf(stderr, "Unable to setgid to %d!\n", (int)pw->pw_gid);
+        exit(1);
+      }
+
+      if (isroot && initgroups(pw->pw_name, pw->pw_gid)) {
+        fprintf(stderr, "Unable to init groups for '%s'\n", runuser);
+        exit(1);
+      }
+    }
+
+    if (setuid(pw->pw_uid)) {
+      fprintf(stderr, "Unable to setuid to %d (%s)\n", (int)pw->pw_uid, runuser);
+      exit(1);
+    }
+  # ifdef HAVE_CAP
+
+    if (has_cap) {
+      cap_t cap;
+
+      cap = cap_from_text("cap_net_admin=eip");
+
+      if (cap_set_proc(cap)) {
+        fprintf(stderr, "Unable to install capabilities.\n");
+      }
+
+      if (cap_free(cap)) {
+        fprintf(stderr, "Unable to drop capabilities.\n");
+      }
+    }
+  # endif /* HAVE_CAP */
+  }
+
+  #endif   /* __CYGWIN__ */
+
+  #ifdef linux
+
+  if (geteuid() && ast_opt_dump_core) {
+    if (prctl(PR_SET_DUMPABLE, 1, 0, 0, 0) < 0) {
+      fprintf(stderr,
+              "Unable to set the process for core dumps after changing to a non-root user. %s\n",
+              strerror(errno));
+    }
+  }
+  #endif /* ifdef linux */
+
+
+  if (ast_tryconnect()) {
+    /* One is already running */
+    if (ast_opt_remote) {
+      enable_multi_thread_safe();
+
+      if (ast_opt_exec) {
+        ast_remotecontrol(xarg);
+        shutdown_fast_wrap(0, 0);
+        exit(0);
+      }
+      ast_term_init();
+      printf("%s", ast_insteadof_term_end());
+      fflush(stdout);
+
+      print_intro_message(runuser, rungroup);
+
+      printf("%s", term_quit());
+
+      ast_remotecontrol(NULL);
+      shutdown_fast_wrap(0, 0);
+      exit(0);
+    } else {
+      fprintf(stderr,
+              "already running on %s.  get your help for connect.\n",
+              libcutil_get_config_socket());
+      printf("%s", term_quit());
+      exit(1);
+    }
+  } else if (ast_opt_remote || ast_opt_exec) {
+    fprintf(stderr,
+            "Unable to connect to remote LibCutil CLI (does %s exist?)\n",
+            libcutil_get_config_socket());
+    printf("%s", term_quit());
+    exit(1);
+  }
+
+
+  daemon_run(isroot, runuser, rungroup);
 }

@@ -74,7 +74,7 @@ int main(int argc, char *argv[])
   int isroot = 1, rundir_exists = 0;
   const char *runuser = NULL, *rungroup = NULL;
   int x;
-  static const char *getopt_settings = "cdhRrx:Vv";
+  static const char *getopt_settings = "cdhgRrx:Vv";
   int c;
 
   printf("init library  \r\n");
@@ -146,6 +146,10 @@ int main(int argc, char *argv[])
 
     case 'c':
       libcutil_enable_console();
+      break;
+
+    case 'g':
+      libcutil_enable_coredump();
       break;
 
     case '?':

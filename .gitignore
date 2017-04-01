@@ -7,3 +7,4 @@ build.*/
 .ycm_extra_conf.*
 build.h
 libcutil_autoconfig.h
+src/core/version.c

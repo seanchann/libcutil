@@ -24,12 +24,6 @@ void shutdown_fast_wrap(int num,
 void enable_multi_thread_safe(void);
 int  ast_tryconnect(void);
 
-/*! \brief Welcome message when starting a CLI interface */
-#define WELCOME_MESSAGE                                                                           \
-  ast_verbose("libcutil console interface %s, Copyright (C) 2016 - 2017, JYD, Inc. and others.\n" \
-              "Created by seanchann.zhou <xqzhou@bj-jyd.cn>\n"                                    \
-              "=========================================================================\n",      \
-              ast_get_version())
 
 void ast_remotecontrol(char *data);
 

@@ -1817,9 +1817,8 @@ static void logger_print_normal(struct logmsg *logmsg)
         }
 
         /* Don't use LOG_MAKEPRI because it's broken in glibc<2.17 */
-        syslog_level = chan->facility | syslog_level; /*
-                                                         LOG_MAKEPRI(chan->facility,
-                                                         syslog_level); */
+        /*LOG_MAKEPRI(chan->facility, syslog_level); */
+        syslog_level = chan->facility | syslog_level;
 
         if (!chan->formatter.format_log(chan, logmsg, buf, BUFSIZ)) {
           syslog(syslog_level, "%s", buf);
