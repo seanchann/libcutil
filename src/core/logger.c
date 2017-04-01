@@ -37,6 +37,7 @@
 #include "libcutil/json.h"
 
 #include "libcutil/cli.h"
+#include "internal.h"
 
 /*** DOCUMENTATION
  ***/

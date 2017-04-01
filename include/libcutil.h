@@ -364,9 +364,7 @@ const char   * libcutil_get_config_run_dir(void);
 void           libcutil_set_config_run_dir(const char *dir);
 
 const char   * libcutil_get_config_socket(void);
-int            libcutil_set_config_socket(void);
 
-const char   * libcutil_get_config_pid(void);
 
 int            libcutil_get_option_debug(void);
 void           libcutil_set_option_debug(int level);
@@ -381,11 +379,6 @@ struct timeval libcutil_get_startup_time(void);
 struct timeval libcutil_get_lastreload_time(void);
 int            libcutil_test_option(enum cutil_option_flags flag);
 
-int            libcutil_get_consock(void);
-void           libcutil_set_consock(int fd);
-
-int            libcutil_get_socket(void);
-void           libcutil_set_socket(int fd);
 
 const char   * libcutil_get_ctl_permissions(void);
 void           libcutil_set_ctl_permissions(char *permissions);
@@ -535,10 +528,5 @@ void libcutil_logger_append_logfiles_line(
   char *name,
   char *value);
 
-typedef int (*logger_channel_cb)(const char *channel,
-                                 const char *components,
-                                 int         lineno,
-                                 int         dynamic);
-void libcutil_logger_create_log_channel(logger_channel_cb cb);
 
 #endif /* _LIBCUTIL_H */

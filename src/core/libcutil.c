@@ -18,6 +18,7 @@
 #include "libcutil/term.h"
 #include "libcutil/utils.h"
 #include "libcutil/linkedlists.h"
+#include "internal.h"
 
 struct logger_files_line {
   char chan_name[64];

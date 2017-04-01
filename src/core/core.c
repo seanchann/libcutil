@@ -48,6 +48,7 @@
 #include "libcutil/localtime.h"
 #include "libcutil/term.h"
 #include "libcutil/ast_version.h"
+#include "internal.h"
 
 struct ast_atexit {
   void (*func)(void);
