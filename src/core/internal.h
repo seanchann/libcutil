@@ -17,6 +17,8 @@ extern "C" {
 #endif // if defined(__cplusplus) || defined(c_plusplus)
 
 int         libcutil_set_config_socket(void);
+const char* libcutil_get_config_socket(void);
+
 const char* libcutil_get_config_pid(void);
 
 int         libcutil_get_consock(void);
