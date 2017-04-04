@@ -22,6 +22,7 @@
 #include "libcutil/cli.h"
 
 static char *_argv[256];
+#define RUN_DIR "/var/run/testcutil"
 
 
 static char* handle_cli_test(struct ast_cli_entry *e,
@@ -69,9 +70,22 @@ static int show_cli_help(void)
   return 0;
 }
 
+static void exit_handle(void)
+{
+  printf("exit program. clean up resource\r\n");
+
+  ast_cli_unregister_multiple(cli_test, ARRAY_LEN(cli_test));
+}
+
 static void fully_booted_event_cb(void)
 {
   ast_verbose("libcutil fully booted\r\n");
+
+  /* register the logger cli commands */
+  ast_cli_register_multiple(cli_test, ARRAY_LEN(cli_test));
+
+
+  ast_register_atexit(exit_handle);
 }
 
 int main(int argc, char *argv[])
@@ -87,18 +101,15 @@ int main(int argc, char *argv[])
 
   libcutil_set_option_debug(5);
   libcutil_set_option_verbose(5);
-  libcutil_set_config_run_user("seanchann");
-  libcutil_set_config_run_group("seanchann");
-  libcutil_set_config_socket();
+  libcutil_set_config_run_user("root");
+  libcutil_set_config_run_group("root");
 
-  //
+  libcutil_set_config_run_dir(RUN_DIR);
 
-  libcutil_set_config_dir("/var/run/testcutil");
-  libcutil_set_config_run_dir("/var/run/testcutil");
+  libcutil_set_config_log_dir("/var/log");
+  libcutil_logger_append_logfiles_line("full",
+                                       "notice,warning,error,debug,verbose");
 
-
-  /* register the logger cli commands */
-  ast_cli_register_multiple(cli_test, ARRAY_LEN(cli_test));
 
   /* Remember original args for restart */
   if (argc > ARRAY_LEN(_argv) - 1) {
@@ -164,11 +175,5 @@ int main(int argc, char *argv[])
 
   libcutil_process(fully_booted_event_cb);
 
-
-  sleep(5);
-
-  ast_cli_unregister_multiple(cli_test, ARRAY_LEN(cli_test));
-
-  // libcutil_free();
   return 0;
 }

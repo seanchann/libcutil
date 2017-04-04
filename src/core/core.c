@@ -477,6 +477,11 @@ static int ast_makesocket(void)
   unlink(libcutil_get_config_socket());
   libcutil_set_socket(socket(PF_LOCAL, SOCK_STREAM, 0));
 
+  ast_log(LOG_NOTICE,
+          "bind local socket %s fd %d\r\n",
+          libcutil_get_config_socket(),
+          libcutil_get_socket());
+
   if (libcutil_get_socket() < 0) {
     ast_log(LOG_WARNING, "Unable to create control socket: %s\n",
             strerror(errno));
@@ -2375,7 +2380,6 @@ void libcutil_process(fully_booted_event event_handle)
   if (mkdir(libcutil_get_config_run_dir(), 0755)) {
     if (errno == EEXIST) {
       rundir_exists = 1;
-      libcutil_set_config_socket();
     } else {
       fprintf(stderr,
               "Unable to create socket file directory.  Remote consoles will not be able to connect! (%s)\n",
@@ -2383,6 +2387,9 @@ void libcutil_process(fully_booted_event event_handle)
       exit(1);
     }
   }
+
+  // set config socket
+  libcutil_set_config_socket();
 
   if ((!rungroup) &&
       !ast_strlen_zero(libcutil_get_config_run_group())) rungroup =
