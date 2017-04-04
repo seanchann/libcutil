@@ -346,7 +346,6 @@ enum cutil_option_flags {
 
 
 const char   * libcutil_get_config_dir(void);
-void           libcutil_set_config_dir(const char *dir);
 
 const char   * libcutil_get_config_log_dir(void);
 void           libcutil_set_config_log_dir(const char *dir);
@@ -362,9 +361,6 @@ void           libcutil_set_config_system_name(const char *system_name);
 
 const char   * libcutil_get_config_run_dir(void);
 void           libcutil_set_config_run_dir(const char *dir);
-
-const char   * libcutil_get_config_socket(void);
-
 
 int            libcutil_get_option_debug(void);
 void           libcutil_set_option_debug(int level);
