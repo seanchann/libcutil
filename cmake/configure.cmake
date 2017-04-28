@@ -12,8 +12,6 @@ macro(Configure)
   CHECK_INCLUDE_FILES ("unistd.h" HAVE_UNISTD_H)
   CHECK_INCLUDE_FILES ("memory.h" HAVE_MEMORY_H)
   CHECK_INCLUDE_FILES ("execinfo.h" HAVE_BKTR_HEADER)
-  CHECK_INCLUDE_FILES ("locale.h" HAVE_LOCALE_T_IN_LOCALE_H)
-  CHECK_INCLUDE_FILES ("xlocale.h" HAVE_LOCALE_T_IN_XLOCALE_H)
   CHECK_INCLUDE_FILES ("limits.h" HAVE_LIMITS_H)
   CHECK_INCLUDE_FILES ("stddef.h" HAVE_STDDEF_H)
   CHECK_INCLUDE_FILES ("alloca.h" HAVE_ALLOCA_H)
@@ -171,6 +169,40 @@ macro(Configure)
 
     HAVE_STRUCT_SOCKPEERCRED_UID
   )
+
+
+  CHECK_C_SOURCE_COMPILES(
+    "
+    /* end confdefs.h.  */
+    #include <locale.h>
+    int
+    main ()
+    {
+    locale_t lt = NULL
+      ;
+      return 0;
+    }
+    "
+
+    HAVE_LOCALE_T_IN_LOCALE_H
+  )
+
+  CHECK_C_SOURCE_COMPILES(
+    "
+    /* end confdefs.h.  */
+    #include <xlocale.h>
+    int
+    main ()
+    {
+    locale_t lt = NULL
+      ;
+      return 0;
+    }
+    "
+
+    HAVE_LOCALE_T_IN_XLOCALE_H
+  )
+
 
 
 

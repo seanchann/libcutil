@@ -19,6 +19,7 @@
 #undef setpriority
 
 #include <stdlib.h>  /* for closefrom(3) */
+#include <signal.h>
 #ifndef HAVE_CLOSEFROM
 # include <dirent.h> /* for opendir(3)   */
 #endif /* ifndef HAVE_CLOSEFROM */

@@ -81,6 +81,8 @@ target_compile_options(${CUTIL_CORE_LIBRARY_STATIC} PUBLIC  "-fPIC")
 target_compile_options(${CUTIL_CORE_LIBRARY_SHARED} PUBLIC  "-fPIC")
 
 SET(LINK_LIB jansson)
+SET(LINK_LIB ncurses)
+SET(LINK_LIB uuid)
 
 if(CMAKE_THREAD_LIBS_INIT)
   SET(LINK_LIB ${LINK_LIB} ${CMAKE_THREAD_LIBS_INIT})
