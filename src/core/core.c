@@ -1159,7 +1159,6 @@ static int ast_el_read_char(EditLine * editline, char * cp)
   *cp = '\0';
 # endif  /* ifdef  HAVE_LIBEDIT_IS_UNICODE */
 
-  printf("el read out\r\n");
   return 0;
 }
 

@@ -14,6 +14,7 @@
 #ifndef _CUTIL_LOGGER_H
 #define _CUTIL_LOGGER_H
 
+#include <string.h>
 #include "libcutil.h"
 
 #if defined(__cplusplus) || defined(c_plusplus)
@@ -33,6 +34,8 @@ extern "C" {
 #define VERBOSE_PREFIX_4 "       > "
 
 #define AST_CALLID_BUFFER_LENGTH 13
+
+#define __FILENAME__ (strrchr(__FILE__, '/') ? strrchr(__FILE__, '/') + 1 : __FILE__)
 
 enum ast_logger_results {
   AST_LOGGER_SUCCESS     = 0,  /*!< Log channel was created or deleted
@@ -224,12 +227,12 @@ void __attribute__((format(printf, 6, 7))) __ast_verbose_callid(const char *file
                                                                 const char *fmt,
                                                                 ...);
 
-#define ast_verbose(...) __ast_verbose(__FILE__,            \
+#define ast_verbose(...) __ast_verbose(__FILENAME__,            \
                                        __LINE__,            \
                                        __PRETTY_FUNCTION__, \
                                        -1,                  \
                                        __VA_ARGS__)
-#define ast_verbose_callid(callid, ...) __ast_verbose_callid(__FILE__,            \
+#define ast_verbose_callid(callid, ...) __ast_verbose_callid(__FILENAME__,            \
                                                              __LINE__,            \
                                                              __PRETTY_FUNCTION__, \
                                                              -1,                  \
@@ -309,7 +312,7 @@ void ast_console_toggle_loglevel(int fd,
  * needed for third-party modules
  */
 
-#define _A_ __FILE__, __LINE__, __PRETTY_FUNCTION__
+#define _A_ __FILENAME__, __LINE__, __PRETTY_FUNCTION__
 
 #ifdef LOG_DEBUG
 # undef LOG_DEBUG
@@ -514,7 +517,7 @@ void ast_callid_strnprint(char      *buffer,
  */
 
 #define ast_log_dynamic_level(level, ...) ast_log(level,               \
-                                                  __FILE__,            \
+                                                  __FILENAME__,            \
                                                   __LINE__,            \
                                                   __PRETTY_FUNCTION__, \
                                                   __VA_ARGS__)
@@ -549,14 +552,14 @@ void ast_callid_strnprint(char      *buffer,
 #define ast_verb(level, ...)                                                      \
   do {                                                                            \
     if (VERBOSITY_ATLEAST(level)) {                                               \
-      __ast_verbose(__FILE__, __LINE__, __PRETTY_FUNCTION__, level, __VA_ARGS__); \
+      __ast_verbose(__FILENAME__, __LINE__, __PRETTY_FUNCTION__, level, __VA_ARGS__); \
     }                                                                             \
   } while (0)
 
 #define ast_verb_callid(level, callid, ...)     \
   do {                                          \
     if (VERBOSITY_ATLEAST(level)) {             \
-      __ast_verbose_callid(__FILE__,            \
+      __ast_verbose_callid(__FILENAME__,            \
                            __LINE__,            \
                            __PRETTY_FUNCTION__, \
                            level,               \
