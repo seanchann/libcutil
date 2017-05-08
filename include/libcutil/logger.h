@@ -568,6 +568,7 @@ void ast_callid_strnprint(char      *buffer,
     }                                           \
   } while (0)
 
+#define cutil_verb ast_verb
 /*!
  * \brief Re-evaluate the system max verbosity level (ast_verb_sys_level).
  *
