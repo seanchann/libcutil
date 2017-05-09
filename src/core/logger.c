@@ -382,9 +382,9 @@ static int format_log_default(struct logchannel *chan,
     break;
 
   case LOGTYPE_FILE:
-    snprintf(buf, size, "[%s] %s[%d]%s %s: %s",
+    snprintf(buf, size, "[%s] %s[%d]%s %s:%d %s: %s",
              msg->date, msg->level_name, msg->lwp, call_identifier_str,
-             msg->file, msg->message);
+             msg->file, msg->line, msg->function, msg->message);
     term_strip(buf, buf, size);
     break;
 
