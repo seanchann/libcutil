@@ -1236,4 +1236,8 @@ int ast_compare_versions(const char *version1,
  */
 int ast_check_ipv6(void);
 
+
+
+int ast_safe_system(const char *s);
+
 #endif /* _ASTERISK_UTILS_H */
