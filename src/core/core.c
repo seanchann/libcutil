@@ -29,7 +29,7 @@
 #include <pwd.h>
 #include <stdlib.h>
 #include <sys/un.h>
-#include <histedit.h>
+#include <editline/histedit.h>
 #include <fcntl.h>
 #include <grp.h>
 #include <pwd.h>

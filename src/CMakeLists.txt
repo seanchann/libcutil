@@ -9,8 +9,8 @@ set (CUTIL_CORE_VERSION_EXTRA "master")
 message(STATUS "build cutil version: ${CUTIL_CORE_VERSION}")
 
 include(CheckCXXSourceCompiles)
-include(${CMAKE_CURRENT_SOURCE_DIR}/../../cmake/readline.cmake)
-include(${CMAKE_CURRENT_SOURCE_DIR}/../../cmake/libutils.cmake)
+include(${CMAKE_CURRENT_SOURCE_DIR}/../cmake/readline.cmake)
+include(${CMAKE_CURRENT_SOURCE_DIR}/../cmake/libutils.cmake)
 #build editline first
 # Add system/bundled editline.
 MYSQL_CHECK_EDITLINE()
@@ -18,37 +18,38 @@ MYSQL_CHECK_EDITLINE()
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cutil.pc.cmakein ${CMAKE_CURRENT_BINARY_DIR}/cutil.pc @ONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/version.c.cmakein ${CMAKE_CURRENT_SOURCE_DIR}/version.c @ONLY)
 
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../asterisk)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/asterisk)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/editline)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/core)
 set(SOURCES
-  ${CMAKE_CURRENT_SOURCE_DIR}/../asterisk/syslog.c
-  ${CMAKE_CURRENT_SOURCE_DIR}/../asterisk/term.c
-  ${CMAKE_CURRENT_SOURCE_DIR}/../asterisk/lock.c
-  ${CMAKE_CURRENT_SOURCE_DIR}/../asterisk/uuid.c
-  ${CMAKE_CURRENT_SOURCE_DIR}/../asterisk/utils.c
-  ${CMAKE_CURRENT_SOURCE_DIR}/../asterisk/json.c
-  ${CMAKE_CURRENT_SOURCE_DIR}/../asterisk/md5.c
-  ${CMAKE_CURRENT_SOURCE_DIR}/../asterisk/sha1.c
-  ${CMAKE_CURRENT_SOURCE_DIR}/../asterisk/strings.c
-  ${CMAKE_CURRENT_SOURCE_DIR}/../asterisk/stringfields.c
-  ${CMAKE_CURRENT_SOURCE_DIR}/../asterisk/buildinfo.c
-  ${CMAKE_CURRENT_SOURCE_DIR}/../asterisk/backtrace.c
-  ${CMAKE_CURRENT_SOURCE_DIR}/../asterisk/astobj2_container.c
-  ${CMAKE_CURRENT_SOURCE_DIR}/../asterisk/astobj2_hash.c
-  ${CMAKE_CURRENT_SOURCE_DIR}/../asterisk/astobj2_rbtree.c
-  ${CMAKE_CURRENT_SOURCE_DIR}/../asterisk/astobj2.c
-  ${CMAKE_CURRENT_SOURCE_DIR}/../asterisk/netsock2.c
-  ${CMAKE_CURRENT_SOURCE_DIR}/../asterisk/config.c
-  ${CMAKE_CURRENT_SOURCE_DIR}/../asterisk/strcompat.c
-  ${CMAKE_CURRENT_SOURCE_DIR}/../asterisk/io.c
-  ${CMAKE_CURRENT_SOURCE_DIR}/../asterisk/threadstorage.c
-  ${CMAKE_CURRENT_SOURCE_DIR}/../asterisk/stdtime/localtime.c
-  ${CMAKE_CURRENT_SOURCE_DIR}/cli.c
-  ${CMAKE_CURRENT_SOURCE_DIR}/core.c
-  ${CMAKE_CURRENT_SOURCE_DIR}/elhelper.c
+  ${CMAKE_CURRENT_SOURCE_DIR}/asterisk/syslog.c
+  ${CMAKE_CURRENT_SOURCE_DIR}/asterisk/term.c
+  ${CMAKE_CURRENT_SOURCE_DIR}/asterisk/lock.c
+  ${CMAKE_CURRENT_SOURCE_DIR}/asterisk/uuid.c
+  ${CMAKE_CURRENT_SOURCE_DIR}/asterisk/utils.c
+  ${CMAKE_CURRENT_SOURCE_DIR}/asterisk/json.c
+  ${CMAKE_CURRENT_SOURCE_DIR}/asterisk/md5.c
+  ${CMAKE_CURRENT_SOURCE_DIR}/asterisk/sha1.c
+  ${CMAKE_CURRENT_SOURCE_DIR}/asterisk/strings.c
+  ${CMAKE_CURRENT_SOURCE_DIR}/asterisk/stringfields.c
+  ${CMAKE_CURRENT_SOURCE_DIR}/asterisk/buildinfo.c
+  ${CMAKE_CURRENT_SOURCE_DIR}/asterisk/backtrace.c
+  ${CMAKE_CURRENT_SOURCE_DIR}/asterisk/astobj2_container.c
+  ${CMAKE_CURRENT_SOURCE_DIR}/asterisk/astobj2_hash.c
+  ${CMAKE_CURRENT_SOURCE_DIR}/asterisk/astobj2_rbtree.c
+  ${CMAKE_CURRENT_SOURCE_DIR}/asterisk/astobj2.c
+  ${CMAKE_CURRENT_SOURCE_DIR}/asterisk/netsock2.c
+  ${CMAKE_CURRENT_SOURCE_DIR}/asterisk/config.c
+  ${CMAKE_CURRENT_SOURCE_DIR}/asterisk/strcompat.c
+  ${CMAKE_CURRENT_SOURCE_DIR}/asterisk/io.c
+  ${CMAKE_CURRENT_SOURCE_DIR}/asterisk/threadstorage.c
+  ${CMAKE_CURRENT_SOURCE_DIR}/asterisk/stdtime/localtime.c
+  ${CMAKE_CURRENT_SOURCE_DIR}/core/cli.c
+  ${CMAKE_CURRENT_SOURCE_DIR}/core/core.c
+  ${CMAKE_CURRENT_SOURCE_DIR}/core/elhelper.c
+  ${CMAKE_CURRENT_SOURCE_DIR}/core/logger.c
+
   ${CMAKE_CURRENT_SOURCE_DIR}/version.c
-  ${CMAKE_CURRENT_SOURCE_DIR}/logger.c
   ${CMAKE_CURRENT_SOURCE_DIR}/libcutil.c
 )
 
@@ -100,7 +101,7 @@ target_link_libraries(${CUTIL_CORE_LIBRARY_SHARED}
 )
 
 #merget libcutilcore.a and libedit.a begin
-include(${CMAKE_CURRENT_SOURCE_DIR}/../../cmake/libutils.cmake)
+include(${CMAKE_CURRENT_SOURCE_DIR}/../cmake/libutils.cmake)
 merge_static_libs(${CUTIL_CORE_LIBRARY} ${EDITLINE_LIBRARY} ${CUTIL_CORE_LIBRARY_STATIC} )
 #merget libcutilcore.a and libedit.a end
 
