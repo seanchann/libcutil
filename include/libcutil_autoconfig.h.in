@@ -203,6 +203,9 @@
 /* Define to 1 if have pthread_rwlock_trywrlock  */
 #cmakedefine HAVE_PTHREAD_RWLOCK_TIMEDWRLOCK @HAVE_PTHREAD_RWLOCK_TIMEDWRLOCK@
 
+/* Define to 1 if have fcntl.h  */
+#cmakedefine HAVE_FCNTL_H @HAVE_FCNTL_H@
+
 
 /* Enable extensions on AIX 3, Interix.  */
 #cmakedefine _ALL_SOURCE @_ALL_SOURCE@

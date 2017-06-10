@@ -22,6 +22,8 @@ macro(Configure)
   CHECK_INCLUDE_FILES ("arpa/inet.h" HAVE_ARPA_INET_H)
   CHECK_INCLUDE_FILES ("winsock.h" HAVE_WINSOCK_H)
   CHECK_INCLUDE_FILES ("winsock2.h" HAVE_WINSOCK2_H)
+  CHECK_INCLUDE_FILES ("fcntl.h" HAVE_FCNTL_H)
+
 
 
   INCLUDE(CheckSymbolExists)

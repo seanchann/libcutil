@@ -6,7 +6,15 @@ include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/build_tools.cmake)
 
 
 option(BUILD_LIBCUTIL "build c utility library" ON)
+option(ENABLE_HTTP "build http module" ON)
+option(ENABLE_RESTFUL "build restful module" ON)
+
 option(BUILD_TEST "build test binary" ON)
+
+if(ENABLE_RESTFUL)
+  #if enable
+  set(ENABLE_HTTP ON)
+endif()
 
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/.libs)
