@@ -19,7 +19,7 @@
 #ifndef _ASTERISK_HTTP_H
 #define _ASTERISK_HTTP_H
 
-//#include "asterisk/config.h"
+#include "libcutil/config.h"
 #include "libcutil/tcptls.h"
 #include "libcutil/linkedlists.h"
 

@@ -20,7 +20,7 @@
 #define _ASTERISK_HTTP_WEBSOCKET_H
 
 #include "libcutil/http.h"
-//#include "asterisk/optional_api.h"
+#include "libcutil/optional_api.h"
 
 #include <errno.h>
 

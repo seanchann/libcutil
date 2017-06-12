@@ -26,6 +26,9 @@
 
 #include "libcutil.h"
 
+#ifdef HAVE_FCNTL_H
+#include <fcntl.h>
+#endif
 
 //#include "asterisk/module.h"
 #include "libcutil/http.h"
@@ -137,7 +140,8 @@ static void websocket_server_internal_dtor(void *obj)
 static void websocket_server_dtor(void *obj)
 {
 	websocket_server_internal_dtor(obj);
-	ast_module_unref(ast_module_info->self);
+	//seanchann
+	//ast_module_unref(ast_module_info->self);
 }
 
 static struct ast_websocket_server *websocket_server_create_impl(void (*dtor)(void *))
@@ -165,7 +169,8 @@ static struct ast_websocket_server *websocket_server_internal_create(void)
 
 struct ast_websocket_server *AST_OPTIONAL_API_NAME(ast_websocket_server_create)(void)
 {
-	ast_module_ref(ast_module_info->self);
+	//seanchann remove
+	//ast_module_ref(ast_module_info->self);
 	return websocket_server_create_impl(websocket_server_dtor);
 }
 
@@ -734,7 +739,8 @@ int AST_OPTIONAL_API_NAME(ast_websocket_uri_cb)(struct ast_tcptls_session_instan
 	struct ast_websocket *session;
 	struct ast_websocket_server *server;
 
-	SCOPED_MODULE_USE(ast_module_info->self);
+	//seanchann
+	//SCOPED_MODULE_USE(ast_module_info->self);
 
 	/* Upgrade requests are only permitted on GET methods */
 	if (method != AST_HTTP_GET) {
@@ -976,9 +982,11 @@ static int websocket_add_protocol_internal(const char *name, ast_websocket_callb
 int AST_OPTIONAL_API_NAME(ast_websocket_add_protocol)(const char *name, ast_websocket_callback callback)
 {
 	int res = websocket_add_protocol_internal(name, callback);
-	if (res == 0) {
-		ast_module_ref(ast_module_info->self);
-	}
+
+	//seanchann remove.
+	// if (res == 0) {
+	// 	ast_module_ref(ast_module_info->self);
+	// }
 	return res;
 }
 
@@ -994,7 +1002,7 @@ int AST_OPTIONAL_API_NAME(ast_websocket_add_protocol2)(struct ast_websocket_prot
 		return -1;
 	}
 
-	ast_module_ref(ast_module_info->self);
+	//ast_module_ref(ast_module_info->self);
 	return 0;
 }
 
@@ -1010,9 +1018,11 @@ static int websocket_remove_protocol_internal(const char *name, ast_websocket_ca
 int AST_OPTIONAL_API_NAME(ast_websocket_remove_protocol)(const char *name, ast_websocket_callback callback)
 {
 	int res = websocket_remove_protocol_internal(name, callback);
-	if (res == 0) {
-		ast_module_unref(ast_module_info->self);
-	}
+
+	//seanchann
+	// if (res == 0) {
+	// 	ast_module_unref(ast_module_info->self);
+	// }
 	return res;
 }
 
@@ -1430,7 +1440,9 @@ static int load_module(void)
 {
 	websocketuri.data = websocket_server_internal_create();
 	if (!websocketuri.data) {
-		return AST_MODULE_LOAD_FAILURE;
+		cutil_log(LOG_ERROR, "failed to create internal websocket server.\r\n");
+		return -1;
+		//return AST_MODULE_LOAD_FAILURE;
 	}
 	ast_http_uri_link(&websocketuri);
 	websocket_add_protocol_internal("echo", websocket_echo_callback);

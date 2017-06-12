@@ -21,6 +21,8 @@ filename | sha256 hash
 ### channges
 
 * support lib init for multi process use.
+* add http and websocket mini server. -DENABLE_HTTP=ON build http and http_websocket module.(in http_websocket we disable module refer.need to test it.)
+* add restful mini framework base on http and http_websocket module. -DENABLE_RESTFUL build restful module.(we disable module refer.need to test it.)
 
 ### Other notable changes
 
