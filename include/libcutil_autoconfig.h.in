@@ -207,6 +207,12 @@
 #cmakedefine HAVE_FCNTL_H @HAVE_FCNTL_H@
 
 
+/* Define to 1 if you have the `funopen' function. */
+#cmakedefine HAVE_FUNOPEN @HAVE_FUNOPEN@
+
+/* Define to 1 if you have the `fopencookie' function. */
+#cmakedefine HAVE_FOPENCOOKIE @HAVE_FOPENCOOKIE@
+
 /* Enable extensions on AIX 3, Interix.  */
 #cmakedefine _ALL_SOURCE @_ALL_SOURCE@
 

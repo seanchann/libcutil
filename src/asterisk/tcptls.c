@@ -1285,7 +1285,6 @@ void ast_tcptls_server_stop(struct ast_tcptls_session_args *desc)
 
 int ast_tls_read_conf(struct ast_tls_config *tls_cfg, struct ast_tcptls_session_args *tls_desc, const char *varname, const char *value)
 {
-#if 0
 	if (!strcasecmp(varname, "tlsenable") || !strcasecmp(varname, "sslenable")) {
 		tls_cfg->enabled = ast_true(value) ? 1 : 0;
 	} else if (!strcasecmp(varname, "tlscertfile") || !strcasecmp(varname, "sslcert") || !strcasecmp(varname, "tlscert")) {
@@ -1335,7 +1334,6 @@ int ast_tls_read_conf(struct ast_tls_config *tls_cfg, struct ast_tcptls_session_
 	} else {
 		return -1;
 	}
-#endif
 
 	return 0;
 }

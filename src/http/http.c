@@ -92,6 +92,7 @@ static int session_keep_alive = DEFAULT_SESSION_KEEP_ALIVE;
 static int session_count = 0;
 
 static struct ast_tls_config http_tls_cfg;
+static struct http_server* http_server_instance = NULL;
 
 static void *httpd_helper_thread(void *arg);
 
@@ -378,10 +379,10 @@ static int httpstatus_callback(struct ast_tcptls_session_instance *ser,
 	}
 
 	ast_str_append(&out, 0,
-		"<html><title>Asterisk HTTP Status</title>\r\n"
+		"<html><title>HTTP Status</title>\r\n"
 		"<body bgcolor=\"#ffffff\">\r\n"
 		"<table bgcolor=\"#f1f1f1\" align=\"center\"><tr><td bgcolor=\"#e0e0ff\" colspan=\"2\" width=\"500\">\r\n"
-		"<h2>&nbsp;&nbsp;Asterisk&trade; HTTP Status</h2></td></tr>\r\n");
+		"<h2><center>HTTP Status</center></h2></td></tr>\r\n");
 
 	ast_str_append(&out, 0, "<tr><td><i>Server</i></td><td><b>%s</b></td></tr>\r\n", http_server_name);
 	ast_str_append(&out, 0, "<tr><td><i>Prefix</i></td><td><b>%s</b></td></tr>\r\n", prefix);
@@ -405,14 +406,13 @@ static int httpstatus_callback(struct ast_tcptls_session_instance *ser,
 	}
 	ast_variables_destroy(cookies);
 
-	ast_str_append(&out, 0, "</table><center><font size=\"-1\"><i>Asterisk and Digium are registered trademarks of Digium, Inc.</i></font></center></body></html>\r\n");
 	ast_http_send(ser, method, 200, NULL, NULL, out, 0, 0);
 	return 0;
 }
 
 static struct ast_http_uri statusuri = {
 	.callback = httpstatus_callback,
-	.description = "Asterisk HTTP General Status",
+	.description = "cutil HTTP General Status",
 	.uri = "httpstatus",
 	.has_subtree = 0,
 	.data = NULL,
@@ -421,7 +421,7 @@ static struct ast_http_uri statusuri = {
 
 static struct ast_http_uri staticuri = {
 	.callback = static_callback,
-	.description = "Asterisk HTTP Static Delivery",
+	.description = "cutil HTTP Static Delivery",
 	.uri = "static",
 	.has_subtree = 1,
 	.data = NULL,
@@ -2067,6 +2067,7 @@ static void add_redirect(const char *value)
 	AST_RWLIST_UNLOCK(&uri_redirects);
 }
 
+#if 0
 static int __ast_http_load(int reload)
 {
 	struct ast_config *cfg;
@@ -2242,6 +2243,186 @@ static int __ast_http_load(int reload)
 
 	return 0;
 }
+#else
+static int __ast_http_load(int reload)
+{
+	//struct ast_config *cfg;
+	//struct ast_variable *v;
+	int enabled=0;
+	int newenablestatic=0;
+	char newprefix[MAX_PREFIX] = "";
+	char server_name[MAX_SERVER_NAME_LENGTH];
+	struct http_uri_redirect *redirect;
+	struct ast_flags config_flags = { reload ? CONFIG_FLAG_FILEUNCHANGED : 0 };
+	uint32_t bindport = DEFAULT_PORT;
+	RAII_VAR(struct ast_sockaddr *, addrs, NULL, ast_free);
+	int num_addrs = 0;
+	int http_tls_was_enabled = 0;
+
+	// cfg = ast_config_load2("http.conf", "http", config_flags);
+	// if (!cfg || cfg == CONFIG_STATUS_FILEUNCHANGED || cfg == CONFIG_STATUS_FILEINVALID) {
+	// 	return 0;
+	// }
+
+	http_tls_was_enabled = (reload && http_tls_cfg.enabled);
+
+	http_tls_cfg.enabled = 0;
+
+	ast_free(http_tls_cfg.certfile);
+	http_tls_cfg.certfile = ast_strdup(AST_CERTFILE);
+
+	ast_free(http_tls_cfg.capath);
+	http_tls_cfg.capath = ast_strdup("");
+
+	ast_free(http_tls_cfg.pvtfile);
+	http_tls_cfg.pvtfile = ast_strdup("");
+
+	/* Apply modern intermediate settings according to the Mozilla OpSec team as of July 30th, 2015 but disable TLSv1 */
+	ast_set_flag(&http_tls_cfg.flags, AST_SSL_DISABLE_TLSV1 | AST_SSL_SERVER_CIPHER_ORDER);
+
+	ast_free(http_tls_cfg.cipher);
+	http_tls_cfg.cipher = ast_strdup("ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-AES256-GCM-SHA384:DHE-RSA-AES128-GCM-SHA256:DHE-DSS-AES128-GCM-SHA256:kEDH+AESGCM:ECDHE-RSA-AES128-SHA256:ECDHE-ECDSA-AES128-SHA256:ECDHE-RSA-AES128-SHA:ECDHE-ECDSA-AES128-SHA:ECDHE-RSA-AES256-SHA384:ECDHE-ECDSA-AES256-SHA384:ECDHE-RSA-AES256-SHA:ECDHE-ECDSA-AES256-SHA:DHE-RSA-AES128-SHA256:DHE-RSA-AES128-SHA:DHE-DSS-AES128-SHA256:DHE-RSA-AES256-SHA256:DHE-DSS-AES256-SHA:DHE-RSA-AES256-SHA:AES128-GCM-SHA256:AES256-GCM-SHA384:AES128-SHA256:AES256-SHA256:AES128-SHA:AES256-SHA:AES:CAMELLIA:DES-CBC3-SHA:!aNULL:!eNULL:!EXPORT:!DES:!RC4:!MD5:!PSK:!aECDH:!EDH-DSS-DES-CBC3-SHA:!EDH-RSA-DES-CBC3-SHA:!KRB5-DES-CBC3-SHA");
+
+	AST_RWLIST_WRLOCK(&uri_redirects);
+	while ((redirect = AST_RWLIST_REMOVE_HEAD(&uri_redirects, entry))) {
+		ast_free(redirect);
+	}
+	AST_RWLIST_UNLOCK(&uri_redirects);
+
+	ast_sockaddr_setnull(&https_desc.local_address);
+
+	session_limit = DEFAULT_SESSION_LIMIT;
+	session_inactivity = DEFAULT_SESSION_INACTIVITY;
+	session_keep_alive = DEFAULT_SESSION_KEEP_ALIVE;
+
+	if (!ast_strlen_zero(http_server_instance->config->server_name)) {
+		ast_copy_string(server_name, http_server_instance->config->server_name, sizeof(server_name));
+	} else {
+		snprintf(server_name, sizeof(server_name), "cutil/%s", ast_get_version());
+	}
+
+	if(!ast_strlen_zero(http_server_instance->config->redirect)){
+		add_redirect(http_server_instance->config->redirect);
+	}
+
+	if(!ast_strlen_zero(http_server_instance->config->sessionlimit)){
+		if (ast_parse_arg(http_server_instance->config->sessionlimit,
+			PARSE_INT32 | PARSE_DEFAULT | PARSE_IN_RANGE,
+			&session_limit, DEFAULT_SESSION_LIMIT, 1, INT_MAX)) {
+				ast_log(LOG_WARNING, "Invalid sessionlimit '%s' \n",
+				http_server_instance->config->sessionlimit);
+		}
+	}
+
+if(!ast_strlen_zero(http_server_instance->config->session_inactivity)){
+	if (ast_parse_arg(http_server_instance->config->session_inactivity,
+		PARSE_INT32 | PARSE_DEFAULT | PARSE_IN_RANGE,
+		&session_inactivity, DEFAULT_SESSION_INACTIVITY, 1, INT_MAX)) {
+		ast_log(LOG_WARNING, "Invalid session_inactivity '%s'.\n",
+			http_server_instance->config->session_inactivity);
+	}
+}
+
+if(!ast_strlen_zero(http_server_instance->config->session_keep_alive)){
+	if (sscanf(http_server_instance->config->session_keep_alive, "%30d", &session_keep_alive) != 1
+		|| session_keep_alive < 0) {
+		session_keep_alive = DEFAULT_SESSION_KEEP_ALIVE;
+		ast_log(LOG_WARNING, "Invalid session_keep_alive '%s'\n",
+			http_server_instance->config->session_keep_alive);
+	}
+}
+
+	ast_tls_read_conf(&http_tls_cfg,
+		&https_desc,
+		"tlsenable", http_server_instance->config->tlsenable?"yes":"no");
+
+	if(http_server_instance->config->tlsenable){
+		ast_tls_read_conf(&http_tls_cfg,
+			&https_desc,
+			"tlsbindaddr", http_server_instance->config->tlsbindaddr);
+		ast_tls_read_conf(&http_tls_cfg,
+			&https_desc,
+			"tlscertfile", http_server_instance->config->tlscertfile);
+		ast_tls_read_conf(&http_tls_cfg,
+			&https_desc,
+			"tlsprivatekey", http_server_instance->config->tlsprivatekey);
+	}
+
+	enabled = http_server_instance->config->enabled;
+	if(http_server_instance->config->enabled){
+		if (ast_parse_arg(http_server_instance->config->bindport, PARSE_UINT32 | PARSE_IN_RANGE | PARSE_DEFAULT,
+			&bindport, DEFAULT_PORT, 0, 65535)) {
+			ast_log(LOG_WARNING, "Invalid port %s specified. Using default port %" PRId32 "\n",
+				http_server_instance->config->bindport, DEFAULT_PORT);
+		}
+
+		if (!(num_addrs = ast_sockaddr_resolve(&addrs, http_server_instance->config->bindaddr, 0, AST_AF_UNSPEC))) {
+			ast_log(LOG_WARNING, "Invalid bind address %s\n", http_server_instance->config->bindaddr);
+		}
+
+		if (!ast_strlen_zero(http_server_instance->config->prefix)) {
+			newprefix[0] = '/';
+			ast_copy_string(newprefix + 1, http_server_instance->config->prefix, sizeof(newprefix) - 1);
+		} else {
+			newprefix[0] = '\0';
+		}
+	}
+
+
+	if (strcmp(prefix, newprefix)) {
+		ast_copy_string(prefix, newprefix, sizeof(prefix));
+	}
+
+	ast_copy_string(http_server_name, server_name, sizeof(http_server_name));
+	enablestatic = newenablestatic;
+
+	if (num_addrs && enabled) {
+		int i;
+		for (i = 0; i < num_addrs; ++i) {
+			ast_sockaddr_copy(&http_desc.local_address, &addrs[i]);
+			if (!ast_sockaddr_port(&http_desc.local_address)) {
+				ast_sockaddr_set_port(&http_desc.local_address, bindport);
+			}
+			ast_tcptls_server_start(&http_desc);
+			if (http_desc.accept_fd == -1) {
+				ast_log(LOG_WARNING, "Failed to start HTTP server for address %s\n", ast_sockaddr_stringify(&addrs[i]));
+				ast_sockaddr_setnull(&http_desc.local_address);
+			} else {
+				ast_verb(1, "Bound HTTP server to address %s\n", ast_sockaddr_stringify(&addrs[i]));
+				break;
+			}
+		}
+		/* When no specific TLS bindaddr is specified, we just use
+		 * the non-TLS bindaddress here.
+		 */
+		if (ast_sockaddr_isnull(&https_desc.local_address) && http_desc.accept_fd != -1) {
+			ast_sockaddr_copy(&https_desc.local_address, &http_desc.local_address);
+			/* Of course, we can't use the same port though.
+			 * Since no bind address was specified, we just use the
+			 * default TLS port
+			 */
+			ast_sockaddr_set_port(&https_desc.local_address, DEFAULT_TLS_PORT);
+		}
+	}
+	if (http_tls_was_enabled && !http_tls_cfg.enabled) {
+		ast_tcptls_server_stop(&https_desc);
+	} else if (http_tls_cfg.enabled && !ast_sockaddr_isnull(&https_desc.local_address)) {
+		/* We can get here either because a TLS-specific address was specified
+		 * or because we copied the non-TLS address here. In the case where
+		 * we read an explicit address from the config, there may have been
+		 * no port specified, so we'll just use the default TLS port.
+		 */
+		if (!ast_sockaddr_port(&https_desc.local_address)) {
+			ast_sockaddr_set_port(&https_desc.local_address, DEFAULT_TLS_PORT);
+		}
+		if (ast_ssl_setup(https_desc.tls_cfg)) {
+			ast_tcptls_server_start(&https_desc);
+		}
+	}
+
+	return 0;
+}
+#endif
 
 static char *handle_show_http(struct ast_cli_entry *e, int cmd, struct ast_cli_args *a)
 {
@@ -2331,12 +2512,65 @@ static void http_shutdown(void)
 	AST_RWLIST_UNLOCK(&uri_redirects);
 }
 
-int ast_http_init(void)
+static int ast_http_config_init(struct http_server* self, struct http_server_config* config)
 {
+	struct http_server_config* cfg = NULL;
+
+	if(!config){
+		return -1;
+	}
+
+	cfg = ast_calloc(1, sizeof(struct http_server_config));
+	if (!cfg) {
+		return -1;
+	}
+	self->config = cfg;
+
+
+
+	snprintf(cfg->server_name, sizeof(cfg->server_name), config->server_name);
+	if (config->enabled) {
+		cfg->enabled = 1;
+		snprintf(cfg->bindaddr, sizeof(cfg->bindaddr), config->bindaddr);
+		snprintf(cfg->bindport, sizeof(cfg->prefix), config->bindport);
+		snprintf(cfg->prefix, sizeof(cfg->prefix), config->prefix);
+	}else{
+		cfg->enabled = 0;
+	}
+
+	if (config->tlsenable) {
+		config->tlsenable = 1;
+		snprintf(cfg->tlsbindaddr, sizeof(cfg->tlsbindaddr), config->tlsbindaddr);
+		snprintf(cfg->tlscertfile, sizeof(cfg->tlscertfile), config->tlscertfile);
+		snprintf(cfg->tlsprivatekey, sizeof(cfg->tlsprivatekey), config->tlsprivatekey);
+	}else{
+		config->tlsenable = 0;
+	}
+
+
+	return 0;
+}
+
+int ast_http_init(struct http_server_config* config)
+{
+	if(!http_server_instance){
+		http_server_instance = ast_calloc(1, sizeof(struct http_server));
+		if (!http_server_instance) {
+			cutil_log(LOG_ERROR, "new http server instance failed.\r\n");
+			return -1;
+		}
+	}
+	if(ast_http_config_init(http_server_instance, config)){
+		cutil_log(LOG_ERROR, "init http config failed.\r\n");
+		return -1;
+	}
+
 	ast_http_uri_link(&statusuri);
 	ast_http_uri_link(&staticuri);
 	ast_cli_register_multiple(cli_http, ARRAY_LEN(cli_http));
 	ast_register_cleanup(http_shutdown);
+
+	cutil_log(LOG_NOTICE, "http init.\r\n");
 
 	return __ast_http_load(0);
 }

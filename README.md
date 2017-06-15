@@ -5,4 +5,6 @@
 - console
 - cli
 - log
+- http mini server
+- restful mini framework
 - 公共基础库，例如：list以及系统函数的包装

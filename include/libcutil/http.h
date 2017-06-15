@@ -54,14 +54,14 @@
 
 /*! \brief HTTP Request methods known by Asterisk */
 enum ast_http_method {
-	AST_HTTP_UNKNOWN = -1,   /*!< Unknown response */
-	AST_HTTP_GET = 0,
-	AST_HTTP_POST,
-	AST_HTTP_HEAD,
-	AST_HTTP_PUT,
-	AST_HTTP_DELETE,
-	AST_HTTP_OPTIONS,
-	AST_HTTP_MAX_METHOD, /*!< Last entry in ast_http_method enum */
+  AST_HTTP_UNKNOWN = -1, /*!< Unknown response */
+  AST_HTTP_GET     = 0,
+  AST_HTTP_POST,
+  AST_HTTP_HEAD,
+  AST_HTTP_PUT,
+  AST_HTTP_DELETE,
+  AST_HTTP_OPTIONS,
+  AST_HTTP_MAX_METHOD, /*!< Last entry in ast_http_method enum */
 };
 
 struct ast_http_uri;
@@ -94,37 +94,48 @@ struct ast_http_uri;
  * \retval 0 Continue and process the next HTTP request.
  * \retval -1 Fatal HTTP connection error.  Force the HTTP connection closed.
  */
-typedef int (*ast_http_callback)(struct ast_tcptls_session_instance *ser, const struct ast_http_uri *urih, const char *uri, enum ast_http_method method, struct ast_variable *get_params, struct ast_variable *headers);
+typedef int (*ast_http_callback)(struct ast_tcptls_session_instance *ser,
+                                 const struct ast_http_uri          *urih,
+                                 const char                         *uri,
+                                 enum ast_http_method                method,
+                                 struct ast_variable                *get_params,
+                                 struct ast_variable                *headers);
 
 /*! \brief Definition of a URI handler */
 struct ast_http_uri {
-	AST_LIST_ENTRY(ast_http_uri) entry;
-	const char *description;
-	const char *uri;
-	const char *prefix;
-	ast_http_callback callback;
-	unsigned int has_subtree:1;
-	/*! Structure is malloc'd */
-	unsigned int mallocd:1;
-	/*! Data structure is malloc'd */
-	unsigned int dmallocd:1;
-	/*! Don't automatically decode URI before passing it to the callback */
-	unsigned int no_decode_uri:1;
-	/*! Data to bind to the uri if needed */
-	void *data;
-	/*! Key to be used for unlinking if multiple URIs registered */
-	const char *key;
+  AST_LIST_ENTRY(ast_http_uri) entry;
+  const char       *description;
+  const char       *uri;
+  const char       *prefix;
+  ast_http_callback callback;
+  unsigned int      has_subtree : 1;
+
+  /*! Structure is malloc'd */
+  unsigned int mallocd : 1;
+
+  /*! Data structure is malloc'd */
+  unsigned int dmallocd : 1;
+
+  /*! Don't automatically decode URI before passing it to the callback */
+  unsigned int no_decode_uri : 1;
+
+  /*! Data to bind to the uri if needed */
+  void *data;
+
+  /*! Key to be used for unlinking if multiple URIs registered */
+  const char *key;
 };
 
 /*! \brief Get cookie from Request headers */
-struct ast_variable *ast_http_get_cookies(struct ast_variable *headers);
+struct ast_variable* ast_http_get_cookies(struct ast_variable *headers);
 
 /*! \brief HTTP authentication information. */
 struct ast_http_auth {
-	/*! Provided userid. */
-	char *userid;
-	/*! For Basic auth, the provided password. */
-	char *password;
+  /*! Provided userid. */
+  char *userid;
+
+  /*! For Basic auth, the provided password. */
+  char *password;
 };
 
 /*!
@@ -137,22 +148,23 @@ struct ast_http_auth {
  * \return \c NULL if no supported HTTP auth headers present.
  * \since 12
  */
-struct ast_http_auth *ast_http_get_auth(struct ast_variable *headers);
+struct ast_http_auth* ast_http_get_auth(struct ast_variable *headers);
 
 /*! \brief Register a URI handler */
-int ast_http_uri_link(struct ast_http_uri *urihandler);
+int                   ast_http_uri_link(struct ast_http_uri *urihandler);
 
 /*! \brief Unregister a URI handler */
-void ast_http_uri_unlink(struct ast_http_uri *urihandler);
+void                  ast_http_uri_unlink(struct ast_http_uri *urihandler);
 
 /*! \brief Unregister all handlers with matching key */
-void ast_http_uri_unlink_all_with_key(const char *key);
+void                  ast_http_uri_unlink_all_with_key(const char *key);
 
 /*!
  * \brief Return http method name string
  * \since 1.8
  */
-const char *ast_get_http_method(enum ast_http_method method) attribute_pure;
+const char          * ast_get_http_method(enum ast_http_method method)
+attribute_pure;
 
 /*!
  * \brief Return mime type based on extension
@@ -160,7 +172,7 @@ const char *ast_get_http_method(enum ast_http_method method) attribute_pure;
  * \return String containing associated MIME type
  * \since 1.8
  */
-const char *ast_http_ftype2mtype(const char *ftype) attribute_pure;
+const char* ast_http_ftype2mtype(const char *ftype) attribute_pure;
 
 /*!
  * \brief Return manager id, if exist, from request headers
@@ -168,7 +180,8 @@ const char *ast_http_ftype2mtype(const char *ftype) attribute_pure;
  * \return 32-bit associated manager session identifier
  * \since 1.8
  */
-uint32_t ast_http_manid_from_vars(struct ast_variable *headers) attribute_pure;
+uint32_t    ast_http_manid_from_vars(struct ast_variable *headers)
+attribute_pure;
 
 /*!
  * \brief Generic function for sending HTTP/1.1 response.
@@ -178,8 +191,10 @@ uint32_t ast_http_manid_from_vars(struct ast_variable *headers) attribute_pure;
  * \param status_title English equivalent to the status_code parameter
  * \param http_header An ast_str object containing all headers
  * \param out An ast_str object containing the body of the response
- * \param fd If out is NULL, a file descriptor where the body of the response is held (otherwise -1)
- * \param static_content Zero if the content is dynamically generated and should not be cached; nonzero otherwise
+ * \param fd If out is NULL, a file descriptor where the body of the response is
+ * held (otherwise -1)
+ * \param static_content Zero if the content is dynamically generated and should
+ * not be cached; nonzero otherwise
  *
  * \note Function determines the HTTP response header from status_code,
  * status_header, and http_header.
@@ -197,9 +212,14 @@ uint32_t ast_http_manid_from_vars(struct ast_variable *headers) attribute_pure;
  *
  * \since 1.8
  */
-void ast_http_send(struct ast_tcptls_session_instance *ser, enum ast_http_method method,
-	int status_code, const char *status_title, struct ast_str *http_header,
-	struct ast_str *out, int fd, unsigned int static_content);
+void ast_http_send(struct ast_tcptls_session_instance *ser,
+                   enum ast_http_method                method,
+                   int                                 status_code,
+                   const char                         *status_title,
+                   struct ast_str                     *http_header,
+                   struct ast_str                     *out,
+                   int                                 fd,
+                   unsigned int                        static_content);
 
 /*!
  * \brief Creates and sends a formatted http response message.
@@ -210,7 +230,8 @@ void ast_http_send(struct ast_tcptls_session_instance *ser, enum ast_http_method
  * \param text                  Additional informational text to use in the
  *                              response
  *
- * \note Function constructs response headers from the status_code, status_title and
+ * \note Function constructs response headers from the status_code, status_title
+ * and
  * http_header_data parameters.
  *
  * The response body is created as HTML content, from the status_code,
@@ -220,14 +241,25 @@ void ast_http_send(struct ast_tcptls_session_instance *ser, enum ast_http_method
  *
  * \since 13.2.0
  */
-void ast_http_create_response(struct ast_tcptls_session_instance *ser, int status_code,
-	const char *status_title, struct ast_str *http_header_data, const char *text);
+void ast_http_create_response(struct ast_tcptls_session_instance *ser,
+                              int                                 status_code,
+                              const char                         *status_title,
+                              struct ast_str                     *http_header_data,
+                              const char                         *text);
 
 /*! \brief Send http "401 Unauthorized" response and close socket */
-void ast_http_auth(struct ast_tcptls_session_instance *ser, const char *realm, const unsigned long nonce, const unsigned long opaque, int stale, const char *text);
+void ast_http_auth(struct ast_tcptls_session_instance *ser,
+                   const char                         *realm,
+                   const unsigned long                 nonce,
+                   const unsigned long                 opaque,
+                   int                                 stale,
+                   const char                         *text);
 
 /*! \brief Send HTTP error message and close socket */
-void ast_http_error(struct ast_tcptls_session_instance *ser, int status, const char *title, const char *text);
+void ast_http_error(struct ast_tcptls_session_instance *ser,
+                    int                                 status,
+                    const char                         *title,
+                    const char                         *text);
 
 /*!
  * \brief Return the current prefix
@@ -235,7 +267,8 @@ void ast_http_error(struct ast_tcptls_session_instance *ser, int status, const c
  * \param[in] len length of prefix to copy
  * \since 1.6.1
  */
-void ast_http_prefix(char *buf, int len);
+void ast_http_prefix(char *buf,
+                     int   len);
 
 /*!
  * \brief Request the HTTP connection be closed after this HTTP request.
@@ -258,7 +291,8 @@ void ast_http_request_close_on_completion(struct ast_tcptls_session_instance *se
  *
  * \return Nothing
  */
-void ast_http_body_read_status(struct ast_tcptls_session_instance *ser, int read_success);
+void ast_http_body_read_status(struct ast_tcptls_session_instance *ser,
+                               int                                 read_success);
 
 /*!
  * \brief Read and discard any unread HTTP request body.
@@ -269,17 +303,21 @@ void ast_http_body_read_status(struct ast_tcptls_session_instance *ser, int read
  * \retval 0 on success.
  * \retval -1 on error.
  */
-int ast_http_body_discard(struct ast_tcptls_session_instance *ser);
+int                  ast_http_body_discard(struct ast_tcptls_session_instance *ser);
 
 /*!
- * \brief Get post variables from client Request Entity-Body, if content type is application/x-www-form-urlencoded.
+ * \brief Get post variables from client Request Entity-Body, if content type is
+ * application/x-www-form-urlencoded.
  * \param ser TCP/TLS session object
  * \param headers List of HTTP headers
  * \return List of variables within the POST body
- * \note Since returned list is malloc'd, list should be free'd by the calling function
+ * \note Since returned list is malloc'd, list should be free'd by the calling
+ * function
  * \since 1.8
  */
-struct ast_variable *ast_http_get_post_vars(struct ast_tcptls_session_instance *ser, struct ast_variable *headers);
+struct ast_variable* ast_http_get_post_vars(
+  struct ast_tcptls_session_instance *ser,
+  struct ast_variable                *headers);
 
 struct ast_json;
 
@@ -292,8 +330,9 @@ struct ast_json;
  * \return \c NULL on error, if no content, or if different content type.
  * \since 12
  */
-struct ast_json *ast_http_get_json(
-	struct ast_tcptls_session_instance *ser, struct ast_variable *headers);
+struct ast_json* ast_http_get_json(
+  struct ast_tcptls_session_instance *ser,
+  struct ast_variable                *headers);
 
 /*!\brief Parse the http response status line.
  *
@@ -304,7 +343,9 @@ struct ast_json *ast_http_get_json(
  * \return status code (>0)
  * \since 13
  */
-int ast_http_response_status_line(const char *buf, const char *version, int code);
+int ast_http_response_status_line(const char *buf,
+                                  const char *version,
+                                  int         code);
 
 /*!\brief Parse a header into the given name/value strings.
  *
@@ -320,7 +361,9 @@ int ast_http_response_status_line(const char *buf, const char *version, int code
  * \return 1 if name or value portion don't exist
  * \since 13
  */
-int ast_http_header_parse(char *buf, char **name, char **value);
+int ast_http_header_parse(char  *buf,
+                          char **name,
+                          char **value);
 
 /*!\brief Check if the header and value match (case insensitive) their
  *        associated expected values.
@@ -334,8 +377,10 @@ int ast_http_header_parse(char *buf, char **name, char **value);
  * \return 1 if the both the name and value match their expected value
  * \since 13
  */
-int ast_http_header_match(const char *name, const char *expected_name,
-			  const char *value, const char *expected_value);
+int ast_http_header_match(const char *name,
+                          const char *expected_name,
+                          const char *value,
+                          const char *expected_value);
 
 /*!\brief Check if the header name matches the expected header name.  If so,
  *        then check to see if the value can be located in the expected value.
@@ -351,10 +396,35 @@ int ast_http_header_match(const char *name, const char *expected_name,
  * \return 1 if the name matches expected name and value is in expected value
  * \since 13
  */
-int ast_http_header_match_in(const char *name, const char *expected_name,
-			     const char *value, const char *expected_value);
+int ast_http_header_match_in(const char *name,
+                             const char *expected_name,
+                             const char *value,
+                             const char *expected_value);
 
-const char   * cutil_http_get_static_root_dir(void);
-void           cutil_http_set_static_root_dir(const char *root_dir);
+const char* cutil_http_get_static_root_dir(void);
+void        cutil_http_set_static_root_dir(const char *root_dir);
+
+struct http_server_config {
+  unsigned char enabled : 1;
+  char          bindaddr[64];
+  char          bindport[32];
+
+  char prefix[32];
+  char server_name[128];
+  char redirect[128];
+  char sessionlimit[16];
+  char session_inactivity[16];
+  char session_keep_alive[16];
+  
+  unsigned char tlsenable : 1;
+  char          tlsbindaddr[64];
+  char          tlscertfile[64];
+  char          tlsprivatekey[64];
+};
+
+struct http_server {
+  struct http_server_config *config;
+};
+int ast_http_init(struct http_server_config *config);
 
 #endif /* _ASTERISK_SRV_H */
