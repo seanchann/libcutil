@@ -609,12 +609,17 @@ static void *handle_tcptls_connection(void *data)
 	 * need to be pushed down into the individual protocol handlers, but
 	 * this seems like a good general policy.
 	 */
+	/* we disable call ast_thread_inhibit_escalations. wo don't need
+   * execute 'dangerous' functions.
+	 */
+#if 0
 	if (ast_thread_inhibit_escalations()) {
 		ast_log(LOG_ERROR, "Failed to inhibit privilege escalations; killing connection\n");
 		ast_tcptls_close_session_file(tcptls_session);
 		ao2_ref(tcptls_session, -1);
 		return NULL;
 	}
+#endif
 
 	tcptls_session->stream_cookie = tcptls_stream_alloc();
 	if (!tcptls_session->stream_cookie) {

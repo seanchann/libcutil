@@ -1237,7 +1237,16 @@ int ast_compare_versions(const char *version1,
 int ast_check_ipv6(void);
 
 
-
+/*
+ * \brief execute shell command by fork process
+ *
+ *
+ * \return 0 successful.
+ * \return other value failed.
+ */
 int ast_safe_system(const char *s);
+
+/*! \brief Read a file */
+char *ast_read_textfile(const char *filename);
 
 #endif /* _ASTERISK_UTILS_H */

@@ -216,7 +216,7 @@ struct ast_config* ast_config_load2(const char      *filename,
  * \retval NULL on error
  */
 #define ast_config_load(filename, flags) ast_config_load2(filename,   \
-                                                          AST_MODULE, \
+                                                          CUTIL_MODULE, \
                                                           flags)
 
 /*!

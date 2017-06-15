@@ -294,9 +294,11 @@ static int static_callback(struct ast_tcptls_session_instance *ser,
 		goto out404;
 	}
 
+#if 0
 	if (strstr(path, "/private/") && !astman_is_authed(ast_http_manid_from_vars(headers))) {
 		goto out403;
 	}
+#endif
 
 	fd = open(path, O_RDONLY);
 	if (fd < 0) {
@@ -1875,10 +1877,14 @@ static int httpd_process_request(struct ast_tcptls_session_instance *ser)
 		return -1;
 	}
 
+	/* must ensure that http service stops when the library exits.
+	 */
+#if 0
 	if (ast_shutdown_final()) {
 		ast_http_error(ser, 503, "Service Unavailable", "Shutdown in progress");
 		return -1;
 	}
+#endif
 
 	/* process "Request Headers" lines */
 	if (http_request_headers_get(ser, &headers)) {

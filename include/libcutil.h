@@ -29,6 +29,7 @@
 
 #include "libcutil/compat.h"
 
+#define CUTIL_MODULE "cutil"
 
 /* Default to allowing the umask or filesystem ACLs to determine actual file
  * creation permissions

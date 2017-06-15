@@ -200,7 +200,7 @@ void *aco_pending_config(struct aco_info *info);
  */
 #define CONFIG_INFO_STANDARD(name, arr, alloc, ...) \
 static struct aco_info name = { \
-	.module = "cutil", \
+	.module = CUTIL_MODULE, \
 	.global_obj = &arr, \
 	.snapshot_alloc = alloc, \
 	__VA_ARGS__ \
@@ -216,7 +216,7 @@ static struct aco_info name = { \
 
 #define CONFIG_INFO_TEST(name, arr, alloc, ...) \
 static struct aco_info name = { \
-	.module = "cutil", \
+	.module = CUTIL_MODULE, \
 	.global_obj = &arr, \
 	.snapshot_alloc = alloc, \
 	.hidden = 1, \

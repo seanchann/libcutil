@@ -40,8 +40,10 @@ set(SOURCES
   ${CMAKE_CURRENT_SOURCE_DIR}/asterisk/astobj2.c
   ${CMAKE_CURRENT_SOURCE_DIR}/asterisk/netsock2.c
   ${CMAKE_CURRENT_SOURCE_DIR}/asterisk/config.c
+  ${CMAKE_CURRENT_SOURCE_DIR}/asterisk/config_options.c
   ${CMAKE_CURRENT_SOURCE_DIR}/asterisk/strcompat.c
   ${CMAKE_CURRENT_SOURCE_DIR}/asterisk/io.c
+  ${CMAKE_CURRENT_SOURCE_DIR}/asterisk/crypt.c
   ${CMAKE_CURRENT_SOURCE_DIR}/asterisk/threadstorage.c
   ${CMAKE_CURRENT_SOURCE_DIR}/asterisk/tcptls.c
   ${CMAKE_CURRENT_SOURCE_DIR}/asterisk/optional_api.c
@@ -70,6 +72,7 @@ IF(ENABLE_RESTFUL)
   set(SOURCES
     ${SOURCES}
     ${CMAKE_CURRENT_SOURCE_DIR}/restful/restful.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/restful/restful_model.c
     ${CMAKE_CURRENT_SOURCE_DIR}/restful/restful_websockets.c
     ${CMAKE_CURRENT_SOURCE_DIR}/restful/restful_model_validators.c
     ${CMAKE_CURRENT_SOURCE_DIR}/restful/config.c
