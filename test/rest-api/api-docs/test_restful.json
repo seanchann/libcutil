@@ -1,0 +1,23 @@
+{
+	"_copyright": "Copyright (C) 2017 - 2018, Digium, Inc.",
+	"_author": "seanchann.zhou, II <seanchann@foxmail.com>",
+	"apiVersion": "1.0.0",
+	"swaggerVersion": "1.1",
+	"basePath": "http://localhost:8088/api",
+	"resourcePath": "/api-docs/sounds.{format}",
+	"apis": [
+		{
+			"path": "/test",
+			"description": "test",
+			"operations": [
+				{
+					"httpMethod": "GET",
+					"summary": "reture test string.",
+					"nickname": "list",
+					"responseClass": "List[Sound]"
+				}
+			]
+		}
+	]
+
+}

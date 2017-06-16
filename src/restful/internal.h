@@ -26,8 +26,6 @@
  */
 
 #include "libcutil/http.h"
-#include "libcutil/json.h"
-#include "libcutil/stringfields.h"
 
 /*! @{ */
 
@@ -37,7 +35,7 @@
  * \return 0 on success.
  * \return Non-zero on error.
  */
-int ast_ari_cli_register(void);
+int  ast_ari_cli_register(void);
 
 /*!
  * \brief Unregister CLI commands for ARI.
@@ -48,76 +46,6 @@ void ast_ari_cli_unregister(void);
 
 /*! @{ */
 
-struct ast_ari_conf_general;
-
-/*! \brief All configuration options for ARI. */
-struct ast_ari_conf {
-	/*! The general section configuration options. */
-	struct ast_ari_conf_general *general;
-	/*! Configured users */
-	struct ao2_container *users;
-};
-
-/*! Max length for auth_realm field */
-#define ARI_AUTH_REALM_LEN 80
-
-/*! \brief Global configuration options for ARI. */
-struct ast_ari_conf_general {
-	/*! Enabled by default, disabled if false. */
-	int enabled;
-	/*! Write timeout for websocket connections */
-	int write_timeout;
-	/*! Encoding format used during output (default compact). */
-	enum ast_json_encoding_format format;
-	/*! Authentication realm */
-	char auth_realm[ARI_AUTH_REALM_LEN];
-
-	AST_DECLARE_STRING_FIELDS(
-		AST_STRING_FIELD(allowed_origins);
-	);
-};
-
-/*! \brief Password format */
-enum ast_ari_password_format {
-	/*! \brief Plaintext password */
-	ARI_PASSWORD_FORMAT_PLAIN,
-	/*! crypt(3) password */
-	ARI_PASSWORD_FORMAT_CRYPT,
-};
-
-/*!
- * \brief User's password mx length.
- *
- * If 256 seems like a lot, a crypt SHA-512 has over 106 characters.
- */
-#define ARI_PASSWORD_LEN 256
-
-/*! \brief Per-user configuration options */
-struct ast_ari_conf_user {
-	/*! Username for authentication */
-	char *username;
-	/*! User's password. */
-	char password[ARI_PASSWORD_LEN];
-	/*! Format for the password field */
-	enum ast_ari_password_format password_format;
-	/*! If true, user cannot execute change operations */
-	int read_only;
-};
-
-/*!
- * \brief Initialize the ARI configuration
- */
-int ast_ari_config_init(void);
-
-/*!
- * \brief Reload the ARI configuration
- */
-int ast_ari_config_reload(void);
-
-/*!
- * \brief Destroy the ARI configuration
- */
-void ast_ari_config_destroy(void);
 
 /*!
  * \brief Get the current ARI configuration.
@@ -128,7 +56,7 @@ void ast_ari_config_destroy(void);
  * \return ARI configuration object.
  * \return \c NULL on error.
  */
-struct ast_ari_conf *ast_ari_config_get(void);
+struct ast_ari_conf     * ast_ari_config_get(void);
 
 /*!
  * \brief Validated a user's credentials.
@@ -138,8 +66,8 @@ struct ast_ari_conf *ast_ari_config_get(void);
  * \return User object.
  * \return \c NULL if username or password is invalid.
  */
-struct ast_ari_conf_user *ast_ari_config_validate_user(const char *username,
-	const char *password);
+struct ast_ari_conf_user* ast_ari_config_validate_user(const char *username,
+                                                       const char *password);
 
 /*! @} */
 
@@ -159,9 +87,22 @@ struct ast_websocket_server;
  * \param get_params Parsed query parameters.
  * \param headers Parsed HTTP headers.
  */
-void ari_handle_websocket(struct ast_websocket_server *ws_server,
-	struct ast_tcptls_session_instance *ser, const char *uri,
-	enum ast_http_method method, struct ast_variable *get_params,
-	struct ast_variable *headers);
+void ari_handle_websocket(struct ast_websocket_server        *ws_server,
+                          struct ast_tcptls_session_instance *ser,
+                          const char                         *uri,
+                          enum ast_http_method                method,
+                          struct ast_variable                *get_params,
+                          struct ast_variable                *headers);
 
+
+// new conf for restful server use.
+int cutil_restful_config_init(struct ast_ari_conf_general *general,
+                           struct ast_ari_conf_user    *user_list,
+                           size_t                       user_list_len);
+
+
+/*!
+ * \brief Destroy the restful configuration
+ */
+void cutil_restful_config_destroy(void);
 #endif /* ARI_INTERNAL_H_ */

@@ -97,10 +97,10 @@
    A new feature "Extended String Fields" has been added in 13.9.0.
 
    An extended field is one that is declared outside the
-    *AST_DECLARE_STRING_FIELDS
+ * AST_DECLARE_STRING_FIELDS
    block but still inside the parent structure.  It's most useful for extending
    structures where adding a new string field to an existing
-    *AST_DECLARE_STRING_FIELDS
+ * AST_DECLARE_STRING_FIELDS
    block would break ABI compatibility.
 
    Example:
@@ -117,7 +117,7 @@
    \endcode
 
    Adding "blah" to the existing string fields breaks ABI compatibility because
-    *it changes
+ * it changes
    the offsets of x1 and x2.
 
    \code
@@ -133,7 +133,7 @@
    \endcode
 
    However, adding "blah" as an extended string field to the end of the
-    *structure doesn't break
+ * structure doesn't break
    ABI compatibility but still allows the use of the existing pool.
 
    \code
@@ -149,17 +149,17 @@
    \endcode
 
    The only additional step required is to call ast_string_field_init_extended
-    *so the
+ * so the
    pool knows about the new field.  It must be called AFTER
-    *ast_string_field_init or
+ * ast_string_field_init or
    ast_calloc_with_stringfields.  Although ast_calloc_with_stringfields is used
-    *in the
+ * in the
    sample below, it's not necessary for extended string fields.
 
    \code
 
    struct new_structure_version *x = ast_calloc_with_stringfields(1, struct
-    *new_structure_version, 252);
+ * new_structure_version, 252);
    if (!x) {
       return;
    }
@@ -168,7 +168,7 @@
    \endcode
 
    The new field can now be treated just like any other string field and it's
-    *storage will
+ * storage will
    be released with the rest of the string fields.
 
    \code
@@ -199,7 +199,7 @@
 typedef const char *ast_string_field;
 
 /* the type of storage used to track how many bytes were allocated for a field
-   */
+ */
 
 typedef uint16_t ast_string_field_allocation;
 
@@ -216,50 +216,19 @@ extern const char *__ast_string_field_empty;
         aligned numbers only
  */
 struct ast_string_field_pool {
-  struct ast_string_field_pool *prev;                                                             /*!<
-                                                                                                     pointer
-                                                                                                     to
-                                                                                                     the
-                                                                                                     previous
-                                                                                                     pool,
-                                                                                                     if
-                                                                                                     any
-                                                                                                     */
-  size_t                        size;                                                             /*!<
-                                                                                                     the
-                                                                                                     total
-                                                                                                     size
-                                                                                                     of
-                                                                                                     the
-                                                                                                     pool
-                                                                                                     */
-  size_t                        used;                                                             /*!<
-                                                                                                     the
-                                                                                                     space
-                                                                                                     used
-                                                                                                     in
-                                                                                                     the
-                                                                                                     pool
-                                                                                                     */
-  size_t                        active;                                                           /*!<
-                                                                                                     the
-                                                                                                     amount
-                                                                                                     of
-                                                                                                     space
-                                                                                                     actively
-                                                                                                     in
-                                                                                                     use
-                                                                                                     by
-                                                                                                     fields
-                                                                                                     */
-  char                          base[0] __attribute__((aligned(__alignof__(
-                                                                 ast_string_field_allocation)))); /*!<
-                                                                                                     storage
-                                                                                                     space
-                                                                                                     for
-                                                                                                     the
-                                                                                                     fields
-                                                                                                     */
+  /*!<pointer to the previous pool,if any*/
+  struct ast_string_field_pool *prev;
+
+  /*!<the total size of the pool */
+  size_t size;
+
+  /*!<the space used in the pool*/
+  size_t used;
+
+  /*!<the amount of space actively in use  by fields*/
+  size_t active;
+  char   base[0] __attribute__((aligned(__alignof__(
+                                          ast_string_field_allocation))));
 };
 
 /*!
@@ -274,8 +243,8 @@ AST_VECTOR(ast_string_field_vector, const char **);
    \brief Structure used to manage the storage for a set of string fields.
  */
 struct ast_string_field_mgr {
-  ast_string_field               last_alloc;    /*!< the last field allocated */
-  struct ast_string_field_pool  *embedded_pool; /*!< pointer to the embedded
+  ast_string_field              last_alloc;     /*!< the last field allocated */
+  struct ast_string_field_pool *embedded_pool;  /*!< pointer to the embedded
                                                    pool, if any */
   struct ast_string_field_vector string_fields; /*!< field vector for compare
                                                    and copy */
@@ -378,9 +347,9 @@ enum ast_stringfield_cleanup_type {
   /*!
    * Reset all string fields and free all pools.
    * If the pointer was returned by ast_calloc_with_stringfields, it can NOT be
-   *reused
+   * reused
    * and should be immediately freed.  Otherwise, you must call
-   *ast_string_field_init
+   * ast_string_field_init
    * again if you want to reuse it.
    */
   AST_STRINGFIELD_DESTROY = -1,
@@ -463,7 +432,7 @@ int __ast_string_field_free_memory(struct ast_string_field_mgr      *mgr,
  *
  * \note
  * This macro must be called on ALL fields defined with
- *AST_STRING_FIELD_EXTENDED after
+ * AST_STRING_FIELD_EXTENDED after
  * ast_string_field_init has been called.
  */
 #define ast_string_field_init_extended(x, field)                               \
@@ -493,13 +462,13 @@ int __ast_string_field_init(struct ast_string_field_mgr   *mgr,
  * \param n Current imlementation only allows 1 structure to be allocated
  * \param type The type of structure to allocate
  * \param size The number of bytes of space (minimum) to allocate for
- *stringfields to use
+ * stringfields to use
  *             in each structure
  *
  * This function will allocate memory for one or more structures that use
- *stringfields, and
+ * stringfields, and
  * also allocate space for the stringfields and initialize the stringfield
- *management
+ * management
  * structure embedded in the outer structure.
  *
  * \since 1.8

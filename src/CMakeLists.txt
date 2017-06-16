@@ -76,6 +76,7 @@ IF(ENABLE_RESTFUL)
     ${CMAKE_CURRENT_SOURCE_DIR}/restful/restful_websockets.c
     ${CMAKE_CURRENT_SOURCE_DIR}/restful/restful_model_validators.c
     ${CMAKE_CURRENT_SOURCE_DIR}/restful/config.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/restful/cli.c
   )
 ENDIF()
 

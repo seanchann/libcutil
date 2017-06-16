@@ -274,4 +274,74 @@ void        ast_ari_response_alloc_failed(struct ast_ari_response *response);
 const char* cutil_restful_get_doc_dir(void);
 void        cutil_restful_set_doc_root_dir(const char *dir);
 
+
+struct ast_ari_conf_general;
+
+/*! \brief All configuration options for ARI. */
+struct ast_ari_conf {
+  /*! The general section configuration options. */
+  struct ast_ari_conf_general *general;
+
+  /*! Configured users */
+  struct ao2_container *users;
+};
+
+/*! Max length for auth_realm field */
+#define ARI_AUTH_REALM_LEN 80
+
+/*! \brief Global configuration options for ARI. */
+struct ast_ari_conf_general {
+  /*! Enabled by default, disabled if false. */
+  int enabled;
+
+  /*! Write timeout for websocket connections */
+  int write_timeout;
+
+  /*! Encoding format used during output (default compact). */
+  enum ast_json_encoding_format format;
+
+  /*! Authentication realm */
+  char auth_realm[ARI_AUTH_REALM_LEN];
+
+  AST_DECLARE_STRING_FIELDS(
+    AST_STRING_FIELD(allowed_origins);
+    );
+};
+
+/*! \brief Password format */
+enum ast_ari_password_format {
+  /*! \brief Plaintext password */
+  ARI_PASSWORD_FORMAT_PLAIN,
+
+  /*! crypt(3) password */
+  ARI_PASSWORD_FORMAT_CRYPT,
+};
+
+/*!
+ * \brief User's password mx length.
+ *
+ * If 256 seems like a lot, a crypt SHA-512 has over 106 characters.
+ */
+#define ARI_PASSWORD_LEN 256
+
+/*! \brief Per-user configuration options */
+struct ast_ari_conf_user {
+  /*! Username for authentication */
+  char *username;
+
+  /*! User's password. */
+  char password[ARI_PASSWORD_LEN];
+
+  /*! Format for the password field */
+  enum ast_ari_password_format password_format;
+
+  /*! If true, user cannot execute change operations */
+  int read_only;
+};
+
+int cutil_restful_init(struct ast_ari_conf_general *general,
+                       struct ast_ari_conf_user    *user_list,
+                       size_t                       user_list_len);
+int cutil_restful_destory(void);
+
 #endif /* _RESTFUL_H */

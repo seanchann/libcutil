@@ -25,344 +25,272 @@
 #include "libcutil.h"
 
 
-#include "libcutil/config_options.h"
+// #include "libcutil/config_options.h"
 #include "libcutil/http_websocket.h"
+#include "libcutil/restful.h"
 #include "internal.h"
+
 
 /*! \brief Locking container for safe configuration access. */
 static AO2_GLOBAL_OBJ_STATIC(confs);
 
-/*! \brief Mapping of the ARI conf struct's globals to the
- *         general context in the config file. */
-static struct aco_type general_option = {
-	.type = ACO_GLOBAL,
-	.name = "general",
-	.item_offset = offsetof(struct ast_ari_conf, general),
-	.category = "^general$",
-	.category_match = ACO_WHITELIST,
-};
-
-static struct aco_type *general_options[] = ACO_TYPES(&general_option);
-
-/*! \brief Encoding format handler converts from boolean to enum. */
-static int encoding_format_handler(const struct aco_option *opt,
-	struct ast_variable *var, void *obj)
-{
-	struct ast_ari_conf_general *general = obj;
-
-	if (!strcasecmp(var->name, "pretty")) {
-		general->format = ast_true(var->value) ?
-			AST_JSON_PRETTY : AST_JSON_COMPACT;
-	} else {
-		return -1;
-	}
-
-	return 0;
-}
-
-/*! \brief Parses the ast_ari_password_format enum from a config file */
-static int password_format_handler(const struct aco_option *opt,
-	struct ast_variable *var, void *obj)
-{
-	struct ast_ari_conf_user *user = obj;
-
-	if (strcasecmp(var->value, "plain") == 0) {
-		user->password_format = ARI_PASSWORD_FORMAT_PLAIN;
-	} else if (strcasecmp(var->value, "crypt") == 0) {
-		user->password_format = ARI_PASSWORD_FORMAT_CRYPT;
-	} else {
-		return -1;
-	}
-
-	return 0;
-}
 
 /*! \brief Destructor for \ref ast_ari_conf_user */
 static void user_dtor(void *obj)
 {
-	struct ast_ari_conf_user *user = obj;
-	ast_debug(3, "Disposing of user %s\n", user->username);
-	ast_free(user->username);
+  struct ast_ari_conf_user *user = obj;
+
+  ast_debug(3, "Disposing of user %s\n", user->username);
+  ast_free(user->username);
 }
 
 /*! \brief Allocate an \ref ast_ari_conf_user for config parsing */
-static void *user_alloc(const char *cat)
+static void* user_alloc(const char *cat)
 {
-	RAII_VAR(struct ast_ari_conf_user *, user, NULL, ao2_cleanup);
+  RAII_VAR(struct ast_ari_conf_user *, user, NULL, ao2_cleanup);
 
-	if (!cat) {
-		return NULL;
-	}
+  if (!cat) {
+    return NULL;
+  }
 
-	ast_debug(3, "Allocating user %s\n", cat);
+  ast_debug(3, "Allocating user %s\n", cat);
 
-	user = ao2_alloc_options(sizeof(*user), user_dtor,
-		AO2_ALLOC_OPT_LOCK_NOLOCK);
-	if (!user) {
-		return NULL;
-	}
+  user = ao2_alloc_options(sizeof(*user), user_dtor,
+                           AO2_ALLOC_OPT_LOCK_NOLOCK);
 
-	user->username = ast_strdup(cat);
-	if (!user->username) {
-		return NULL;
-	}
+  if (!user) {
+    return NULL;
+  }
 
-	ao2_ref(user, +1);
-	return user;
+  user->username = ast_strdup(cat);
+
+  if (!user->username) {
+    return NULL;
+  }
+
+  ao2_ref(user, +1);
+  return user;
 }
 
 /*! \brief Sorting function for use with red/black tree */
 static int user_sort_cmp(const void *obj_left, const void *obj_right, int flags)
 {
-	const struct ast_ari_conf_user *user_left = obj_left;
-	const struct ast_ari_conf_user *user_right = obj_right;
-	const char *key_right = obj_right;
-	int cmp;
+  const struct ast_ari_conf_user *user_left  = obj_left;
+  const struct ast_ari_conf_user *user_right = obj_right;
+  const char *key_right                      = obj_right;
+  int cmp;
 
-	switch (flags & OBJ_SEARCH_MASK) {
-	case OBJ_SEARCH_OBJECT:
-		key_right = user_right->username;
-		/* Fall through */
-	case OBJ_SEARCH_KEY:
-		cmp = strcasecmp(user_left->username, key_right);
-		break;
-	case OBJ_SEARCH_PARTIAL_KEY:
-		/*
-		 * We could also use a partial key struct containing a length
-		 * so strlen() does not get called for every comparison instead.
-		 */
-		cmp = strncasecmp(user_left->username, key_right, strlen(key_right));
-		break;
-	default:
-		/* Sort can only work on something with a full or partial key. */
-		ast_assert(0);
-		cmp = 0;
-		break;
-	}
-	return cmp;
+  switch (flags & OBJ_SEARCH_MASK) {
+  case OBJ_SEARCH_OBJECT:
+    key_right = user_right->username;
+
+  /* Fall through */
+  case OBJ_SEARCH_KEY:
+    cmp = strcasecmp(user_left->username, key_right);
+    break;
+
+  case OBJ_SEARCH_PARTIAL_KEY:
+
+    /*
+     * We could also use a partial key struct containing a length
+     * so strlen() does not get called for every comparison instead.
+     */
+    cmp = strncasecmp(user_left->username, key_right, strlen(key_right));
+    break;
+
+  default:
+
+    /* Sort can only work on something with a full or partial key. */
+    ast_assert(0);
+    cmp = 0;
+    break;
+  }
+  return cmp;
 }
 
 /*! \brief \ref aco_type item_find function */
-static void *user_find(struct ao2_container *tmp_container, const char *cat)
+static void* user_find(struct ao2_container *tmp_container, const char *cat)
 {
-	if (!cat) {
-		return NULL;
-	}
+  if (!cat) {
+    return NULL;
+  }
 
-	return ao2_find(tmp_container, cat, OBJ_SEARCH_KEY);
+  return ao2_find(tmp_container, cat, OBJ_SEARCH_KEY);
 }
-
-static struct aco_type user_option = {
-	.type = ACO_ITEM,
-	.name = "user",
-	.category_match = ACO_BLACKLIST,
-	.category = "^general$",
-	.matchfield = "type",
-	.matchvalue = "user",
-	.item_alloc = user_alloc,
-	.item_find = user_find,
-	.item_offset = offsetof(struct ast_ari_conf, users),
-};
-
-static struct aco_type *user[] = ACO_TYPES(&user_option);
 
 static void conf_general_dtor(void *obj)
 {
-	struct ast_ari_conf_general *general = obj;
+  struct ast_ari_conf_general *general = obj;
 
-	ast_string_field_free_memory(general);
+  ast_string_field_free_memory(general);
 }
 
 /*! \brief \ref ast_ari_conf destructor. */
 static void conf_destructor(void *obj)
 {
-	struct ast_ari_conf *cfg = obj;
+  struct ast_ari_conf *cfg = obj;
 
-	ao2_cleanup(cfg->general);
-	ao2_cleanup(cfg->users);
+  ao2_cleanup(cfg->general);
+  ao2_cleanup(cfg->users);
 }
 
 /*! \brief Allocate an \ref ast_ari_conf for config parsing */
-static void *conf_alloc(void)
+static void* conf_alloc(void)
 {
-	struct ast_ari_conf *cfg;
+  struct ast_ari_conf *cfg;
 
-	cfg = ao2_alloc_options(sizeof(*cfg), conf_destructor,
-		AO2_ALLOC_OPT_LOCK_NOLOCK);
-	if (!cfg) {
-		return NULL;
-	}
+  cfg = ao2_alloc_options(sizeof(*cfg), conf_destructor,
+                          AO2_ALLOC_OPT_LOCK_NOLOCK);
 
-	cfg->general = ao2_alloc_options(sizeof(*cfg->general), conf_general_dtor,
-		AO2_ALLOC_OPT_LOCK_NOLOCK);
+  if (!cfg) {
+    return NULL;
+  }
 
-	cfg->users = ao2_container_alloc_rbtree(AO2_ALLOC_OPT_LOCK_NOLOCK,
-		AO2_CONTAINER_ALLOC_OPT_DUPS_REPLACE, user_sort_cmp, NULL);
+  cfg->general = ao2_alloc_options(sizeof(*cfg->general), conf_general_dtor,
+                                   AO2_ALLOC_OPT_LOCK_NOLOCK);
 
-	if (!cfg->users
-		|| !cfg->general
-		|| ast_string_field_init(cfg->general, 64)
-		|| aco_set_defaults(&general_option, "general", cfg->general)) {
-		ao2_ref(cfg, -1);
-		return NULL;
-	}
+  cfg->users = ao2_container_alloc_rbtree(AO2_ALLOC_OPT_LOCK_NOLOCK,
+                                          AO2_CONTAINER_ALLOC_OPT_DUPS_REPLACE,
+                                          user_sort_cmp,
+                                          NULL);
 
-	return cfg;
+  if (!cfg->users
+      || !cfg->general
+      || ast_string_field_init(cfg->general, 64)) {
+    ao2_ref(cfg, -1);
+    return NULL;
+  }
+
+  return cfg;
 }
 
-#define CONF_FILENAME "ari.conf"
-
-/*! \brief The conf file that's processed for the module. */
-static struct aco_file conf_file = {
-	/*! The config file name. */
-	.filename = CONF_FILENAME,
-	/*! The mapping object types to be processed. */
-	.types = ACO_TYPES(&general_option, &user_option),
-};
-
-CONFIG_INFO_STANDARD(cfg_info, confs, conf_alloc,
-		     .files = ACO_FILES(&conf_file));
-
-struct ast_ari_conf *ast_ari_config_get(void)
+struct ast_ari_conf* ast_ari_config_get(void)
 {
-	struct ast_ari_conf *res = ao2_global_obj_ref(confs);
-	if (!res) {
-		ast_log(LOG_ERROR,
-			"Error obtaining config from " CONF_FILENAME "\n");
-	}
-	return res;
+  struct ast_ari_conf *res = ao2_global_obj_ref(confs);
+
+  if (!res) {
+    ast_log(LOG_ERROR,
+            "Error obtaining config. no configuration.\n");
+  }
+  return res;
 }
 
-struct ast_ari_conf_user *ast_ari_config_validate_user(const char *username,
-	const char *password)
+struct ast_ari_conf_user* ast_ari_config_validate_user(const char *username,
+                                                       const char *password)
 {
-	RAII_VAR(struct ast_ari_conf *, conf, NULL, ao2_cleanup);
-	RAII_VAR(struct ast_ari_conf_user *, user, NULL, ao2_cleanup);
-	int is_valid = 0;
+  RAII_VAR(struct ast_ari_conf *,      conf, NULL, ao2_cleanup);
+  RAII_VAR(struct ast_ari_conf_user *, user, NULL, ao2_cleanup);
+  int is_valid = 0;
 
-	conf = ast_ari_config_get();
-	if (!conf) {
-		return NULL;
-	}
+  conf = ast_ari_config_get();
 
-	user = ao2_find(conf->users, username, OBJ_SEARCH_KEY);
-	if (!user) {
-		return NULL;
-	}
+  if (!conf) {
+    return NULL;
+  }
 
-	if (ast_strlen_zero(user->password)) {
-		ast_log(LOG_WARNING,
-			"User '%s' missing password; authentication failed\n",
-			user->username);
-		return NULL;
-	}
+  user = ao2_find(conf->users, username, OBJ_SEARCH_KEY);
 
-	switch (user->password_format) {
-	case ARI_PASSWORD_FORMAT_PLAIN:
-		is_valid = strcmp(password, user->password) == 0;
-		break;
-	case ARI_PASSWORD_FORMAT_CRYPT:
-		is_valid = ast_crypt_validate(password, user->password);
-		break;
-	}
+  if (!user) {
+    return NULL;
+  }
 
-	if (!is_valid) {
-		return NULL;
-	}
+  if (ast_strlen_zero(user->password)) {
+    ast_log(LOG_WARNING,
+            "User '%s' missing password; authentication failed\n",
+            user->username);
+    return NULL;
+  }
 
-	ao2_ref(user, +1);
-	return user;
+  switch (user->password_format) {
+  case ARI_PASSWORD_FORMAT_PLAIN:
+    is_valid = strcmp(password, user->password) == 0;
+    break;
+
+  case ARI_PASSWORD_FORMAT_CRYPT:
+    is_valid = ast_crypt_validate(password, user->password);
+    break;
+  }
+
+  if (!is_valid) {
+    return NULL;
+  }
+
+  ao2_ref(user, +1);
+  return user;
 }
 
 /*! \brief Callback to validate a user object */
 static int validate_user_cb(void *obj, void *arg, int flags)
 {
-	struct ast_ari_conf_user *user = obj;
+  struct ast_ari_conf_user *user = obj;
 
-	if (ast_strlen_zero(user->password)) {
-		ast_log(LOG_WARNING, "User '%s' missing password\n",
-			user->username);
-	}
+  if (ast_strlen_zero(user->password)) {
+    ast_log(LOG_WARNING, "User '%s' missing password\n",
+            user->username);
+  }
 
-	return 0;
+  return 0;
 }
 
-/*! \brief Load (or reload) configuration. */
-static int process_config(int reload)
+void cutil_restful_config_destroy(void)
 {
-	RAII_VAR(struct ast_ari_conf *, conf, NULL, ao2_cleanup);
-
-	switch (aco_process_config(&cfg_info, reload)) {
-	case ACO_PROCESS_ERROR:
-		return -1;
-	case ACO_PROCESS_OK:
-	case ACO_PROCESS_UNCHANGED:
-		break;
-	}
-
-	conf = ast_ari_config_get();
-	if (!conf) {
-		ast_assert(0); /* We just configured; it should be there */
-		return -1;
-	}
-
-	if (conf->general->enabled) {
-		if (ao2_container_count(conf->users) == 0) {
-			ast_log(LOG_ERROR, "No configured users for ARI\n");
-		} else {
-			ao2_callback(conf->users, OBJ_NODATA, validate_user_cb, NULL);
-		}
-	}
-
-	return 0;
+  ao2_global_obj_release(confs);
 }
 
-int ast_ari_config_init(void)
+int cutil_restful_config_init(struct ast_ari_conf_general *general,
+                              struct ast_ari_conf_user    *user_list,
+                              size_t                       user_list_len)
 {
-	if (aco_info_init(&cfg_info)) {
-		aco_info_destroy(&cfg_info);
-		return -1;
-	}
+  struct ast_ari_conf *pending_conf = conf_alloc();
+  int i                             = 0;
+  struct ast_ari_conf_user *user    = NULL;
 
-	/* ARI general category options */
-	aco_option_register(&cfg_info, "enabled", ACO_EXACT, general_options,
-		"yes", OPT_BOOL_T, 1,
-		FLDSET(struct ast_ari_conf_general, enabled));
-	aco_option_register_custom(&cfg_info, "pretty", ACO_EXACT,
-		general_options, "no",  encoding_format_handler, 0);
-	aco_option_register(&cfg_info, "auth_realm", ACO_EXACT, general_options,
-		"Asterisk REST Interface", OPT_CHAR_ARRAY_T, 0,
-		FLDSET(struct ast_ari_conf_general, auth_realm),
-		ARI_AUTH_REALM_LEN);
-	aco_option_register(&cfg_info, "allowed_origins", ACO_EXACT, general_options,
-		"", OPT_STRINGFIELD_T, 0,
-		STRFLDSET(struct ast_ari_conf_general, allowed_origins));
-	aco_option_register(&cfg_info, "websocket_write_timeout", ACO_EXACT, general_options,
-		AST_DEFAULT_WEBSOCKET_WRITE_TIMEOUT_STR, OPT_INT_T, PARSE_IN_RANGE,
-		FLDSET(struct ast_ari_conf_general, write_timeout), 1, INT_MAX);
+  if (!pending_conf) {
+    cutil_log(LOG_ERROR, "alloc conf failed.\r\n");
+    return -1;
+  }
 
-	/* ARI type=user category options */
-	aco_option_register(&cfg_info, "type", ACO_EXACT, user, NULL,
-		OPT_NOOP_T, 0, 0);
-	aco_option_register(&cfg_info, "read_only", ACO_EXACT, user,
-		"no", OPT_BOOL_T, 1,
-		FLDSET(struct ast_ari_conf_user, read_only));
-	aco_option_register(&cfg_info, "password", ACO_EXACT, user,
-		"", OPT_CHAR_ARRAY_T, 0,
-		FLDSET(struct ast_ari_conf_user, password), ARI_PASSWORD_LEN);
-	aco_option_register_custom(&cfg_info, "password_format", ACO_EXACT,
-		user, "plain",  password_format_handler, 0);
+  pending_conf->general->enabled = general->enabled;
 
-	return process_config(0);
-}
+  if (!ast_strlen_zero(general->auth_realm)) {
+    ast_copy_string(pending_conf->general->auth_realm,
+                    general->auth_realm,
+                    sizeof(pending_conf->general->auth_realm));
+  }
 
-int ast_ari_config_reload(void)
-{
-	return process_config(1);
-}
 
-void ast_ari_config_destroy(void)
-{
-	aco_info_destroy(&cfg_info);
-	ao2_global_obj_release(confs);
+  ast_string_fields_copy(pending_conf->general,
+                         general);
+
+
+  pending_conf->general->write_timeout = general->write_timeout;
+  pending_conf->general->format        = general->format;
+
+
+  for (i = 0; i < user_list_len; i++) {
+    user = user_alloc(user_list[i].username);
+
+    if (!user) {
+      continue;
+    }
+
+    user->read_only = user_list[i].read_only;
+    ast_copy_string(user->password, user_list[i].password,
+                    sizeof(user->password));
+    user->password_format = user_list[i].password_format;
+    ao2_link(pending_conf->users, user);
+  }
+
+  if (pending_conf->general->enabled) {
+    if (ao2_container_count(pending_conf->users) == 0) {
+      ast_log(LOG_ERROR, "No configured users for ARI\n");
+    } else {
+      ao2_callback(pending_conf->users, OBJ_NODATA, validate_user_cb, NULL);
+    }
+  }
+
+  ao2_global_obj_replace_unref(confs, pending_conf);
+
+
+  return 0;
 }
