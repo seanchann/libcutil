@@ -66,13 +66,19 @@ void init_restful_mod(void)
   ast_http_init(&config);
 
 
+  if(ast_string_field_init(&general, 64)){
+    cutil_log(LOG_ERROR,"init string field error.\r\n");
+    return;
+  }
+
   general.format = AST_JSON_PRETTY;
   general.enabled = 1;
 
   user.username = calloc(32, sizeof(char));
-  snprintf(user.username, sizeof(user.username), "seanchann");
+  snprintf(user.username, 32, "seanchann");
   user.read_only = 0;
   user.password_format = ARI_PASSWORD_FORMAT_PLAIN;
+  //user.password_format = ARI_PASSWORD_FORMAT_CRYPT;
   snprintf(user.password, sizeof(user.password),"123456");
 
 

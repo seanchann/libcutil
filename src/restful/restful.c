@@ -1011,14 +1011,7 @@ static int ast_ari_callback(struct ast_tcptls_session_instance *ser,
     ast_str_append(&response.headers, 0,
                    "WWW-Authenticate: Basic realm=\"%s\"\r\n",
                    conf->general->auth_realm);
-  }
-
-  // else if (!ast_fully_booted) {
-  //    ast_http_request_close_on_completion(ser);
-  //    ast_ari_response_error(&response, 503, "Service Unavailable", "Asterisk
-  // not booted");
-  // }
-  else if (user->read_only && (method != AST_HTTP_GET) &&
+  }else if (user->read_only && (method != AST_HTTP_GET) &&
            (method != AST_HTTP_OPTIONS)) {
     ast_ari_response_error(&response, 403, "Forbidden", "Write access denied");
   } else if (ast_ends_with(uri, "/")) {
@@ -1129,6 +1122,7 @@ int cutil_restful_init(struct ast_ari_conf_general *general,
   }
 
   if (cutil_restful_config_init(general, user_list, user_list_len) != 0) {
+    cutil_log(LOG_ERROR, "init restful config error.\r\n");
     return -2;
   }
 

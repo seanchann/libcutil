@@ -2021,8 +2021,11 @@ static void daemon_run(int                isroot,
 
   ast_json_init();
   threadstorage_init();
-  check_init(init_logger(), "Logger");
   ast_builtins_init();
+
+  check_init(ast_utils_init(), "Utilities");
+
+  check_init(init_logger(),    "Logger");
 
   if (ast_opt_console) {
     console_el_init();

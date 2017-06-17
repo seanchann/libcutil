@@ -191,6 +191,7 @@ struct ast_ari_conf_user* ast_ari_config_validate_user(const char *username,
   user = ao2_find(conf->users, username, OBJ_SEARCH_KEY);
 
   if (!user) {
+    cutil_log(LOG_NOTICE, "validate user. notfound\r\n");
     return NULL;
   }
 
@@ -258,10 +259,8 @@ int cutil_restful_config_init(struct ast_ari_conf_general *general,
                     sizeof(pending_conf->general->auth_realm));
   }
 
-
   ast_string_fields_copy(pending_conf->general,
                          general);
-
 
   pending_conf->general->write_timeout = general->write_timeout;
   pending_conf->general->format        = general->format;
