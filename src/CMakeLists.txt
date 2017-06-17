@@ -113,6 +113,14 @@ SET(LINK_LIB jansson)
 SET(LINK_LIB ncurses)
 SET(LINK_LIB uuid)
 
+if(HAVE_CRYPT_R)
+  SET(LINK_LIB crypt)
+endif()
+
+if(HAVE_CRYPT)
+  SET(LINK_LIB crypt)
+endif()
+
 if(CMAKE_THREAD_LIBS_INIT)
   SET(LINK_LIB ${LINK_LIB} ${CMAKE_THREAD_LIBS_INIT})
 endif()

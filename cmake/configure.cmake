@@ -26,6 +26,7 @@ macro(Configure)
 
 
 
+
   INCLUDE(CheckSymbolExists)
   CHECK_SYMBOL_EXISTS (LLONG_MAX "limits.h" HAVE_LLONG_MAX)
   CHECK_SYMBOL_EXISTS (timersub "sys/time.h" HAVE_TIMERSUB)
@@ -208,7 +209,6 @@ macro(Configure)
 
 
 
-
   IF(${HAVE_BKTR_HEADER})
     IF(${HAVE_GLIBC})
       CHECK_LIBRARY_EXISTS(c backtrace "" HAVE_BKTR)
@@ -225,6 +225,8 @@ macro(Configure)
   CHECK_LIBRARY_EXISTS(m roundf "" HAVE_ROUNDF)
   CHECK_LIBRARY_EXISTS(cap cap_set_proc "sys/capability.h" HAVE_CAP)
   CHECK_LIBRARY_EXISTS(pthread pthread_rwlock_trywrlock "pthread.h" HAVE_PTHREAD_RWLOCK_TIMEDWRLOCK)
+  CHECK_LIBRARY_EXISTS(crypt crypt "" HAVE_CRYPT)
+  CHECK_LIBRARY_EXISTS(crypt crypt_r "crypt.h" HAVE_CRYPT_R)
 
 
 

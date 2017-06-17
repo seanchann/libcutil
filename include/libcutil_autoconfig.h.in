@@ -206,6 +206,11 @@
 /* Define to 1 if have fcntl.h  */
 #cmakedefine HAVE_FCNTL_H @HAVE_FCNTL_H@
 
+/* Define to 1 if have fcntl.h  */
+#cmakedefine HAVE_CRYPT_R @HAVE_CRYPT_R@
+
+/* Define to 1 if have fcntl.h  */
+#cmakedefine HAVE_CRYPT @HAVE_CRYPT@
 
 /* Define to 1 if you have the `funopen' function. */
 #cmakedefine HAVE_FUNOPEN @HAVE_FUNOPEN@

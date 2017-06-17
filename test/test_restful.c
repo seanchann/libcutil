@@ -77,9 +77,13 @@ void init_restful_mod(void)
   user.username = calloc(32, sizeof(char));
   snprintf(user.username, 32, "seanchann");
   user.read_only = 0;
-  user.password_format = ARI_PASSWORD_FORMAT_PLAIN;
-  //user.password_format = ARI_PASSWORD_FORMAT_CRYPT;
-  snprintf(user.password, sizeof(user.password),"123456");
+
+  user.password_format = ARI_PASSWORD_FORMAT_CRYPT;
+  //snprintf(user.password, sizeof(user.password),"123456");
+  snprintf(user.password, sizeof(user.password),"$6$fKHnOFhuMcDWRvb.$0qK7oPBL7OIxsGeLEK8XWpKwc8TulXP20cw06jB8lAttulKSt/fYgLVcq1ZOy8agyyksSrdNGNm9fbKROZvcL1");
+
+  // user.password_format = ARI_PASSWORD_FORMAT_PLAIN;
+  // snprintf(user.password, sizeof(user.password),"123456");
 
 
   if (cutil_restful_init(&general, &user, 1)) {

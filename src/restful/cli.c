@@ -36,10 +36,10 @@ static char *ari_show(struct ast_cli_entry *e, int cmd, struct ast_cli_args *a)
 
 	switch (cmd) {
 	case CLI_INIT:
-		e->command = "ari show status";
+		e->command = "restful show status";
 		e->usage =
-			"Usage: ari show status\n"
-			"       Shows all ARI settings\n";
+			"Usage: restful show status\n"
+			"       Shows all RESTFUL settings\n";
 		return NULL;
 	case CLI_GENERATE:
 		return NULL;
@@ -54,11 +54,11 @@ static char *ari_show(struct ast_cli_entry *e, int cmd, struct ast_cli_args *a)
 	conf = ast_ari_config_get();
 
 	if (!conf) {
-		ast_cli(a->fd, "Error getting ARI configuration\n");
+		ast_cli(a->fd, "Error getting restful configuration\n");
 		return CLI_FAILURE;
 	}
 
-	ast_cli(a->fd, "ARI Status:\n");
+	ast_cli(a->fd, "restful Status:\n");
 	ast_cli(a->fd, "Enabled: %s\n", AST_CLI_YESNO(conf->general->enabled));
 	ast_cli(a->fd, "Output format: ");
 	switch (conf->general->format) {
@@ -94,10 +94,10 @@ static char *ari_show_users(struct ast_cli_entry *e, int cmd,
 
 	switch (cmd) {
 	case CLI_INIT:
-		e->command = "ari show users";
+		e->command = "restful show users";
 		e->usage =
-			"Usage: ari show users\n"
-			"       Shows all ARI users\n";
+			"Usage: restful show users\n"
+			"       Shows all restful users\n";
 		return NULL;
 	case CLI_GENERATE:
 		return NULL;
@@ -178,10 +178,10 @@ static char *ari_show_user(struct ast_cli_entry *e, int cmd, struct ast_cli_args
 
 	switch (cmd) {
 	case CLI_INIT:
-		e->command = "ari show user";
+		e->command = "restful show user";
 		e->usage =
-			"Usage: ari show user <username>\n"
-			"       Shows a specific ARI user\n";
+			"Usage: restful show user <username>\n"
+			"       Shows a specific restful user\n";
 		return NULL;
 	case CLI_GENERATE:
 		return complete_ari_show_user(a);
@@ -196,7 +196,7 @@ static char *ari_show_user(struct ast_cli_entry *e, int cmd, struct ast_cli_args
 	conf = ast_ari_config_get();
 
 	if (!conf) {
-		ast_cli(a->fd, "Error getting ARI configuration\n");
+		ast_cli(a->fd, "Error getting restful configuration\n");
 		return CLI_FAILURE;
 	}
 
@@ -218,7 +218,7 @@ static char *ari_mkpasswd(struct ast_cli_entry *e, int cmd, struct ast_cli_args 
 
 	switch (cmd) {
 	case CLI_INIT:
-		e->command = "ari mkpasswd";
+		e->command = "restful mkpasswd";
 		e->usage =
 			"Usage: ari mkpasswd <password>\n"
 			"       Encrypts a password for use in ari.conf\n"
@@ -254,9 +254,9 @@ static char *ari_mkpasswd(struct ast_cli_entry *e, int cmd, struct ast_cli_args 
 
 
 static struct ast_cli_entry cli_ari[] = {
-	AST_CLI_DEFINE(ari_show, "Show ARI settings"),
-	AST_CLI_DEFINE(ari_show_users, "List ARI users"),
-	AST_CLI_DEFINE(ari_show_user, "List single ARI user"),
+	AST_CLI_DEFINE(ari_show, "Show restful settings"),
+	AST_CLI_DEFINE(ari_show_users, "List restful users"),
+	AST_CLI_DEFINE(ari_show_user, "List single restful user"),
 	AST_CLI_DEFINE(ari_mkpasswd, "Encrypts a password"),
 };
 
