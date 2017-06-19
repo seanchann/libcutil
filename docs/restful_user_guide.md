@@ -105,13 +105,16 @@ struct ast_ari_conf_user {
 
 
   int read_only;
+
+  char resources[512];
 }
 ```
 
 - username: 鉴权的用户名
 - password: 用户密码
 - password_format: 密码的格式。 目前有两种，一种是明文的格式，一种是密文的格式(密文可以通过`restful mkpassword 123456`来生成)
-- read_only: 如果配置为真，那么用户只被授权发起只读的请求
+- read_only: 如果配置为真，那么用户只被授权发起只读的请求，此配置项基于resource配置来管理用户访问的资源。
+- resources: 此用户可以访问那些资源，如果为空，那么没有限制，可以访问任何资源。如果有多个资源，请用`,`分割。
 
 *初始化的例子可以参考test目录中的test_restful.c中的init_restful_mod()函数*
 

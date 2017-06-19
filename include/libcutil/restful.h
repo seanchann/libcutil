@@ -337,6 +337,9 @@ struct ast_ari_conf_user {
 
   /*! If true, user cannot execute change operations */
   int read_only;
+
+  /*! what resouce this user can be request, multiple resouces use comma split. */
+  char resources[512];
 };
 
 int cutil_restful_init(struct ast_ari_conf_general *general,

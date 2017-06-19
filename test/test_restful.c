@@ -16,6 +16,7 @@
 #include "libcutil/http.h"
 #include "libcutil/restful.h"
 #include "resources/resource_test.h"
+#include "resources/resource_acl.h"
 
 
 static void rest_test_list_cb(
@@ -44,12 +45,38 @@ static struct stasis_rest_handlers test = {
   .children     = {}
 };
 
+static void rest_acl_get_cb(
+  struct ast_tcptls_session_instance *ser,
+  struct ast_variable                *get_params,
+  struct ast_variable                *path_vars,
+  struct ast_variable                *headers,
+  struct ast_json                    *body,
+  struct ast_ari_response            *response)
+{
+  struct rest_test_list_var_args args = {};
+
+  rest_acl_get(headers, &args, response);
+
+fin: __attribute__((unused))
+  return;
+}
+
+/*! \brief REST handler for /api-docs/channels.json */
+static struct stasis_rest_handlers acl = {
+  .path_segment = "acl",
+  .callbacks    = {
+    [AST_HTTP_GET] = rest_acl_get_cb,
+  },
+  .num_children =      0,
+  .children     = {}
+};
+
 
 void init_restful_mod(void)
 {
   struct http_server_config   config;
   struct ast_ari_conf_general general;
-  struct ast_ari_conf_user    user;
+  struct ast_ari_conf_user    user[2];
 
   config.enabled = 1;
   snprintf(config.bindaddr,
@@ -66,27 +93,35 @@ void init_restful_mod(void)
   ast_http_init(&config);
 
 
-  if(ast_string_field_init(&general, 64)){
-    cutil_log(LOG_ERROR,"init string field error.\r\n");
+  if (ast_string_field_init(&general, 64)) {
+    cutil_log(LOG_ERROR, "init string field error.\r\n");
     return;
   }
 
-  general.format = AST_JSON_PRETTY;
+  general.format  = AST_JSON_PRETTY;
   general.enabled = 1;
 
-  user.username = calloc(32, sizeof(char));
-  snprintf(user.username, 32, "seanchann");
-  user.read_only = 0;
+  user[0].username = calloc(32, sizeof(char));
+  snprintf(user[0].username, 32, "seanchann");
+  user[0].read_only       = 0;
+  user[0].password_format = ARI_PASSWORD_FORMAT_CRYPT;
+  snprintf(user[0].password,
+           sizeof(user[0].password),
+           "$6$fKHnOFhuMcDWRvb.$0qK7oPBL7OIxsGeLEK8XWpKwc8TulXP20cw06jB8lAttulKSt/fYgLVcq1ZOy8agyyksSrdNGNm9fbKROZvcL1");
 
-  user.password_format = ARI_PASSWORD_FORMAT_CRYPT;
-  //snprintf(user.password, sizeof(user.password),"123456");
-  snprintf(user.password, sizeof(user.password),"$6$fKHnOFhuMcDWRvb.$0qK7oPBL7OIxsGeLEK8XWpKwc8TulXP20cw06jB8lAttulKSt/fYgLVcq1ZOy8agyyksSrdNGNm9fbKROZvcL1");
+  user[1].username = calloc(32, sizeof(char));
+  snprintf(user[1].username, 32, "xqzhou");
+  user[1].read_only       = 0;
+  user[1].password_format = ARI_PASSWORD_FORMAT_CRYPT;
+  snprintf(user[1].password,
+           sizeof(user[1].password),
+           "$6$fKHnOFhuMcDWRvb.$0qK7oPBL7OIxsGeLEK8XWpKwc8TulXP20cw06jB8lAttulKSt/fYgLVcq1ZOy8agyyksSrdNGNm9fbKROZvcL1");
+  snprintf(user[1].resources, sizeof(user[1].resources), "test");
 
   // user.password_format = ARI_PASSWORD_FORMAT_PLAIN;
   // snprintf(user.password, sizeof(user.password),"123456");
 
-
-  if (cutil_restful_init(&general, &user, 1)) {
+  if (cutil_restful_init(&general, user, 2)) {
     cutil_log(LOG_ERROR, "restful server init error.\r\n");
     return;
   }
@@ -96,5 +131,10 @@ void init_restful_mod(void)
     cutil_log(LOG_ERROR, "add restful  test resource error.\r\n");
   }
 
-  free(user.username);
+  if (ast_ari_add_handler(&acl)) {
+    cutil_log(LOG_ERROR, "add restful  acl resource error.\r\n");
+  }
+
+  free(user[0].username);
+  free(user[1].username);
 }

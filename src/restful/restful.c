@@ -79,9 +79,6 @@
 #include "libcutil/restful.h"
 #include "libcutil/astobj2.h"
 
-// #include "asterisk/module.h"
-// #include "asterisk/paths.h"
-// #include "asterisk/stasis_app.h"
 
 #include <string.h>
 #include <sys/stat.h>
@@ -882,7 +879,9 @@ static int ast_ari_callback(struct ast_tcptls_session_instance *ser,
   const char *app_name = NULL;
   RAII_VAR(struct ast_json *, body,
            ast_json_null(), ast_json_free);
-  int debug_app = 0;
+  int   debug_app     = 0;
+  char *resource_path = ast_strdupa(uri);
+  char *resource_path_segment;
 
   if (!response_body) {
     ast_http_request_close_on_completion(ser);
@@ -1011,8 +1010,16 @@ static int ast_ari_callback(struct ast_tcptls_session_instance *ser,
     ast_str_append(&response.headers, 0,
                    "WWW-Authenticate: Basic realm=\"%s\"\r\n",
                    conf->general->auth_realm);
-  }else if (user->read_only && (method != AST_HTTP_GET) &&
-           (method != AST_HTTP_OPTIONS)) {
+  } else if ((strlen(user->resources) > 0) &&
+             !((resource_path_segment = strsep(&resource_path, "/")) &&
+               (strlen(resource_path_segment) > 0) &&
+               (strstr(user->resources, resource_path_segment)))) {
+    ast_ari_response_error(&response,
+                           401,
+                           "Unauthorized",
+                           "Access is denied due to an ACL set on the requested resource.");
+  }  else if (user->read_only && (method != AST_HTTP_GET) &&
+              (method != AST_HTTP_OPTIONS)) {
     ast_ari_response_error(&response, 403, "Forbidden", "Write access denied");
   } else if (ast_ends_with(uri, "/")) {
     remove_trailing_slash(uri, &response);

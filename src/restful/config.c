@@ -274,9 +274,11 @@ int cutil_restful_config_init(struct ast_ari_conf_general *general,
     }
 
     user->read_only = user_list[i].read_only;
-    ast_copy_string(user->password, user_list[i].password,
+    ast_copy_string(user->password,  user_list[i].password,
                     sizeof(user->password));
     user->password_format = user_list[i].password_format;
+    ast_copy_string(user->resources, user_list[i].resources,
+                    sizeof(user->resources));
     ao2_link(pending_conf->users, user);
   }
 

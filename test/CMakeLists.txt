@@ -2,6 +2,7 @@ set(SOURCES
   test_main.c
   test_restful.c
   resources/resource_test.c
+  resources/resource_acl.c
 )
 
 
