@@ -5,8 +5,8 @@
 ### linux
 
 - `cd libcutil`
-- `mkdir build.release`
-- `cd build.release`
+- `mkdir .build`
+- `cd .build`
 - `cmake .. -DCMAKE_BUILD_TYPE=Release` or `CXX=g++ cmake .. -DCMAKE_BUILD_TYPE=Debug`
 - `make`
 

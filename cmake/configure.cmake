@@ -18,6 +18,7 @@ macro(Configure)
   CHECK_INCLUDE_FILES ("string.h" HAVE_STRING_H)
   CHECK_INCLUDE_FILES ("string.h" HAVE_STRING_H)
   CHECK_INCLUDE_FILES ("sys/thr.h" HAVE_SYS_THR_H)
+  CHECK_INCLUDE_FILES ("sys/time.h" HAVE_SYS_TIME_H)
   #newwork
   CHECK_INCLUDE_FILES ("arpa/inet.h" HAVE_ARPA_INET_H)
   CHECK_INCLUDE_FILES ("winsock.h" HAVE_WINSOCK_H)
