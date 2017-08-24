@@ -21,6 +21,11 @@
 
 #include "libcutil_autoconfig.h"
 
+#if defined(__cplusplus) || defined(c_plusplus)
+extern "C" {
+#endif
+
+
 #if !defined(NO_MALLOC_DEBUG) && !defined(STANDALONE) && !defined(STANDALONE2) && \
   defined(MALLOC_DEBUG)
 # include "asterisk/astmm.h"
@@ -525,5 +530,7 @@ void libcutil_logger_append_logfiles_line(
   char *name,
   char *value);
 
-
+#if defined(__cplusplus) || defined(c_plusplus)
+}
+#endif
 #endif /* _LIBCUTIL_H */

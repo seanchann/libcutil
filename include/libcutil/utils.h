@@ -58,6 +58,10 @@
    \endverbatim
  */
 
+#if defined(__cplusplus) || defined(c_plusplus)
+extern "C" {
+#endif
+
 extern unsigned int __unsigned_int_flags_dummy;
 
 #define ast_test_flag(p, flag) ({              \
@@ -1248,5 +1252,9 @@ int ast_safe_system(const char *s);
 
 /*! \brief Read a file */
 char *ast_read_textfile(const char *filename);
+
+#if defined(__cplusplus) || defined(c_plusplus)
+}
+#endif
 
 #endif /* _ASTERISK_UTILS_H */
