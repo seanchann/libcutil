@@ -2,7 +2,7 @@
 *.so
 .tags
 .tags1
-build*/
+.build/
 *.pch
 .ycm_extra_conf.*
 build.h
