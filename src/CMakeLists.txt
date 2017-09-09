@@ -109,6 +109,12 @@ endif()
 target_compile_options(${CUTIL_CORE_LIBRARY_STATIC} PUBLIC  "-fPIC")
 target_compile_options(${CUTIL_CORE_LIBRARY_SHARED} PUBLIC  "-fPIC")
 
+find_package(OpenSSL)
+if(TARGET OpenSSL::SSL)
+  set(LINK_LIB OpenSSL::SSL)
+endif()
+set(_CUTIL_FIND_SSL "if(NOT OpenSSL_FOUND)\n  find_package(OpenSSL)\nendif()")
+
 SET(LINK_LIB jansson)
 SET(LINK_LIB ncurses)
 SET(LINK_LIB uuid)
