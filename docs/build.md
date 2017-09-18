@@ -2,12 +2,18 @@
 
 ## libcutil 编译
 
+### 依赖安装
+
+```
+sudo dnf install libuuid-devel jansson-devel
+```
+
 ### linux
 
 - `cd libcutil`
 - `mkdir .build`
 - `cd .build`
-- `cmake .. -DCMAKE_BUILD_TYPE=Release` or `CXX=g++ cmake .. -DCMAKE_BUILD_TYPE=Debug`
+- `cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=~/usr/local` or `CXX=g++ cmake .. -DCMAKE_BUILD_TYPE=Debug`
 - `make`
 
 *note: g++ version in my case that is 5.1*
