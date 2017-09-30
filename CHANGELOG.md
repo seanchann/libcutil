@@ -1,48 +1,24 @@
-- [v1.0.0-alpha.2](#v100-alpha2)
-  - [Downloads for v1.0.0-alpha.2](#downloads-for-v100-alpha2)
-  - [Changelog  since v1.0.0-alpha1](#changelog-since-v100-alpha1)
-- [v1.0.0-alpha.1](#v100-alpha1)
-  - [Downloads for v1.0.0-alpha.1](#downloads-for-v100-alpha1)
-  - [Changelog  since v0.0.1](#changelog-since-v001)
+# Change log
 
+## [Unreleased]
 
+### Added
 
-# v1.0.0-alpha.2
+- key-value database support. base on sqlite3.
 
-## Downloads for v1.0.0-alpha.2
+## [0.0.2] - 2017-06-28
 
-filename | sha256 hash
------- | ----------
-[libcutil-src.tar.gz](http://dev.bj-jyd.cn:10080/library/libcutil/repository/archive.tar.gz?ref=master) | `ec24a8a14c5a63544f936e3888183dc2dd71d712868ed5665785e603b8c7733f`
+### Added
 
+- support lib init for multi process use.
+- add http and websocket mini server. -DENABLE_HTTP=ON build http and http_websocket module.(in http_websocket we disable module refer.need to test it.)
+- add restful mini framework base on http and http_websocket module. -DENABLE_RESTFUL build restful module.(we disable module refer.need to test it.)
 
-## Changelog  since v1.0.0-alpha1
+## [0.0.1] - 2017-04-06
 
-### channges
+### Added
 
-* support lib init for multi process use.
-* add http and websocket mini server. -DENABLE_HTTP=ON build http and http_websocket module.(in http_websocket we disable module refer.need to test it.)
-* add restful mini framework base on http and http_websocket module. -DENABLE_RESTFUL build restful module.(we disable module refer.need to test it.)
-
-### Other notable changes
-
-
-
-# v1.0.0-alpha.1
-
-## Downloads for v1.0.0-alpha.1
-
-filename | sha256 hash
------- | ----------
-[libcutil-src.tar.gz](http://dev.bj-jyd.cn:10080/library/libcutil/repository/archive.tar.gz?ref=master) | `ec24a8a14c5a63544f936e3888183dc2dd71d712868ed5665785e603b8c7733f`
-
-
-## Changelog  since v0.0.1
-
-### channges
-
-* build new c utility library.
-
-### Other notable changes
-
-* transplant asterisk core file
+- initialization
+- add utility funciton.
+- add cli function.
+- add logger funciton.

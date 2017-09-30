@@ -8,6 +8,7 @@ include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/build_tools.cmake)
 option(BUILD_LIBCUTIL "build c utility library" ON)
 option(ENABLE_HTTP "build http module" ON)
 option(ENABLE_RESTFUL "build restful module" ON)
+option(ENABLE_KVDB "support kvdb. dependence sqlite3" ON)
 option(BUILD_TEST "build test binary" ON)
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/.libs)
@@ -49,7 +50,7 @@ include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/libutils.cmake)
 MYSQL_CHECK_EDITLINE()
 
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/src/cutil.pc.cmakein ${CMAKE_CURRENT_BINARY_DIR}/cutil.pc @ONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/src/version.c.cmakein ${CMAKE_CURRENT_SOURCE_DIR}/version.c @ONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/src/version.c.cmakein ${CMAKE_CURRENT_SOURCE_DIR}/src/version.c @ONLY)
 
 
 # include_directories(${CMAKE_CURRENT_SOURCE_DIR}/asterisk)
@@ -91,6 +92,13 @@ set(SOURCES
   ${CMAKE_CURRENT_SOURCE_DIR}/src/version.c
   ${CMAKE_CURRENT_SOURCE_DIR}/src/libcutil.c
 )
+
+IF(ENABLE_KVDB)
+  set(SOURCES
+    ${SOURCES}
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/utility/kvdb.c
+  )
+ENDIF(ENABLE_KVDB)
 
 if(ENABLE_RESTFUL)
   set(ENABLE_HTTP ON)
@@ -142,30 +150,45 @@ if(THREADS_HAVE_PTHREAD_ARG)
   target_compile_options(${CUTIL_CORE_LIBRARY_STATIC} PUBLIC  "-pthread")
   target_compile_options(${CUTIL_CORE_LIBRARY_SHARED} PUBLIC  "-pthread")
 endif()
-
 target_compile_options(${CUTIL_CORE_LIBRARY_STATIC} PUBLIC  "-fPIC")
 target_compile_options(${CUTIL_CORE_LIBRARY_SHARED} PUBLIC  "-fPIC")
+if(CMAKE_THREAD_LIBS_INIT)
+  SET(LINK_LIB ${LINK_LIB} ${CMAKE_THREAD_LIBS_INIT})
+endif()
 
 find_package(OpenSSL)
 if(TARGET OpenSSL::SSL)
-  set(LINK_LIB OpenSSL::SSL)
+  set(LINK_LIB ${LINK_LIB} OpenSSL::SSL)
 endif()
 set(_CUTIL_FIND_SSL "if(NOT OpenSSL_FOUND)\n  find_package(OpenSSL)\nendif()")
 
-SET(LINK_LIB jansson)
-SET(LINK_LIB ncurses)
-SET(LINK_LIB uuid)
+IF(ENABLE_KVDB)
+  #if not given -DLIBSQLITE3_PREFIX use default path
+  If(DEFINED  LIBSQLITE3_PREFIX)
+    message(STATUS "use given sqlite3 path" ${LIBSQLITE3_PREFIX})
+    set(CMAKE_PREFIX_PATH ${LIBSQLITE3_PREFIX})
+    find_library(SQLITE3_LIBRARY  NAMES sqlite3)
+    set(SQLITE3_INCLUDE_DIR ${LIBSQLITE3_PREFIX}/include)
+  else()
+    find_path(SQLITE3_INCLUDE_DIR NAMES sqlite3.h)
+    find_library(SQLITE3_LIBRARY  NAMES sqlite3)
+  endif()
+
+  message(STATUS "use sqlite3 path " ${SQLITE3_LIBRARY})
+  include_directories(${SQLITE3_INCLUDE_DIR})
+  SET(LINK_LIB ${LINK_LIB} ${SQLITE3_LIBRARY})
+ENDIF(ENABLE_KVDB)
+
+SET(LINK_LIB ${LINK_LIB} jansson)
+SET(LINK_LIB ${LINK_LIB} ncurses)
+SET(LINK_LIB ${LINK_LIB} uuid)
 
 if(HAVE_CRYPT_R)
-  SET(LINK_LIB crypt)
+  SET(LINK_LIB ${LINK_LIB} crypt)
 endif()
 
 if(HAVE_CRYPT)
-  SET(LINK_LIB crypt)
-endif()
-
-if(CMAKE_THREAD_LIBS_INIT)
-  SET(LINK_LIB ${LINK_LIB} ${CMAKE_THREAD_LIBS_INIT})
+  SET(LINK_LIB ${LINK_LIB} crypt)
 endif()
 
 
