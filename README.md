@@ -11,7 +11,7 @@
 
 ## 相关依赖库license说明
 
-- libedit: BSD License `https://www.cs.utah.edu/~bigler/code/libedit.html`
+- libedit: BSD License `https://www.cs.utah.edu/~bigler/code/libedit.html` readline(NetBSD)
 - jansson: MIT license `http://www.digip.org/jansson/`
 - ncurses: Permissive_software_licence
 - uuid: LGPL v2 `https://linux.die.net/man/3/libuuid`

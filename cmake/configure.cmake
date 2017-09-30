@@ -328,7 +328,7 @@ endif()
   #it is a libcutl
   SET(HAVE_LIBCUITL 1)
 
-  CONFIGURE_FILE(${LIBCUTIL_INCLUDE_DIR}/libcutil_autoconfig.h.in ${LIBCUTIL_INCLUDE_DIR}/libcutil_autoconfig.h)
+  CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/include/libcutil_autoconfig.h.in ${CMAKE_CURRENT_SOURCE_DIR}/include/libcutil_autoconfig.h)
 
 
 endmacro()
