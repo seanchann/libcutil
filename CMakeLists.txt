@@ -49,8 +49,8 @@ include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/libutils.cmake)
 # Add system/bundled editline.
 MYSQL_CHECK_EDITLINE()
 
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/src/cutil.pc.cmakein ${CMAKE_CURRENT_BINARY_DIR}/cutil.pc @ONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/src/version.c.cmakein ${CMAKE_CURRENT_SOURCE_DIR}/src/version.c @ONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cmake/cutil.pc.cmakein ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/cutil.pc @ONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cmake/version.c.cmakein ${CMAKE_CURRENT_SOURCE_DIR}/src/version.c @ONLY)
 
 
 # include_directories(${CMAKE_CURRENT_SOURCE_DIR}/asterisk)

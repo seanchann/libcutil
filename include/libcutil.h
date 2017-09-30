@@ -25,11 +25,10 @@
 extern "C" {
 #endif
 
-
-#if !defined(NO_MALLOC_DEBUG) && !defined(STANDALONE) && !defined(STANDALONE2) && \
-  defined(MALLOC_DEBUG)
-# include "asterisk/astmm.h"
-#endif // if !defined(NO_MALLOC_DEBUG) && !defined(STANDALONE) &&
+#if !defined(NO_MALLOC_DEBUG) && !defined(STANDALONE) && \
+    !defined(STANDALONE2) && defined(MALLOC_DEBUG)
+#include "asterisk/astmm.h"
+#endif  // if !defined(NO_MALLOC_DEBUG) && !defined(STANDALONE) &&
 // !defined(STANDALONE2) && defined(MALLOC_DEBUG)
 
 #include "libcutil/compat.h"
@@ -40,109 +39,75 @@ extern "C" {
  * creation permissions
  */
 #ifndef AST_DIR_MODE
-# define AST_DIR_MODE 0777
-#endif // ifndef AST_DIR_MODE
+#define AST_DIR_MODE 0777
+#endif  // ifndef AST_DIR_MODE
 #ifndef AST_FILE_MODE
-# define AST_FILE_MODE 0666
-#endif // ifndef AST_FILE_MODE
+#define AST_FILE_MODE 0666
+#endif  // ifndef AST_FILE_MODE
 
 /* Make sure PATH_MAX is defined on platforms (HURD) that don't define it.
  * Also be sure to handle the case of a path larger than PATH_MAX
  * (err safely) in the code.
  */
 #ifndef PATH_MAX
-# define PATH_MAX 4096
-#endif // ifndef PATH_MAX
-
+#define PATH_MAX 4096
+#endif  // ifndef PATH_MAX
 
 #define DEFAULT_LANGUAGE "en"
 
 #define DEFAULT_SAMPLE_RATE 8000
-#define DEFAULT_SAMPLES_PER_MS  ((DEFAULT_SAMPLE_RATE) / 1000)
-#define setpriority     __PLEASE_USE_ast_set_priority_INSTEAD_OF_setpriority__
+#define DEFAULT_SAMPLES_PER_MS ((DEFAULT_SAMPLE_RATE) / 1000)
+#define setpriority __PLEASE_USE_ast_set_priority_INSTEAD_OF_setpriority__
 #define sched_setscheduler \
   __PLEASE_USE_ast_set_priority_INSTEAD_OF_sched_setscheduler__
 
-#if defined(DEBUG_FD_LEAKS) && !defined(STANDALONE) && !defined(STANDALONE2) && \
-  !defined(STANDALONE_AEL)
+#if defined(DEBUG_FD_LEAKS) && !defined(STANDALONE) && \
+    !defined(STANDALONE2) && !defined(STANDALONE_AEL)
 
 /* These includes are all about ordering */
-# include <stdio.h>
-# include <sys/types.h>
-# include <sys/stat.h>
-# include <sys/socket.h>
-# include <fcntl.h>
+#include <stdio.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <sys/socket.h>
+#include <fcntl.h>
 
-# define open(a, ...) __ast_fdleak_open(__FILE__,            \
-                                        __LINE__,            \
-                                        __PRETTY_FUNCTION__, \
-                                        a,                   \
-                                        __VA_ARGS__)
-# define pipe(a) __ast_fdleak_pipe(a, __FILE__, __LINE__, __PRETTY_FUNCTION__)
-# define socket(a, b, c) __ast_fdleak_socket(a,        \
-                                             b,        \
-                                             c,        \
-                                             __FILE__, \
-                                             __LINE__, \
-                                             __PRETTY_FUNCTION__)
-# define close(a) __ast_fdleak_close(a)
-# define fopen(a, b) __ast_fdleak_fopen(a,        \
-                                        b,        \
-                                        __FILE__, \
-                                        __LINE__, \
-                                        __PRETTY_FUNCTION__)
-# define fclose(a) __ast_fdleak_fclose(a)
-# define dup2(a, b) __ast_fdleak_dup2(a,        \
-                                      b,        \
-                                      __FILE__, \
-                                      __LINE__, \
-                                      __PRETTY_FUNCTION__)
-# define dup(a) __ast_fdleak_dup(a, __FILE__, __LINE__, __PRETTY_FUNCTION__)
+#define open(a, ...) \
+  __ast_fdleak_open(__FILE__, __LINE__, __PRETTY_FUNCTION__, a, __VA_ARGS__)
+#define pipe(a) __ast_fdleak_pipe(a, __FILE__, __LINE__, __PRETTY_FUNCTION__)
+#define socket(a, b, c) \
+  __ast_fdleak_socket(a, b, c, __FILE__, __LINE__, __PRETTY_FUNCTION__)
+#define close(a) __ast_fdleak_close(a)
+#define fopen(a, b) \
+  __ast_fdleak_fopen(a, b, __FILE__, __LINE__, __PRETTY_FUNCTION__)
+#define fclose(a) __ast_fdleak_fclose(a)
+#define dup2(a, b) \
+  __ast_fdleak_dup2(a, b, __FILE__, __LINE__, __PRETTY_FUNCTION__)
+#define dup(a) __ast_fdleak_dup(a, __FILE__, __LINE__, __PRETTY_FUNCTION__)
 
-# if defined(__cplusplus) || defined(c_plusplus)
+#if defined(__cplusplus) || defined(c_plusplus)
 extern "C" {
-# endif // if defined(__cplusplus) || defined(c_plusplus)
-int __ast_fdleak_open(const char *file,
-                      int         line,
-                      const char *func,
-                      const char *path,
-                      int         flags,
-                      ...);
-int __ast_fdleak_pipe(int        *fds,
-                      const char *file,
-                      int         line,
-                      const char *func);
-int __ast_fdleak_socket(int         domain,
-                        int         type,
-                        int         protocol,
-                        const char *file,
-                        int         line,
-                        const char *func);
-int   __ast_fdleak_close(int fd);
-FILE* __ast_fdleak_fopen(const char *path,
-                         const char *mode,
-                         const char *file,
-                         int         line,
-                         const char *func);
+#endif  // if defined(__cplusplus) || defined(c_plusplus)
+int __ast_fdleak_open(const char *file, int line, const char *func,
+                      const char *path, int flags, ...);
+int __ast_fdleak_pipe(int *fds, const char *file, int line, const char *func);
+int __ast_fdleak_socket(int domain, int type, int protocol, const char *file,
+                        int line, const char *func);
+int __ast_fdleak_close(int fd);
+FILE *__ast_fdleak_fopen(const char *path, const char *mode, const char *file,
+                         int line, const char *func);
 int __ast_fdleak_fclose(FILE *ptr);
-int __ast_fdleak_dup2(int         oldfd,
-                      int         newfd,
-                      const char *file,
-                      int         line,
+int __ast_fdleak_dup2(int oldfd, int newfd, const char *file, int line,
                       const char *func);
-int __ast_fdleak_dup(int         oldfd,
-                     const char *file,
-                     int         line,
-                     const char *func);
-# if defined(__cplusplus) || defined(c_plusplus)
+int __ast_fdleak_dup(int oldfd, const char *file, int line, const char *func);
+#if defined(__cplusplus) || defined(c_plusplus)
 }
-# endif // if defined(__cplusplus) || defined(c_plusplus)
-#endif   // if defined(DEBUG_FD_LEAKS) && !defined(STANDALONE) &&
+#endif  // if defined(__cplusplus) || defined(c_plusplus)
+#endif  // if defined(DEBUG_FD_LEAKS) && !defined(STANDALONE) &&
 // !defined(STANDALONE2) && !defined(STANDALONE_AEL)
 
-int  ast_set_priority(int); /*!< Provided by asterisk.c */
-int  ast_fd_init(void);     /*!< Provided by astfd.c */
-int  ast_pbx_init(void);    /*!< Provided by pbx.c */
+int ast_set_priority(int); /*!< Provided by asterisk.c */
+int ast_fd_init(void);     /*!< Provided by astfd.c */
+int ast_pbx_init(void);    /*!< Provided by pbx.c */
 
 /*!
  * \brief Register a function to be executed before Asterisk exits.
@@ -156,7 +121,7 @@ int  ast_pbx_init(void);    /*!< Provided by pbx.c */
  * loss, or when external programs must be stopped.  All other
  * cleanup in the core should use ast_register_cleanup.
  */
-int  ast_register_atexit(void (*func)(void));
+int ast_register_atexit(void (*func)(void));
 
 /*!
  * \since 11.9
@@ -172,7 +137,7 @@ int  ast_register_atexit(void (*func)(void));
  * \retval 0 on success.
  * \retval -1 on error.
  */
-int  ast_register_cleanup(void (*func)(void));
+int ast_register_cleanup(void (*func)(void));
 
 /*!
  * \brief Unregister a function registered with ast_register_atexit().
@@ -189,7 +154,7 @@ void ast_unregister_atexit(void (*func)(void));
  *
  * \return non-zero if shutdown cancelled.
  */
-int  ast_cancel_shutdown(void);
+int ast_cancel_shutdown(void);
 
 /*!
  * \details
@@ -204,7 +169,7 @@ int  ast_cancel_shutdown(void);
  *
  * \return non-zero if the server is preparing to or actively shutting down.
  */
-int  ast_shutting_down(void);
+int ast_shutting_down(void);
 
 /*!
  * \return non-zero if the server is actively shutting down.
@@ -214,11 +179,11 @@ int  ast_shutting_down(void);
  * The server is releasing resources and unloading modules.
  * It won't be long now.
  */
-int  ast_shutdown_final(void);
+int ast_shutdown_final(void);
 
 #ifdef MTX_PROFILE
-# define HAVE_MTX_PROFILE /* used in lock.h */
-#endif  /* MTX_PROFILE */
+#define HAVE_MTX_PROFILE /* used in lock.h */
+#endif                   /* MTX_PROFILE */
 
 /*!
  * \brief support for event profiling
@@ -235,11 +200,9 @@ int  ast_shutdown_final(void);
  * and then the end of the event with ast_mark(id, 0).
  * For non-i386 architectures, these two calls return 0.
  */
-int     ast_add_profile(const char *,
-                        uint64_t scale);
+int ast_add_profile(const char *, uint64_t scale);
 int64_t ast_profile(int, int64_t);
-int64_t ast_mark(int,
-                 int start1_stop0);
+int64_t ast_mark(int, int start1_stop0);
 
 /*! \brief
  * Definition of various structures that many asterisk files need,
@@ -256,39 +219,38 @@ struct ast_sched_context;
 
 /* Some handy macros for turning a preprocessor token into (effectively) a
    quoted string */
-#define __stringify_1(x) # x
+#define __stringify_1(x) #x
 #define __stringify(x) __stringify_1(x)
 
-
 #if 0
-# if defined(AST_IN_CORE)           \
-  || (!defined(AST_MODULE_SELF_SYM) \
-  && (defined(STANDALONE) || defined(STANDALONE2) || defined(AST_NOT_MODULE)))
+#if defined(AST_IN_CORE) ||           \
+    (!defined(AST_MODULE_SELF_SYM) && \
+     (defined(STANDALONE) || defined(STANDALONE2) || defined(AST_NOT_MODULE)))
 
-#  define AST_MODULE_SELF NULL
+#define AST_MODULE_SELF NULL
 
-# elif defined(AST_MODULE_SELF_SYM)
+#elif defined(AST_MODULE_SELF_SYM)
 
 /*! Retreive the 'struct ast_module *' for the current module. */
-#  define AST_MODULE_SELF AST_MODULE_SELF_SYM()
+#define AST_MODULE_SELF AST_MODULE_SELF_SYM()
 
 struct ast_module;
 
 /* Internal/forward declaration, AST_MODULE_SELF should be used instead. */
 struct ast_module* AST_MODULE_SELF_SYM(void);
 
-# else // if defined(AST_IN_CORE) || (!defined(AST_MODULE_SELF_SYM) &&
+#else  // if defined(AST_IN_CORE) || (!defined(AST_MODULE_SELF_SYM) &&
 // (defined(STANDALONE) || defined(STANDALONE2) ||
 // defined(AST_NOT_MODULE)))
 
-#  error "Externally compiled modules must declare AST_MODULE_SELF_SYM."
+#error "Externally compiled modules must declare AST_MODULE_SELF_SYM."
 
-# endif // if defined(AST_IN_CORE) || (!defined(AST_MODULE_SELF_SYM) &&
+#endif  // if defined(AST_IN_CORE) || (!defined(AST_MODULE_SELF_SYM) &&
 // (defined(STANDALONE) || defined(STANDALONE2) ||
 // defined(AST_NOT_MODULE)))
-#else  // if 0
-# define AST_MODULE_SELF NULL
-#endif // if 0
+#else   // if 0
+#define AST_MODULE_SELF NULL
+#endif  // if 0
 
 #ifdef NOT_USE
 
@@ -298,9 +260,8 @@ struct ast_module* AST_MODULE_SELF_SYM(void);
  * receive the UUID
  * \param length The buffer length
  */
-int ast_pbx_uuid_get(char *pbx_uuid,
-                     int   length);
-#endif // ifdef NOT_USE
+int ast_pbx_uuid_get(char *pbx_uuid, int length);
+#endif  // ifdef NOT_USE
 
 /*! \ingroup main_options */
 enum cutil_option_flags {
@@ -350,99 +311,88 @@ enum cutil_option_flags {
   AST_OPT_FLAG_DUMP_CORE = (1 << 21),
 };
 
+const char *libcutil_get_config_dir(void);
 
-const char   * libcutil_get_config_dir(void);
+const char *libcutil_get_config_log_dir(void);
+void libcutil_set_config_log_dir(const char *dir);
 
-const char   * libcutil_get_config_log_dir(void);
-void           libcutil_set_config_log_dir(const char *dir);
+void libcutil_set_config_run_group(const char *run_group);
+const char *libcutil_get_config_run_group(void);
 
-void           libcutil_set_config_run_group(const char *run_group);
-const char   * libcutil_get_config_run_group(void);
+void libcutil_set_config_run_user(const char *run_user);
+const char *libcutil_get_config_run_user(void);
 
-void           libcutil_set_config_run_user(const char *run_user);
-const char   * libcutil_get_config_run_user(void);
+const char *libcutil_get_config_system_name(void);
+void libcutil_set_config_system_name(const char *system_name);
 
-const char   * libcutil_get_config_system_name(void);
-void           libcutil_set_config_system_name(const char *system_name);
+const char *libcutil_get_config_run_dir(void);
+void libcutil_set_config_run_dir(const char *dir);
 
-const char   * libcutil_get_config_run_dir(void);
-void           libcutil_set_config_run_dir(const char *dir);
+int libcutil_get_option_debug(void);
+void libcutil_set_option_debug(int level);
 
-int            libcutil_get_option_debug(void);
-void           libcutil_set_option_debug(int level);
+int libcutil_get_option_verbose(void);
+void libcutil_set_option_verbose(int level);
 
-int            libcutil_get_option_verbose(void);
-void           libcutil_set_option_verbose(int level);
-
-int            libcutil_get_option_verbose_sys_level(void);
-void           libcutil_set_option_verbose_sys_level(int level);
+int libcutil_get_option_verbose_sys_level(void);
+void libcutil_set_option_verbose_sys_level(int level);
 
 struct timeval libcutil_get_startup_time(void);
 struct timeval libcutil_get_lastreload_time(void);
-int            libcutil_test_option(enum cutil_option_flags flag);
+int libcutil_test_option(enum cutil_option_flags flag);
 
+const char *libcutil_get_ctl_permissions(void);
+void libcutil_set_ctl_permissions(char *permissions);
 
-const char   * libcutil_get_ctl_permissions(void);
-void           libcutil_set_ctl_permissions(char *permissions);
+const char *libcutil_get_remotehostname(void);
+void libcutil_set_remotehostname(const char *hostname);
 
-const char   * libcutil_get_remotehostname(void);
-void           libcutil_set_remotehostname(const char *hostname);
+const char *libcutil_get_ctl_owner(void);
+const char *libcutil_get_ctl_group(void);
+const char *libcutil_get_ctl_filename(void);
 
+void libcutil_enable_console(void);
+void libcutil_enable_remote(void);
+void libcutil_enable_coredump(void);
 
-const char   * libcutil_get_ctl_owner(void);
-const char   * libcutil_get_ctl_group(void);
-const char   * libcutil_get_ctl_filename(void);
+#define ast_opt_remote libcutil_test_option(AST_OPT_FLAG_REMOTE)
+#define ast_opt_exec libcutil_test_option(AST_OPT_FLAG_EXEC)
+#define ast_opt_no_color libcutil_test_option(AST_OPT_FLAG_NO_COLOR)
+#define ast_opt_console libcutil_test_option(AST_OPT_FLAG_CONSOLE)
+#define ast_opt_light_background \
+  libcutil_test_option(AST_OPT_FLAG_LIGHT_BACKGROUND)
+#define ast_opt_force_black_background \
+  libcutil_test_option(AST_OPT_FLAG_FORCE_BLACK_BACKGROUND)
+#define ast_opt_ref_debug libcutil_test_option(AST_OPT_FLAG_REF_DEBUG)
+#define ast_opt_timestamp libcutil_test_option(AST_OPT_FLAG_TIMESTAMP)
+#define ast_opt_exec_includes libcutil_test_option(AST_OPT_FLAG_EXEC_INCLUDES)
+#define ast_opt_high_priority libcutil_test_option(AST_OPT_FLAG_HIGH_PRIORITY)
+#define ast_opt_no_fork libcutil_test_option(AST_OPT_FLAG_NO_FORK)
+#define ast_opt_reconnect libcutil_test_option(AST_OPT_FLAG_RECONNECT)
+#define ast_opt_hide_connect \
+  libcutil_test_option(AST_OPT_FLAG_HIDE_CONSOLE_CONNECT)
+#define ast_opt_mute libcutil_test_option(AST_OPT_FLAG_MUTE)
+#define ast_opt_dump_core libcutil_test_option(AST_OPT_FLAG_DUMP_CORE)
 
-
-void           libcutil_enable_console(void);
-void           libcutil_enable_remote(void);
-void           libcutil_enable_coredump(void);
-
-
-#define ast_opt_remote                  libcutil_test_option(AST_OPT_FLAG_REMOTE)
-#define ast_opt_exec                    libcutil_test_option(AST_OPT_FLAG_EXEC)
-#define ast_opt_no_color                libcutil_test_option(AST_OPT_FLAG_NO_COLOR)
-#define ast_opt_console                 libcutil_test_option(AST_OPT_FLAG_CONSOLE)
-#define ast_opt_light_background        libcutil_test_option( \
-    AST_OPT_FLAG_LIGHT_BACKGROUND)
-#define ast_opt_force_black_background  libcutil_test_option( \
-    AST_OPT_FLAG_FORCE_BLACK_BACKGROUND)
-#define ast_opt_ref_debug           libcutil_test_option(AST_OPT_FLAG_REF_DEBUG)
-#define ast_opt_timestamp               libcutil_test_option( \
-    AST_OPT_FLAG_TIMESTAMP)
-#define ast_opt_exec_includes           libcutil_test_option( \
-    AST_OPT_FLAG_EXEC_INCLUDES)
-#define ast_opt_high_priority           libcutil_test_option( \
-    AST_OPT_FLAG_HIGH_PRIORITY)
-#define ast_opt_no_fork                 libcutil_test_option(AST_OPT_FLAG_NO_FORK)
-#define ast_opt_reconnect               libcutil_test_option( \
-    AST_OPT_FLAG_RECONNECT)
-#define ast_opt_hide_connect            libcutil_test_option( \
-    AST_OPT_FLAG_HIDE_CONSOLE_CONNECT)
-#define ast_opt_mute                    libcutil_test_option(AST_OPT_FLAG_MUTE)
-#define ast_opt_dump_core               libcutil_test_option( \
-    AST_OPT_FLAG_DUMP_CORE)
-
-typedef void (*fully_booted_event) (void);
-void                              libcutil_process(fully_booted_event event_handle);
+typedef void (*fully_booted_event)(void);
+void libcutil_process(fully_booted_event event_handle);
 
 /*libcutil init and free api.not use "-nonstartfiles" or "-nostdlib" for build
    flag*/
 void __attribute__((constructor)) libcutil_init(void);
-void __attribute__((destructor))  libcutil_free(void);
-
+void __attribute__((destructor)) libcutil_free(void);
 
 // ses strftime(3) for details. eg '%F %T' is ISO 8601 date format
-void        libcutil_logger_set_date_format(char *dataformat);
-const char* libcutil_logger_get_date_format(void);
+void libcutil_logger_set_date_format(char *dataformat);
+const char *libcutil_logger_get_date_format(void);
 
 // This makes  write callids to log messages.value is yes or no
-void        libcutil_logger_set_use_callids(char *flags);
-const char* libcutil_logger_get_use_callids(void);
+void libcutil_logger_set_use_callids(char *flags);
+const char *libcutil_logger_get_use_callids(void);
 
 // This appends the hostname to the name of the log files..value is yes or no
-void        libcutil_logger_set_appendhostname(char *flags);
-const char* libcutil_logger_get_appendhostname(void);
+void libcutil_logger_set_appendhostname(char *flags);
+const char *libcutil_logger_get_appendhostname(void);
 
 enum libcuti_logger_rotate_strategy {
   /*  none:  Do not perform any logrotation at all.  You should make
@@ -476,11 +426,9 @@ enum libcuti_logger_rotate_strategy {
   LOGGER_ROTATE_STRATEGY_TIMESTAMP,
 };
 
-
-void                                libcutil_logger_set_rotate_strategy(
-  enum libcuti_logger_rotate_strategy strategy);
-enum libcuti_logger_rotate_strategy libcutil_logger_get_rotate_strategy(
-  void);
+void libcutil_logger_set_rotate_strategy(
+    enum libcuti_logger_rotate_strategy strategy);
+enum libcuti_logger_rotate_strategy libcutil_logger_get_rotate_strategy(void);
 
 /*
    ; Format is:
@@ -526,9 +474,7 @@ enum libcuti_logger_rotate_strategy libcutil_logger_get_rotate_strategy(
    ;
 
  */
-void libcutil_logger_append_logfiles_line(
-  char *name,
-  char *value);
+void libcutil_logger_append_logfiles_line(char *name, char *value);
 
 #if defined(__cplusplus) || defined(c_plusplus)
 }
