@@ -31,8 +31,8 @@ struct kvdb {
   int doexit;
   int dosync;
 };
-struct kvdb *kvdb_new(char *file);
-void kvdb_free(struct kvdb *handle);
+struct kvdb *cutil_kvdb_new(char *file);
+void cutil_kvdb_free(struct kvdb *handle);
 
 struct cutil_db_entry {
   struct ast_db_entry *next;

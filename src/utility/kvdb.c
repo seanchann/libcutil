@@ -498,7 +498,7 @@ static void *db_sync_thread(void *data) {
  * \internal
  * \brief Clean up resources on main program shutdown
  */
-void kvdb_free(struct kvdb *handle) {
+void cutil_kvdb_free(struct kvdb *handle) {
   /* Set doexit to 1 to kill thread. db_sync must be called with
    * mutex held. */
   ast_mutex_lock(&handle->dblock);
@@ -517,7 +517,7 @@ void kvdb_free(struct kvdb *handle) {
   ast_mutex_destroy(&handle->dblock);
 }
 
-struct kvdb *kvdb_new(char *file) {
+struct kvdb *cutil_kvdb_new(char *file) {
   struct kvdb *kv_handle = cutil_calloc(1, sizeof(struct kvdb));
   size_t len = strlen(file);
 
