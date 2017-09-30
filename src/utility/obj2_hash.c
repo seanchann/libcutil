@@ -24,9 +24,9 @@
 #include "libcutil.h"
 
 #include "libcutil/_private.h"
-#include "libcutil/astobj2.h"
-#include "astobj2_private.h"
-#include "astobj2_container_private.h"
+#include "libcutil/obj2.h"
+#include "obj2_private.h"
+#include "obj2_container_private.h"
 #include "libcutil/dlinkedlists.h"
 #include "libcutil/utils.h"
 
@@ -72,7 +72,7 @@ struct ao2_container_hash {
    * \note Must be first in the specific container struct.
    */
   struct ao2_container common;
-  ao2_hash_fn         *hash_fn;
+  ao2_hash_fn *hash_fn;
 
   /*! Number of hash buckets in this container. */
   int n_buckets;
@@ -125,20 +125,16 @@ struct hash_traversal_state_check {
  * \retval empty-clone-container on success.
  * \retval NULL on error.
  */
-static struct ao2_container* hash_ao2_alloc_empty_clone(
-  struct ao2_container_hash *self,
-  const char                *tag,
-  const char                *file,
-  int                        line,
-  const char                *func)
-{
+static struct ao2_container *hash_ao2_alloc_empty_clone(
+    struct ao2_container_hash *self, const char *tag, const char *file,
+    int line, const char *func) {
   if (!__is_ao2_object(self, file, line, func)) {
     return NULL;
   }
 
-  return __ao2_container_alloc_hash(ao2_options_get(
-                                      self), self->common.options,
-                                    self->n_buckets, self->hash_fn, self->common.sort_fn, self->common.cmp_fn,
+  return __ao2_container_alloc_hash(ao2_options_get(self), self->common.options,
+                                    self->n_buckets, self->hash_fn,
+                                    self->common.sort_fn, self->common.cmp_fn,
                                     tag, file, line, func);
 }
 
@@ -159,8 +155,7 @@ static struct ao2_container* hash_ao2_alloc_empty_clone(
  *
  * \return Nothing
  */
-static void hash_ao2_node_destructor(void *v_doomed)
-{
+static void hash_ao2_node_destructor(void *v_doomed) {
   struct hash_bucket_node *doomed = v_doomed;
 
   if (doomed->common.is_linked) {
@@ -189,8 +184,8 @@ static void hash_ao2_node_destructor(void *v_doomed)
 
 #if defined(AO2_DEBUG)
 
-    if (!my_container->common.destroying
-        && ao2_container_check(doomed->common.my_container, OBJ_NOLOCK)) {
+    if (!my_container->common.destroying &&
+        ao2_container_check(doomed->common.my_container, OBJ_NOLOCK)) {
       ast_log(LOG_ERROR, "Container integrity failed before node deletion.\n");
     }
 #endif /* defined(AO2_DEBUG) */
@@ -223,20 +218,14 @@ static void hash_ao2_node_destructor(void *v_doomed)
  * \retval initialized-node on success.
  * \retval NULL on error.
  */
-static struct hash_bucket_node* hash_ao2_new_node(struct ao2_container_hash *self,
-                                                  void                      *obj_new,
-                                                  const char                *tag,
-                                                  const char                *file,
-                                                  int                        line,
-                                                  const char                *func)
-{
+static struct hash_bucket_node *hash_ao2_new_node(
+    struct ao2_container_hash *self, void *obj_new, const char *tag,
+    const char *file, int line, const char *func) {
   struct hash_bucket_node *node;
   int i;
 
-  node = ao2_t_alloc_options(sizeof(*node),
-                             hash_ao2_node_destructor,
-                             AO2_ALLOC_OPT_LOCK_NOLOCK,
-                             NULL);
+  node = ao2_t_alloc_options(sizeof(*node), hash_ao2_node_destructor,
+                             AO2_ALLOC_OPT_LOCK_NOLOCK, NULL);
 
   if (!node) {
     return NULL;
@@ -244,10 +233,10 @@ static struct hash_bucket_node* hash_ao2_new_node(struct ao2_container_hash *sel
 
   i = abs(self->hash_fn(obj_new, OBJ_SEARCH_OBJECT) % self->n_buckets);
 
-  __ao2_ref(obj_new, +1, tag ? : "Container node creation", file, line, func);
-  node->common.obj          = obj_new;
+  __ao2_ref(obj_new, +1, tag ?: "Container node creation", file, line, func);
+  node->common.obj = obj_new;
   node->common.my_container = (struct ao2_container *)self;
-  node->my_bucket           = i;
+  node->my_bucket = i;
 
   return node;
 }
@@ -263,16 +252,14 @@ static struct hash_bucket_node* hash_ao2_new_node(struct ao2_container_hash *sel
  * \return enum ao2_container_insert value.
  */
 static enum ao2_container_insert hash_ao2_insert_node(
-  struct ao2_container_hash *self,
-  struct hash_bucket_node   *node)
-{
+    struct ao2_container_hash *self, struct hash_bucket_node *node) {
   int cmp;
   struct hash_bucket *bucket;
   struct hash_bucket_node *cur;
   ao2_sort_fn *sort_fn;
-  uint32_t     options;
+  uint32_t options;
 
-  bucket  = &self->buckets[node->my_bucket];
+  bucket = &self->buckets[node->my_bucket];
   sort_fn = self->common.sort_fn;
   options = self->common.options;
 
@@ -291,27 +278,27 @@ static enum ao2_container_insert hash_ao2_insert_node(
         }
 
         switch (options & AO2_CONTAINER_ALLOC_OPT_DUPS_MASK) {
-        default:
-        case AO2_CONTAINER_ALLOC_OPT_DUPS_ALLOW:
-          break;
+          default:
+          case AO2_CONTAINER_ALLOC_OPT_DUPS_ALLOW:
+            break;
 
-        case AO2_CONTAINER_ALLOC_OPT_DUPS_REJECT:
+          case AO2_CONTAINER_ALLOC_OPT_DUPS_REJECT:
 
-          /* Reject all objects with the same key. */
-          return AO2_CONTAINER_INSERT_NODE_REJECTED;
-
-        case AO2_CONTAINER_ALLOC_OPT_DUPS_OBJ_REJECT:
-
-          if (cur->common.obj == node->common.obj) {
-            /* Reject inserting the same object */
+            /* Reject all objects with the same key. */
             return AO2_CONTAINER_INSERT_NODE_REJECTED;
-          }
-          break;
 
-        case AO2_CONTAINER_ALLOC_OPT_DUPS_REPLACE:
-          SWAP(cur->common.obj, node->common.obj);
-          ao2_t_ref(node, -1, NULL);
-          return AO2_CONTAINER_INSERT_NODE_OBJ_REPLACED;
+          case AO2_CONTAINER_ALLOC_OPT_DUPS_OBJ_REJECT:
+
+            if (cur->common.obj == node->common.obj) {
+              /* Reject inserting the same object */
+              return AO2_CONTAINER_INSERT_NODE_REJECTED;
+            }
+            break;
+
+          case AO2_CONTAINER_ALLOC_OPT_DUPS_REPLACE:
+            SWAP(cur->common.obj, node->common.obj);
+            ao2_t_ref(node, -1, NULL);
+            return AO2_CONTAINER_INSERT_NODE_OBJ_REPLACED;
         }
       }
       AST_DLLIST_TRAVERSE_BACKWARDS_SAFE_END;
@@ -332,27 +319,27 @@ static enum ao2_container_insert hash_ao2_insert_node(
         }
 
         switch (options & AO2_CONTAINER_ALLOC_OPT_DUPS_MASK) {
-        default:
-        case AO2_CONTAINER_ALLOC_OPT_DUPS_ALLOW:
-          break;
+          default:
+          case AO2_CONTAINER_ALLOC_OPT_DUPS_ALLOW:
+            break;
 
-        case AO2_CONTAINER_ALLOC_OPT_DUPS_REJECT:
+          case AO2_CONTAINER_ALLOC_OPT_DUPS_REJECT:
 
-          /* Reject all objects with the same key. */
-          return AO2_CONTAINER_INSERT_NODE_REJECTED;
-
-        case AO2_CONTAINER_ALLOC_OPT_DUPS_OBJ_REJECT:
-
-          if (cur->common.obj == node->common.obj) {
-            /* Reject inserting the same object */
+            /* Reject all objects with the same key. */
             return AO2_CONTAINER_INSERT_NODE_REJECTED;
-          }
-          break;
 
-        case AO2_CONTAINER_ALLOC_OPT_DUPS_REPLACE:
-          SWAP(cur->common.obj, node->common.obj);
-          ao2_t_ref(node, -1, NULL);
-          return AO2_CONTAINER_INSERT_NODE_OBJ_REPLACED;
+          case AO2_CONTAINER_ALLOC_OPT_DUPS_OBJ_REJECT:
+
+            if (cur->common.obj == node->common.obj) {
+              /* Reject inserting the same object */
+              return AO2_CONTAINER_INSERT_NODE_REJECTED;
+            }
+            break;
+
+          case AO2_CONTAINER_ALLOC_OPT_DUPS_REPLACE:
+            SWAP(cur->common.obj, node->common.obj);
+            ao2_t_ref(node, -1, NULL);
+            return AO2_CONTAINER_INSERT_NODE_OBJ_REPLACED;
         }
       }
       AST_DLLIST_TRAVERSE_SAFE_END;
@@ -375,31 +362,28 @@ static enum ao2_container_insert hash_ao2_insert_node(
  * \retval node-ptr of found node (Reffed).
  * \retval NULL when no node found.
  */
-static struct hash_bucket_node* hash_ao2_find_first(
-  struct ao2_container_hash   *self,
-  enum search_flags            flags,
-  void                        *arg,
-  struct hash_traversal_state *state)
-{
+static struct hash_bucket_node *hash_ao2_find_first(
+    struct ao2_container_hash *self, enum search_flags flags, void *arg,
+    struct hash_traversal_state *state) {
   struct hash_bucket_node *node;
   int bucket_cur;
   int cmp;
 
   memset(state, 0, sizeof(*state));
-  state->arg   = arg;
+  state->arg = arg;
   state->flags = flags;
 
   /* Determine traversal order. */
   switch (flags & OBJ_ORDER_MASK) {
-  case OBJ_ORDER_POST:
-  case OBJ_ORDER_DESCENDING:
-    state->descending = 1;
-    break;
+    case OBJ_ORDER_POST:
+    case OBJ_ORDER_DESCENDING:
+      state->descending = 1;
+      break;
 
-  case OBJ_ORDER_PRE:
-  case OBJ_ORDER_ASCENDING:
-  default:
-    break;
+    case OBJ_ORDER_PRE:
+    case OBJ_ORDER_ASCENDING:
+    default:
+      break;
   }
 
   /*
@@ -407,28 +391,28 @@ static struct hash_bucket_node* hash_ao2_find_first(
    * sort functions.  Otherwise, traverse the whole container.
    */
   switch (flags & OBJ_SEARCH_MASK) {
-  case OBJ_SEARCH_OBJECT:
-  case OBJ_SEARCH_KEY:
+    case OBJ_SEARCH_OBJECT:
+    case OBJ_SEARCH_KEY:
 
-    /* we know hash can handle this case */
-    bucket_cur = abs(self->hash_fn(arg, flags & OBJ_SEARCH_MASK)
-                     % self->n_buckets);
-    state->sort_fn = self->common.sort_fn;
-    break;
+      /* we know hash can handle this case */
+      bucket_cur =
+          abs(self->hash_fn(arg, flags & OBJ_SEARCH_MASK) % self->n_buckets);
+      state->sort_fn = self->common.sort_fn;
+      break;
 
-  case OBJ_SEARCH_PARTIAL_KEY:
+    case OBJ_SEARCH_PARTIAL_KEY:
 
-    /* scan all buckets for partial key matches */
-    bucket_cur     = -1;
-    state->sort_fn = self->common.sort_fn;
-    break;
+      /* scan all buckets for partial key matches */
+      bucket_cur = -1;
+      state->sort_fn = self->common.sort_fn;
+      break;
 
-  default:
+    default:
 
-    /* don't know, let's scan all buckets */
-    bucket_cur     = -1;
-    state->sort_fn = NULL;
-    break;
+      /* don't know, let's scan all buckets */
+      bucket_cur = -1;
+      state->sort_fn = NULL;
+      break;
   }
 
   if (state->descending) {
@@ -438,7 +422,7 @@ static struct hash_bucket_node* hash_ao2_find_first(
      * bucket_cur downto state->bucket_last
      */
     if (bucket_cur < 0) {
-      bucket_cur         = self->n_buckets - 1;
+      bucket_cur = self->n_buckets - 1;
       state->bucket_last = 0;
     } else {
       state->bucket_last = bucket_cur;
@@ -448,8 +432,7 @@ static struct hash_bucket_node* hash_ao2_find_first(
     /* For each bucket */
     for (; state->bucket_last <= bucket_cur; --bucket_cur) {
       /* For each node in the bucket. */
-      for (node = AST_DLLIST_LAST(&self->buckets[bucket_cur].list);
-           node;
+      for (node = AST_DLLIST_LAST(&self->buckets[bucket_cur].list); node;
            node = AST_DLLIST_PREV(node, links)) {
         if (!node->common.obj) {
           /* Node is empty */
@@ -482,7 +465,7 @@ static struct hash_bucket_node* hash_ao2_find_first(
      * bucket_cur to state->bucket_last-1
      */
     if (bucket_cur < 0) {
-      bucket_cur         = 0;
+      bucket_cur = 0;
       state->bucket_last = self->n_buckets;
     } else {
       state->bucket_last = bucket_cur + 1;
@@ -492,8 +475,7 @@ static struct hash_bucket_node* hash_ao2_find_first(
     /* For each bucket */
     for (; bucket_cur < state->bucket_last; ++bucket_cur) {
       /* For each node in the bucket. */
-      for (node = AST_DLLIST_FIRST(&self->buckets[bucket_cur].list);
-           node;
+      for (node = AST_DLLIST_FIRST(&self->buckets[bucket_cur].list); node;
            node = AST_DLLIST_NEXT(node, links)) {
         if (!node->common.obj) {
           /* Node is empty */
@@ -537,21 +519,19 @@ static struct hash_bucket_node* hash_ao2_find_first(
  * \retval node-ptr of found node (Reffed).
  * \retval NULL when no node found.
  */
-static struct hash_bucket_node* hash_ao2_find_next(
-  struct ao2_container_hash   *self,
-  struct hash_traversal_state *state,
-  struct hash_bucket_node     *prev)
-{
+static struct hash_bucket_node *hash_ao2_find_next(
+    struct ao2_container_hash *self, struct hash_traversal_state *state,
+    struct hash_bucket_node *prev) {
   struct hash_bucket_node *node;
   void *arg;
   enum search_flags flags;
   int bucket_cur;
   int cmp;
 
-  arg        = state->arg;
-  flags      = state->flags;
+  arg = state->arg;
+  flags = state->flags;
   bucket_cur = prev->my_bucket;
-  node       = prev;
+  node = prev;
 
   /*
    * This function is structured the same as hash_ao2_find_first()
@@ -566,8 +546,7 @@ static struct hash_bucket_node* hash_ao2_find_next(
     /* For each bucket */
     for (; state->bucket_last <= bucket_cur; --bucket_cur) {
       /* For each node in the bucket. */
-      for (node = AST_DLLIST_LAST(&self->buckets[bucket_cur].list);
-           node;
+      for (node = AST_DLLIST_LAST(&self->buckets[bucket_cur].list); node;
            node = AST_DLLIST_PREV(node, links)) {
         if (!node->common.obj) {
           /* Node is empty */
@@ -604,7 +583,7 @@ static struct hash_bucket_node* hash_ao2_find_next(
         }
         prev = node;
 
-hash_descending_resume:;
+      hash_descending_resume:;
       }
     }
   } else {
@@ -613,8 +592,7 @@ hash_descending_resume:;
     /* For each bucket */
     for (; bucket_cur < state->bucket_last; ++bucket_cur) {
       /* For each node in the bucket. */
-      for (node = AST_DLLIST_FIRST(&self->buckets[bucket_cur].list);
-           node;
+      for (node = AST_DLLIST_FIRST(&self->buckets[bucket_cur].list); node;
            node = AST_DLLIST_NEXT(node, links)) {
         if (!node->common.obj) {
           /* Node is empty */
@@ -651,7 +629,7 @@ hash_descending_resume:;
         }
         prev = node;
 
-hash_ascending_resume:;
+      hash_ascending_resume:;
       }
     }
   }
@@ -676,11 +654,9 @@ hash_ascending_resume:;
  * \retval node on success.
  * \retval NULL on error or no more nodes in the container.
  */
-static struct hash_bucket_node* hash_ao2_iterator_next(
-  struct ao2_container_hash *self,
-  struct hash_bucket_node   *node,
-  enum ao2_iterator_flags    flags)
-{
+static struct hash_bucket_node *hash_ao2_iterator_next(
+    struct ao2_container_hash *self, struct hash_bucket_node *node,
+    enum ao2_iterator_flags flags) {
   int cur_bucket;
 
   if (flags & AO2_ITERATOR_DESCENDING) {
@@ -769,12 +745,11 @@ static struct hash_bucket_node* hash_ao2_iterator_next(
  *
  * \return Nothing
  */
-static void hash_ao2_link_node_stat(struct ao2_container      *hash,
-                                    struct ao2_container_node *hash_node)
-{
+static void hash_ao2_link_node_stat(struct ao2_container *hash,
+                                    struct ao2_container_node *hash_node) {
   struct ao2_container_hash *self = (struct ao2_container_hash *)hash;
-  struct hash_bucket_node   *node = (struct hash_bucket_node *)hash_node;
-  int i                           = node->my_bucket;
+  struct hash_bucket_node *node = (struct hash_bucket_node *)hash_node;
+  int i = node->my_bucket;
 
   ++self->buckets[i].elements;
 
@@ -797,11 +772,10 @@ static void hash_ao2_link_node_stat(struct ao2_container      *hash,
  *
  * \return Nothing
  */
-static void hash_ao2_unlink_node_stat(struct ao2_container      *hash,
-                                      struct ao2_container_node *hash_node)
-{
+static void hash_ao2_unlink_node_stat(struct ao2_container *hash,
+                                      struct ao2_container_node *hash_node) {
   struct ao2_container_hash *self = (struct ao2_container_hash *)hash;
-  struct hash_bucket_node   *node = (struct hash_bucket_node *)hash_node;
+  struct hash_bucket_node *node = (struct hash_bucket_node *)hash_node;
 
   --self->buckets[node->my_bucket].elements;
 }
@@ -818,8 +792,7 @@ static void hash_ao2_unlink_node_stat(struct ao2_container      *hash,
  *
  * \return Nothing
  */
-static void hash_ao2_destroy(struct ao2_container_hash *self)
-{
+static void hash_ao2_destroy(struct ao2_container_hash *self) {
   int idx;
 
   /* Check that the container no longer has any nodes */
@@ -847,13 +820,10 @@ static void hash_ao2_destroy(struct ao2_container_hash *self)
  *
  * \return Nothing
  */
-static void hash_ao2_dump(struct ao2_container_hash *self,
-                          void                      *where,
-                          ao2_prnt_fn               *prnt,
-                          ao2_prnt_obj_fn           *prnt_obj)
-{
-# define FORMAT  "%6s, %16s, %16s, %16s, %16s, %s\n"
-# define FORMAT2 "%6d, %16p, %16p, %16p, %16p, "
+static void hash_ao2_dump(struct ao2_container_hash *self, void *where,
+                          ao2_prnt_fn *prnt, ao2_prnt_obj_fn *prnt_obj) {
+#define FORMAT "%6s, %16s, %16s, %16s, %16s, %s\n"
+#define FORMAT2 "%6d, %16p, %16p, %16p, %16p, "
 
   int bucket;
   int suppressed_buckets = 0;
@@ -861,14 +831,7 @@ static void hash_ao2_dump(struct ao2_container_hash *self,
 
   prnt(where, "Number of buckets: %d\n\n", self->n_buckets);
 
-  prnt(where,
-       FORMAT,
-       "Bucket",
-       "Node",
-       "Prev",
-       "Next",
-       "Obj",
-       "Key");
+  prnt(where, FORMAT, "Bucket", "Node", "Prev", "Next", "Obj", "Key");
 
   for (bucket = 0; bucket < self->n_buckets; ++bucket) {
     node = AST_DLLIST_FIRST(&self->buckets[bucket].list);
@@ -877,12 +840,8 @@ static void hash_ao2_dump(struct ao2_container_hash *self,
       suppressed_buckets = 0;
 
       do {
-        prnt(where, FORMAT2,
-             bucket,
-             node,
-             AST_DLLIST_PREV(node, links),
-             AST_DLLIST_NEXT(node, links),
-             node->common.obj);
+        prnt(where, FORMAT2, bucket, node, AST_DLLIST_PREV(node, links),
+             AST_DLLIST_NEXT(node, links), node->common.obj);
 
         if (node->common.obj && prnt_obj) {
           prnt_obj(node->common.obj, where, prnt);
@@ -897,8 +856,8 @@ static void hash_ao2_dump(struct ao2_container_hash *self,
     }
   }
 
-# undef FORMAT
-# undef FORMAT2
+#undef FORMAT
+#undef FORMAT2
 }
 
 #endif /* defined(AO2_DEBUG) */
@@ -918,19 +877,17 @@ static void hash_ao2_dump(struct ao2_container_hash *self,
  *
  * \return Nothing
  */
-static void hash_ao2_stats(struct ao2_container_hash *self,
-                           void                      *where,
-                           ao2_prnt_fn               *prnt)
-{
-# define FORMAT  "%10.10s %10.10s %10.10s\n"
-# define FORMAT2 "%10d %10d %10d\n"
+static void hash_ao2_stats(struct ao2_container_hash *self, void *where,
+                           ao2_prnt_fn *prnt) {
+#define FORMAT "%10.10s %10.10s %10.10s\n"
+#define FORMAT2 "%10d %10d %10d\n"
 
   int bucket;
   int suppressed_buckets = 0;
 
   prnt(where, "Number of buckets: %d\n\n", self->n_buckets);
 
-  prnt(where, FORMAT,                      "Bucket", "Objects", "Max");
+  prnt(where, FORMAT, "Bucket", "Objects", "Max");
 
   for (bucket = 0; bucket < self->n_buckets; ++bucket) {
     if (self->buckets[bucket].max_elements) {
@@ -943,8 +900,8 @@ static void hash_ao2_stats(struct ao2_container_hash *self,
     }
   }
 
-# undef FORMAT
-# undef FORMAT2
+#undef FORMAT
+#undef FORMAT2
 }
 
 #endif /* defined(AO2_DEBUG) */
@@ -963,31 +920,30 @@ static void hash_ao2_stats(struct ao2_container_hash *self,
  * \retval 0 on success.
  * \retval -1 on error.
  */
-static int hash_ao2_integrity(struct ao2_container_hash *self)
-{
-  int   bucket_exp;
-  int   bucket;
-  int   count_obj;
-  int   count_total_obj;
-  int   count_total_node;
+static int hash_ao2_integrity(struct ao2_container_hash *self) {
+  int bucket_exp;
+  int bucket;
+  int count_obj;
+  int count_total_obj;
+  int count_total_node;
   void *obj_last;
   struct hash_bucket_node *node;
   struct hash_bucket_node *prev;
   struct hash_bucket_node *next;
 
-  count_total_obj  = 0;
+  count_total_obj = 0;
   count_total_node = 0;
 
   /* For each bucket in the container. */
   for (bucket = 0; bucket < self->n_buckets; ++bucket) {
-    if (!AST_DLLIST_FIRST(&self->buckets[bucket].list)
-        && !AST_DLLIST_LAST(&self->buckets[bucket].list)) {
+    if (!AST_DLLIST_FIRST(&self->buckets[bucket].list) &&
+        !AST_DLLIST_LAST(&self->buckets[bucket].list)) {
       /* The bucket list is empty. */
       continue;
     }
 
     count_obj = 0;
-    obj_last  = NULL;
+    obj_last = NULL;
 
     /* Check bucket list links and nodes. */
     node = AST_DLLIST_LAST(&self->buckets[bucket].list);
@@ -1059,8 +1015,7 @@ static int hash_ao2_integrity(struct ao2_container_hash *self)
           return -1;
         }
       } else if (node != AST_DLLIST_LAST(&self->buckets[bucket].list)) {
-        ast_log(LOG_ERROR, "Bucket %d forward list chain is broken!\n",
-                bucket);
+        ast_log(LOG_ERROR, "Bucket %d forward list chain is broken!\n", bucket);
         return -1;
       }
 
@@ -1079,22 +1034,20 @@ static int hash_ao2_integrity(struct ao2_container_hash *self)
       ++count_obj;
 
       /* Check container hash key for expected bucket. */
-      bucket_exp = abs(self->hash_fn(node->common.obj, OBJ_SEARCH_OBJECT)
-                       % self->n_buckets);
+      bucket_exp = abs(self->hash_fn(node->common.obj, OBJ_SEARCH_OBJECT) %
+                       self->n_buckets);
 
       if (bucket != bucket_exp) {
-        ast_log(LOG_ERROR, "Bucket %d node hashes to bucket %d!\n",
-                bucket, bucket_exp);
+        ast_log(LOG_ERROR, "Bucket %d node hashes to bucket %d!\n", bucket,
+                bucket_exp);
         return -1;
       }
 
       /* Check sort if configured. */
       if (self->common.sort_fn) {
-        if (obj_last
-            && (self->common.sort_fn(obj_last, node->common.obj,
-                                     OBJ_SEARCH_OBJECT) > 0)) {
-          ast_log(LOG_ERROR, "Bucket %d nodes out of sorted order!\n",
-                  bucket);
+        if (obj_last && (self->common.sort_fn(obj_last, node->common.obj,
+                                              OBJ_SEARCH_OBJECT) > 0)) {
+          ast_log(LOG_ERROR, "Bucket %d nodes out of sorted order!\n", bucket);
           return -1;
         }
         obj_last = node->common.obj;
@@ -1105,9 +1058,7 @@ static int hash_ao2_integrity(struct ao2_container_hash *self)
     if (count_obj != self->buckets[bucket].elements) {
       ast_log(LOG_ERROR,
               "Bucket %d object count of %d does not match stat of %d!\n",
-              bucket,
-              count_obj,
-              self->buckets[bucket].elements);
+              bucket, count_obj, self->buckets[bucket].elements);
       return -1;
     }
 
@@ -1118,9 +1069,9 @@ static int hash_ao2_integrity(struct ao2_container_hash *self)
   /* Check total obj count. */
   if (count_total_obj != ao2_container_count(&self->common)) {
     ast_log(LOG_ERROR,
-            "Total object count of %d does not match ao2_container_count() of %d!\n",
-            count_total_obj,
-            ao2_container_count(&self->common));
+            "Total object count of %d does not match ao2_container_count() of "
+            "%d!\n",
+            count_total_obj, ao2_container_count(&self->common));
     return -1;
   }
 
@@ -1138,20 +1089,20 @@ static int hash_ao2_integrity(struct ao2_container_hash *self)
 
 /*! Hash container virtual method table. */
 static const struct ao2_container_methods v_table_hash = {
-  .alloc_empty_clone =
-    (ao2_container_alloc_empty_clone_fn)hash_ao2_alloc_empty_clone,
-  .new_node       = (ao2_container_new_node_fn)hash_ao2_new_node,
-  .insert         = (ao2_container_insert_fn)hash_ao2_insert_node,
-  .traverse_first = (ao2_container_find_first_fn)hash_ao2_find_first,
-  .traverse_next  = (ao2_container_find_next_fn)hash_ao2_find_next,
-  .iterator_next  = (ao2_iterator_next_fn)hash_ao2_iterator_next,
-  .destroy        = (ao2_container_destroy_fn)hash_ao2_destroy,
+    .alloc_empty_clone =
+        (ao2_container_alloc_empty_clone_fn)hash_ao2_alloc_empty_clone,
+    .new_node = (ao2_container_new_node_fn)hash_ao2_new_node,
+    .insert = (ao2_container_insert_fn)hash_ao2_insert_node,
+    .traverse_first = (ao2_container_find_first_fn)hash_ao2_find_first,
+    .traverse_next = (ao2_container_find_next_fn)hash_ao2_find_next,
+    .iterator_next = (ao2_iterator_next_fn)hash_ao2_iterator_next,
+    .destroy = (ao2_container_destroy_fn)hash_ao2_destroy,
 #if defined(AO2_DEBUG)
-  .link_stat   = hash_ao2_link_node_stat,
-  .unlink_stat = hash_ao2_unlink_node_stat,
-  .dump        = (ao2_container_display)hash_ao2_dump,
-  .stats       = (ao2_container_statistics)hash_ao2_stats,
-  .integrity   = (ao2_container_integrity)hash_ao2_integrity,
+    .link_stat = hash_ao2_link_node_stat,
+    .unlink_stat = hash_ao2_unlink_node_stat,
+    .dump = (ao2_container_display)hash_ao2_dump,
+    .stats = (ao2_container_statistics)hash_ao2_stats,
+    .integrity = (ao2_container_integrity)hash_ao2_integrity,
 #endif /* defined(AO2_DEBUG) */
 };
 
@@ -1164,10 +1115,7 @@ static const struct ao2_container_methods v_table_hash = {
  *
  * \returns 0
  */
-static int hash_zero(const void *user_obj, const int flags)
-{
-  return 0;
-}
+static int hash_zero(const void *user_obj, const int flags) { return 0; }
 
 /*!
  * \brief Initialize a hash container with the desired number of buckets.
@@ -1181,20 +1129,20 @@ static int hash_zero(const void *user_obj, const int flags)
  *
  * \return A pointer to a struct container.
  */
-static struct ao2_container* hash_ao2_container_init(
-  struct ao2_container_hash *self, unsigned int options, unsigned int n_buckets,
-  ao2_hash_fn *hash_fn, ao2_sort_fn *sort_fn, ao2_callback_fn *cmp_fn)
-{
+static struct ao2_container *hash_ao2_container_init(
+    struct ao2_container_hash *self, unsigned int options,
+    unsigned int n_buckets, ao2_hash_fn *hash_fn, ao2_sort_fn *sort_fn,
+    ao2_callback_fn *cmp_fn) {
   if (!self) {
     return NULL;
   }
 
   self->common.v_table = &v_table_hash;
   self->common.sort_fn = sort_fn;
-  self->common.cmp_fn  = cmp_fn;
+  self->common.cmp_fn = cmp_fn;
   self->common.options = options;
-  self->hash_fn        = hash_fn ? hash_fn : hash_zero;
-  self->n_buckets      = n_buckets;
+  self->hash_fn = hash_fn ? hash_fn : hash_zero;
+  self->n_buckets = n_buckets;
 
 #ifdef AO2_DEBUG
   ast_atomic_fetchadd_int(&ao2.total_containers, 1);
@@ -1203,40 +1151,29 @@ static struct ao2_container* hash_ao2_container_init(
   return (struct ao2_container *)self;
 }
 
-struct ao2_container* __ao2_container_alloc_hash(unsigned int     ao2_options,
-                                                 unsigned int     container_options,
-                                                 unsigned int     n_buckets,
-                                                 ao2_hash_fn     *hash_fn,
-                                                 ao2_sort_fn     *sort_fn,
-                                                 ao2_callback_fn *cmp_fn,
-                                                 const char      *tag,
-                                                 const char      *file,
-                                                 int              line,
-                                                 const char      *func)
-{
+struct ao2_container *__ao2_container_alloc_hash(
+    unsigned int ao2_options, unsigned int container_options,
+    unsigned int n_buckets, ao2_hash_fn *hash_fn, ao2_sort_fn *sort_fn,
+    ao2_callback_fn *cmp_fn, const char *tag, const char *file, int line,
+    const char *func) {
   unsigned int num_buckets;
   size_t container_size;
   struct ao2_container_hash *self;
 
-  num_buckets    = hash_fn ? n_buckets : 1;
-  container_size = sizeof(struct ao2_container_hash) + num_buckets *
-                   sizeof(struct hash_bucket);
+  num_buckets = hash_fn ? n_buckets : 1;
+  container_size = sizeof(struct ao2_container_hash) +
+                   num_buckets * sizeof(struct hash_bucket);
 
   self = __ao2_alloc(container_size, container_destruct, ao2_options,
-                     tag ? : __PRETTY_FUNCTION__, file, line, func);
+                     tag ?: __PRETTY_FUNCTION__, file, line, func);
   return hash_ao2_container_init(self, container_options, num_buckets, hash_fn,
                                  sort_fn, cmp_fn);
 }
 
-struct ao2_container* __ao2_container_alloc_list(unsigned int     ao2_options,
-                                                 unsigned int     container_options,
-                                                 ao2_sort_fn     *sort_fn,
-                                                 ao2_callback_fn *cmp_fn,
-                                                 const char      *tag,
-                                                 const char      *file,
-                                                 int              line,
-                                                 const char      *func)
-{
+struct ao2_container *__ao2_container_alloc_list(
+    unsigned int ao2_options, unsigned int container_options,
+    ao2_sort_fn *sort_fn, ao2_callback_fn *cmp_fn, const char *tag,
+    const char *file, int line, const char *func) {
   return __ao2_container_alloc_hash(ao2_options, container_options, 1, NULL,
                                     sort_fn, cmp_fn, tag, file, line, func);
 }

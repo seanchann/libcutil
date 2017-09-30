@@ -1,31 +1,13 @@
 /*
- * Asterisk -- An open source telephony toolkit.
- *
- * Copyright (C) 1999 - 2006, Digium, Inc.
- *
- * See http://www.asterisk.org for more information about
- * the Asterisk project. Please do not directly contact
- * any of the maintainers of this project for assistance;
- * the project provides a web site, mailing lists and IRC
- * channels for your use.
- *
- * This program is free software, distributed under the terms of
- * the GNU General Public License Version 2. See the LICENSE file
- * at the top of the source tree.
- */
-
-/*! \file
- *
- * \brief Utility functions
- *
- * \note These are important for portability and security,
- * so please use them in favour of other routines.
- * Please consult the CODING GUIDELINES for more information.
- */
-
-/*** MODULEINFO
-        <support_level>core</support_level>
- ***/
+* Copyright (C) 2016 - 2017, JYD, Inc.
+*
+* seanchann <xqzhou@bj-jyd.cn>
+*
+* See docs/ for more information about
+* the  project.
+*
+* This program belongs to JYD, Inc. JYD, Inc reserves all rights
+*/
 
 #include "libcutil.h"
 
@@ -35,15 +17,15 @@
 #include <sys/syscall.h>
 #include <unistd.h>
 #if defined(__APPLE__)
-# include <mach/mach.h>
+#include <mach/mach.h>
 #elif defined(HAVE_SYS_THR_H)
-# include <sys/thr.h>
+#include <sys/thr.h>
 #endif /* if defined(__APPLE__) */
 
 #include "libcutil/network.h"
-#include "libcutil/ast_version.h"
+#include "libcutil/version.h"
 
-#define AST_API_MODULE /* ensure that inlinable API functions will be built in
+#define AST_API_MODULE /* ensure that inlinable API functions will be built in \
                           lock.h if required */
 #include "libcutil/lock.h"
 #include "libcutil/io.h"
@@ -51,17 +33,17 @@
 #include "libcutil/sha1.h"
 #include "libcutil/cli.h"
 #include "libcutil/linkedlists.h"
-#include "libcutil/astobj2.h"
+#include "libcutil/obj2.h"
 
-#define AST_API_MODULE /* ensure that inlinable API functions will be built in
+#define AST_API_MODULE /* ensure that inlinable API functions will be built in \
                           this module if required */
 #include "libcutil/strings.h"
 
-#define AST_API_MODULE /* ensure that inlinable API functions will be built in
+#define AST_API_MODULE /* ensure that inlinable API functions will be built in \
                           this module if required */
 #include "libcutil/time.h"
 
-#define AST_API_MODULE /* ensure that inlinable API functions will be built in
+#define AST_API_MODULE /* ensure that inlinable API functions will be built in \
                           this module if required */
 #include "libcutil/utils.h"
 
@@ -78,8 +60,8 @@ AST_THREADSTORAGE(inet_ntoa_buf);
 
 #if !defined(HAVE_GETHOSTBYNAME_R_5) && !defined(HAVE_GETHOSTBYNAME_R_6)
 
-# define ERANGE 34 /*!< duh? ERANGE value copied from web... */
-# undef gethostbyname
+#define ERANGE 34 /*!< duh? ERANGE value copied from web... */
+#undef gethostbyname
 
 AST_MUTEX_DEFINE_STATIC(__mutex);
 
@@ -89,24 +71,23 @@ AST_MUTEX_DEFINE_STATIC(__mutex);
    domain by Enzo Michelangeli <em@em.no-ip.com> */
 static int gethostbyname_r(const char *name, struct hostent *ret, char *buf,
                            size_t buflen, struct hostent **result,
-                           int *h_errnop)
-{
+                           int *h_errnop) {
   int hsave;
   struct hostent *ph;
 
   ast_mutex_lock(&__mutex); /* begin critical area */
   hsave = h_errno;
 
-  ph        = gethostbyname(name);
+  ph = gethostbyname(name);
   *h_errnop = h_errno; /* copy h_errno to *h_herrnop */
 
   if (ph == NULL) {
     *result = NULL;
   } else {
     char **p, **q;
-    char  *pbuf;
-    int    nbytes = 0;
-    int    naddr = 0, naliases = 0;
+    char *pbuf;
+    int nbytes = 0;
+    int naddr = 0, naliases = 0;
 
     /* determine if we have enough space in buf */
 
@@ -116,7 +97,7 @@ static int gethostbyname_r(const char *name, struct hostent *ret, char *buf,
       nbytes += sizeof(*p);   /* pointers */
       naddr++;
     }
-    nbytes += sizeof(*p);     /* one more for the terminating NULL */
+    nbytes += sizeof(*p); /* one more for the terminating NULL */
 
     /* count how many aliases, and total length of strings */
     for (p = ph->h_aliases; *p != 0; p++) {
@@ -124,7 +105,7 @@ static int gethostbyname_r(const char *name, struct hostent *ret, char *buf,
       nbytes += sizeof(*p);       /* pointers */
       naliases++;
     }
-    nbytes += sizeof(*p);         /* one more for the terminating NULL */
+    nbytes += sizeof(*p); /* one more for the terminating NULL */
 
     /* here nbytes is the number of bytes required in buffer */
     /* as a terminator must be there, the minimum value is ph->h_length */
@@ -148,115 +129,114 @@ static int gethostbyname_r(const char *name, struct hostent *ret, char *buf,
             then naddr addresses (fixed length), and naliases aliases (asciiz).
      */
 
-    *ret = *ph;                                                     /* copy
-                                                                       whole
-                                                                       structure
-                                                                       (not its
-                                                                       address!)
-                                                                     */
+    *ret = *ph; /* copy
+                   whole
+                   structure
+                   (not its
+                   address!)
+                 */
 
     /* copy addresses */
-    q                = (char **)buf;                                /* pointer
-                                                                       to
-                                                                       pointers
-                                                                       area
-                                                                       (type:
-                                                                       char **)
-                                                                     */
-    ret->h_addr_list = q;                                           /* update
-                                                                       pointer
-                                                                       to
-                                                                       address
-                                                                       list */
-    pbuf             = buf + ((naddr + naliases + 2) * sizeof(*p)); /* skip that
-                                                                       area */
+    q = (char **)buf;                                   /* pointer
+                                                           to
+                                                           pointers
+                                                           area
+                                                           (type:
+                                                           char **)
+                                                         */
+    ret->h_addr_list = q;                               /* update
+                                                           pointer
+                                                           to
+                                                           address
+                                                           list */
+    pbuf = buf + ((naddr + naliases + 2) * sizeof(*p)); /* skip that
+                                                           area */
 
     for (p = ph->h_addr_list; *p != 0; p++) {
-      memcpy(pbuf, *p, ph->h_length);                               /* copy
-                                                                       address
-                                                                       bytes */
-      *q++  = pbuf;                                                 /* the
-                                                                       pointer
-                                                                       is the
-                                                                       one
-                                                                       inside
-                                                                       buf... */
-      pbuf += ph->h_length;                                         /* advance
-                                                                       pbuf */
+      memcpy(pbuf, *p, ph->h_length); /* copy
+                                         address
+                                         bytes */
+      *q++ = pbuf;                    /* the
+                                         pointer
+                                         is the
+                                         one
+                                         inside
+                                         buf... */
+      pbuf += ph->h_length;           /* advance
+                                         pbuf */
     }
-    *q++ = NULL;                                                    /* address
-                                                                       list
-                                                                       terminator
-                                                                     */
+    *q++ = NULL; /* address
+                    list
+                    terminator
+                  */
 
     /* copy aliases */
-    ret->h_aliases = q;                                             /* update
-                                                                       pointer
-                                                                       to
-                                                                       aliases
-                                                                       list */
+    ret->h_aliases = q; /* update
+                           pointer
+                           to
+                           aliases
+                           list */
 
     for (p = ph->h_aliases; *p != 0; p++) {
-      strcpy(pbuf, *p);                                             /* copy
-                                                                       alias
-                                                                       strings
-                                                                     */
-      *q++    = pbuf;                                               /* the
-                                                                       pointer
-                                                                       is the
-                                                                       one
-                                                                       inside
-                                                                       buf... */
-      pbuf   += strlen(*p);                                         /* advance
-                                                                       pbuf */
-      *pbuf++ = 0;                                                  /* string
-                                                                       terminator
-                                                                     */
+      strcpy(pbuf, *p);   /* copy
+                             alias
+                             strings
+                           */
+      *q++ = pbuf;        /* the
+                             pointer
+                             is the
+                             one
+                             inside
+                             buf... */
+      pbuf += strlen(*p); /* advance
+                             pbuf */
+      *pbuf++ = 0;        /* string
+                             terminator
+                           */
     }
-    *q++ = NULL;                                                    /*
-                                                                       terminator
-                                                                     */
+    *q++ = NULL; /*
+                    terminator
+                  */
 
-    strcpy(pbuf, ph->h_name);                                       /* copy
-                                                                       alias
-                                                                       strings
-                                                                     */
+    strcpy(pbuf, ph->h_name); /* copy
+                                 alias
+                                 strings
+                               */
     ret->h_name = pbuf;
-    pbuf       += strlen(ph->h_name);                               /* advance
-                                                                       pbuf */
-    *pbuf++     = 0;                                                /* string
-                                                                       terminator
-                                                                     */
+    pbuf += strlen(ph->h_name); /* advance
+                                   pbuf */
+    *pbuf++ = 0;                /* string
+                                   terminator
+                                 */
 
-    *result = ret;                                                  /* and let
-                                                                     * result
-                                                                       point to
-                                                                       structure
-                                                                     */
+    *result = ret; /* and let
+                    * result
+                      point to
+                      structure
+                    */
   }
-  h_errno = hsave;                                                  /* restore
-                                                                       h_errno
-                                                                     */
-  ast_mutex_unlock(&__mutex);                                       /* end
-                                                                       critical
-                                                                       area */
+  h_errno = hsave;            /* restore
+                                 h_errno
+                               */
+  ast_mutex_unlock(&__mutex); /* end
+                                 critical
+                                 area */
 
-  return *result == NULL;                                           /* return 0
-                                                                       on
-                                                                       success,
-                                                                       non-zero
-                                                                       on error
-                                                                     */
+  return *result == NULL; /* return 0
+                             on
+                             success,
+                             non-zero
+                             on error
+                           */
 }
 
-#endif /* if !defined(HAVE_GETHOSTBYNAME_R_5) &&
+#endif /* if !defined(HAVE_GETHOSTBYNAME_R_5) && \
           !defined(HAVE_GETHOSTBYNAME_R_6) */
 
 /*! \brief Re-entrant (thread safe) version of gethostbyname that replaces the
    standard gethostbyname (which is not thread safe)
  */
-struct hostent* ast_gethostbyname(const char *host, struct ast_hostent *hp)
-{
+struct hostent *ast_gethostbyname(const char *host, struct ast_hostent *hp) {
   int res;
   int herrno;
   int dots = 0;
@@ -267,12 +247,14 @@ struct hostent* ast_gethostbyname(const char *host, struct ast_hostent *hp)
      the sake of the sanity of people who like to name their peers as
      integers, we break with tradition and refuse to look up a
      pure integer */
-  s   = host;
+  s = host;
   res = 0;
 
   while (s && *s) {
-    if (*s == '.') dots++;
-    else if (!isdigit(*s)) break;
+    if (*s == '.')
+      dots++;
+    else if (!isdigit(*s))
+      break;
     s++;
   }
 
@@ -281,9 +263,9 @@ struct hostent* ast_gethostbyname(const char *host, struct ast_hostent *hp)
     if (dots != 3) return NULL;
 
     memset(hp, 0, sizeof(struct ast_hostent));
-    hp->hp.h_addrtype  = AF_INET;
+    hp->hp.h_addrtype = AF_INET;
     hp->hp.h_addr_list = (void *)hp->buf;
-    hp->hp.h_addr      = hp->buf + sizeof(void *);
+    hp->hp.h_addr = hp->buf + sizeof(void *);
 
     /* For AF_INET, this will always be 4 */
     hp->hp.h_length = 4;
@@ -298,23 +280,22 @@ struct hostent* ast_gethostbyname(const char *host, struct ast_hostent *hp)
   if (!result || !hp->hp.h_addr_list || !hp->hp.h_addr_list[0]) return NULL;
 
 #else /* ifdef HAVE_GETHOSTBYNAME_R_5 */
-  res =
-    gethostbyname_r(host, &hp->hp, hp->buf, sizeof(hp->buf), &result, &herrno);
+  res = gethostbyname_r(host, &hp->hp, hp->buf, sizeof(hp->buf), &result,
+                        &herrno);
 
-  if (res || !result || !hp->hp.h_addr_list ||
-      !hp->hp.h_addr_list[0]) return NULL;
+  if (res || !result || !hp->hp.h_addr_list || !hp->hp.h_addr_list[0])
+    return NULL;
 
 #endif /* ifdef HAVE_GETHOSTBYNAME_R_5 */
   return &hp->hp;
 }
 
 /*! \brief Produce 32 char MD5 hash of value. */
-void ast_md5_hash(char *output, const char *input)
-{
+void ast_md5_hash(char *output, const char *input) {
   struct MD5Context md5;
-  unsigned char     digest[16];
+  unsigned char digest[16];
   char *ptr;
-  int   x;
+  int x;
 
   MD5Init(&md5);
   MD5Update(&md5, (const unsigned char *)input, strlen(input));
@@ -325,11 +306,10 @@ void ast_md5_hash(char *output, const char *input)
 }
 
 /*! \brief Produce 40 char SHA1 hash of value. */
-void ast_sha1_hash(char *output, const char *input)
-{
+void ast_sha1_hash(char *output, const char *input) {
   struct SHA1Context sha;
-  char   *ptr;
-  int     x;
+  char *ptr;
+  int x;
   uint8_t Message_Digest[20];
 
   SHA1Reset(&sha);
@@ -343,8 +323,7 @@ void ast_sha1_hash(char *output, const char *input)
 }
 
 /*! \brief Produce a 20 byte SHA1 hash of value. */
-void ast_sha1_hash_uint(uint8_t *digest, const char *input)
-{
+void ast_sha1_hash_uint(uint8_t *digest, const char *input) {
   struct SHA1Context sha;
 
   SHA1Reset(&sha);
@@ -355,26 +334,25 @@ void ast_sha1_hash_uint(uint8_t *digest, const char *input)
 }
 
 /*! \brief decode BASE64 encoded text */
-int ast_base64decode(unsigned char *dst, const char *src, int max)
-{
-  int cnt           = 0;
+int ast_base64decode(unsigned char *dst, const char *src, int max) {
+  int cnt = 0;
   unsigned int byte = 0;
   unsigned int bits = 0;
-  int incnt         = 0;
+  int incnt = 0;
 
   while (*src && *src != '=' && (cnt < max)) {
     /* Shift in 6 bits of input */
     byte <<= 6;
-    byte  |= (b2a[(int)(*src)]) & 0x3f;
-    bits  += 6;
+    byte |= (b2a[(int)(*src)]) & 0x3f;
+    bits += 6;
     src++;
     incnt++;
 
     /* If we have at least 8 bits left over, take that character
        off the top */
-    if (bits >= 8)  {
+    if (bits >= 8) {
       bits -= 8;
-      *dst  = (byte >> bits) & 0xff;
+      *dst = (byte >> bits) & 0xff;
       dst++;
       cnt++;
     }
@@ -385,25 +363,21 @@ int ast_base64decode(unsigned char *dst, const char *src, int max)
 }
 
 /*! \brief encode text to BASE64 coding */
-int ast_base64encode_full(char                *dst,
-                          const unsigned char *src,
-                          int                  srclen,
-                          int                  max,
-                          int                  linebreaks)
-{
-  int cnt           = 0;
-  int col           = 0;
+int ast_base64encode_full(char *dst, const unsigned char *src, int srclen,
+                          int max, int linebreaks) {
+  int cnt = 0;
+  int col = 0;
   unsigned int byte = 0;
-  int bits          = 0;
-  int cntin         = 0;
+  int bits = 0;
+  int cntin = 0;
 
   /* Reserve space for null byte at end of string */
   max--;
 
   while ((cntin < srclen) && (cnt < max)) {
     byte <<= 8;
-    byte  |= *(src++);
-    bits  += 8;
+    byte |= *(src++);
+    bits += 8;
     cntin++;
 
     if ((bits == 24) && (cnt + 4 <= max)) {
@@ -411,10 +385,10 @@ int ast_base64encode_full(char                *dst,
       *dst++ = base64[(byte >> 12) & 0x3f];
       *dst++ = base64[(byte >> 6) & 0x3f];
       *dst++ = base64[byte & 0x3f];
-      cnt   += 4;
-      col   += 4;
-      bits   = 0;
-      byte   = 0;
+      cnt += 4;
+      col += 4;
+      bits = 0;
+      byte = 0;
     }
 
     if (linebreaks && (cnt < max) && (col == 64)) {
@@ -431,10 +405,12 @@ int ast_base64encode_full(char                *dst,
     *dst++ = base64[(byte >> 18) & 0x3f];
     *dst++ = base64[(byte >> 12) & 0x3f];
 
-    if (bits == 16) *dst++ = base64[(byte >> 6) & 0x3f];
-    else *dst++ = '=';
+    if (bits == 16)
+      *dst++ = base64[(byte >> 6) & 0x3f];
+    else
+      *dst++ = '=';
     *dst++ = '=';
-    cnt   += 4;
+    cnt += 4;
   }
 
   if (linebreaks && (cnt < max)) {
@@ -445,13 +421,11 @@ int ast_base64encode_full(char                *dst,
   return cnt;
 }
 
-int ast_base64encode(char *dst, const unsigned char *src, int srclen, int max)
-{
+int ast_base64encode(char *dst, const unsigned char *src, int srclen, int max) {
   return ast_base64encode_full(dst, src, srclen, max, 0);
 }
 
-static void base64_init(void)
-{
+static void base64_init(void) {
   int x;
 
   memset(b2a, -1, sizeof(b2a));
@@ -459,56 +433,52 @@ static void base64_init(void)
   /* Initialize base-64 Conversion table */
   for (x = 0; x < 26; x++) {
     /* A-Z */
-    base64[x]    = 'A' + x;
+    base64[x] = 'A' + x;
     b2a['A' + x] = x;
 
     /* a-z */
     base64[x + 26] = 'a' + x;
-    b2a['a' + x]   = x + 26;
+    b2a['a' + x] = x + 26;
 
     /* 0-9 */
     if (x < 10) {
       base64[x + 52] = '0' + x;
-      b2a['0' + x]   = x + 52;
+      b2a['0' + x] = x + 52;
     }
   }
-  base64[62]    = '+';
-  base64[63]    = '/';
+  base64[62] = '+';
+  base64[63] = '/';
   b2a[(int)'+'] = 62;
   b2a[(int)'/'] = 63;
 }
 
-const struct ast_flags ast_uri_http = { AST_URI_UNRESERVED };
-const struct ast_flags ast_uri_http_legacy =
-{ AST_URI_LEGACY_SPACE | AST_URI_UNRESERVED };
-const struct ast_flags ast_uri_sip_user =
-{ AST_URI_UNRESERVED | AST_URI_SIP_USER_UNRESERVED };
+const struct ast_flags ast_uri_http = {AST_URI_UNRESERVED};
+const struct ast_flags ast_uri_http_legacy = {AST_URI_LEGACY_SPACE |
+                                              AST_URI_UNRESERVED};
+const struct ast_flags ast_uri_sip_user = {AST_URI_UNRESERVED |
+                                           AST_URI_SIP_USER_UNRESERVED};
 
-char* ast_uri_encode(const char      *string,
-                     char            *outbuf,
-                     int              buflen,
-                     struct ast_flags spec)
-{
-  const char *ptr             = string;      /* Start with the string */
-  char *out                   = outbuf;
-  const char *mark            = "-_.!~*'()"; /* no encode set, RFC 2396 section
-                                                2.3, RFC 3261 sec 25 */
-  const char *user_unreserved = "&=+$,;?/";  /* user-unreserved set, RFC 3261
-                                                sec 25 */
+char *ast_uri_encode(const char *string, char *outbuf, int buflen,
+                     struct ast_flags spec) {
+  const char *ptr = string; /* Start with the string */
+  char *out = outbuf;
+  const char *mark = "-_.!~*'()";           /* no encode set, RFC 2396 section
+                                               2.3, RFC 3261 sec 25 */
+  const char *user_unreserved = "&=+$,;?/"; /* user-unreserved set, RFC 3261
+                                               sec 25 */
 
   while (*ptr && out - outbuf < buflen - 1) {
     if (ast_test_flag(&spec, AST_URI_LEGACY_SPACE) && (*ptr == ' ')) {
       /* for legacy encoding, encode spaces as '+' */
       *out = '+';
       out++;
-    } else if (!(ast_test_flag(&spec, AST_URI_MARK)
-                 && strchr(mark, *ptr))
-               && !(ast_test_flag(&spec, AST_URI_ALPHANUM)
-                    && (((*ptr >= '0') && (*ptr <= '9'))
-                        || ((*ptr >= 'A') && (*ptr <= 'Z'))
-                        || ((*ptr >= 'a') && (*ptr <= 'z'))))
-               && !(ast_test_flag(&spec, AST_URI_SIP_USER_UNRESERVED)
-                    && strchr(user_unreserved, *ptr))) {
+    } else if (!(ast_test_flag(&spec, AST_URI_MARK) && strchr(mark, *ptr)) &&
+               !(ast_test_flag(&spec, AST_URI_ALPHANUM) &&
+                 (((*ptr >= '0') && (*ptr <= '9')) ||
+                  ((*ptr >= 'A') && (*ptr <= 'Z')) ||
+                  ((*ptr >= 'a') && (*ptr <= 'z')))) &&
+               !(ast_test_flag(&spec, AST_URI_SIP_USER_UNRESERVED) &&
+                 strchr(user_unreserved, *ptr))) {
       if (out - outbuf >= buflen - 3) {
         break;
       }
@@ -527,8 +497,7 @@ char* ast_uri_encode(const char      *string,
   return outbuf;
 }
 
-void ast_uri_decode(char *s, struct ast_flags spec)
-{
+void ast_uri_decode(char *s, struct ast_flags spec) {
   char *o;
   unsigned int tmp;
 
@@ -547,15 +516,14 @@ void ast_uri_decode(char *s, struct ast_flags spec)
   *o = '\0';
 }
 
-char* ast_escape_quoted(const char *string, char *outbuf, int buflen)
-{
+char *ast_escape_quoted(const char *string, char *outbuf, int buflen) {
   const char *ptr = string;
-  char *out       = outbuf;
-  char *allow     = "\t\v !"; /* allow LWS (minus \r and \n) and "!" */
+  char *out = outbuf;
+  char *allow = "\t\v !"; /* allow LWS (minus \r and \n) and "!" */
 
   while (*ptr && out - outbuf < buflen - 1) {
-    if (!(strchr(allow, *ptr))
-        && !((*ptr >= '#') && (*ptr <= '[')) /* %x23 - %x5b */
+    if (!(strchr(allow, *ptr)) &&
+        !((*ptr >= '#') && (*ptr <= '['))    /* %x23 - %x5b */
         && !((*ptr >= ']') && (*ptr <= '~')) /* %x5d - %x7e */
         && !((unsigned char)*ptr > 0x7f)) {  /* UTF8-nonascii */
       if (out - outbuf >= buflen - 2) {
@@ -576,10 +544,9 @@ char* ast_escape_quoted(const char *string, char *outbuf, int buflen)
   return outbuf;
 }
 
-char* ast_escape_semicolons(const char *string, char *outbuf, int buflen)
-{
+char *ast_escape_semicolons(const char *string, char *outbuf, int buflen) {
   const char *ptr = string;
-  char *out       = outbuf;
+  char *out = outbuf;
 
   if ((string == NULL) || (outbuf == NULL)) {
     ast_assert(string != NULL && outbuf != NULL);
@@ -607,14 +574,12 @@ char* ast_escape_semicolons(const char *string, char *outbuf, int buflen)
   return outbuf;
 }
 
-void ast_unescape_quoted(char *quote_str)
-{
+void ast_unescape_quoted(char *quote_str) {
   int esc_pos;
   int unesc_pos;
   int quote_str_len = strlen(quote_str);
 
-  for (esc_pos = 0, unesc_pos = 0;
-       esc_pos < quote_str_len;
+  for (esc_pos = 0, unesc_pos = 0; esc_pos < quote_str_len;
        esc_pos++, unesc_pos++) {
     if (quote_str[esc_pos] == '\\') {
       /* at least one more char and current is \\ */
@@ -630,8 +595,8 @@ void ast_unescape_quoted(char *quote_str)
   quote_str[unesc_pos] = '\0';
 }
 
-int ast_xml_escape(const char *string, char *const outbuf, const size_t buflen)
-{
+int ast_xml_escape(const char *string, char *const outbuf,
+                   const size_t buflen) {
   char *dst = outbuf;
   char *end = outbuf + buflen - 1; /* save one for the null terminator */
 
@@ -644,43 +609,43 @@ int ast_xml_escape(const char *string, char *const outbuf, const size_t buflen)
   /* This also prevents partial entities at the end of a string */
   while (*string && dst < end) {
     const char *entity = NULL;
-    int len            = 0;
+    int len = 0;
 
     switch (*string) {
-    case '<':
-      entity = "&lt;";
-      len    = 4;
-      break;
+      case '<':
+        entity = "&lt;";
+        len = 4;
+        break;
 
-    case '&':
-      entity = "&amp;";
-      len    = 5;
-      break;
+      case '&':
+        entity = "&amp;";
+        len = 5;
+        break;
 
-    case '>':
+      case '>':
 
-      /* necessary if ]]> is in the string; easier to escape them all */
-      entity = "&gt;";
-      len    = 4;
-      break;
+        /* necessary if ]]> is in the string; easier to escape them all */
+        entity = "&gt;";
+        len = 4;
+        break;
 
-    case '\'':
+      case '\'':
 
-      /* necessary in single-quoted strings; easier to escape them all */
-      entity = "&apos;";
-      len    = 6;
-      break;
+        /* necessary in single-quoted strings; easier to escape them all */
+        entity = "&apos;";
+        len = 6;
+        break;
 
-    case '"':
+      case '"':
 
-      /* necessary in double-quoted strings; easier to escape them all */
-      entity = "&quot;";
-      len    = 6;
-      break;
+        /* necessary in double-quoted strings; easier to escape them all */
+        entity = "&quot;";
+        len = 6;
+        break;
 
-    default:
-      *dst++ = *string++;
-      break;
+      default:
+        *dst++ = *string++;
+        break;
     }
 
     if (entity) {
@@ -706,11 +671,11 @@ int ast_xml_escape(const char *string, char *const outbuf, const size_t buflen)
 }
 
 /*! \brief  ast_inet_ntoa: Recursive thread safe replacement of inet_ntoa */
-const char* ast_inet_ntoa(struct in_addr ia)
-{
+const char *ast_inet_ntoa(struct in_addr ia) {
   char *buf;
 
-  if (!(buf = ast_threadstorage_get(&inet_ntoa_buf, INET_ADDRSTRLEN))) return "";
+  if (!(buf = ast_threadstorage_get(&inet_ntoa_buf, INET_ADDRSTRLEN)))
+    return "";
 
   return inet_ntop(AF_INET, &ia, buf, INET_ADDRSTRLEN);
 }
@@ -718,22 +683,22 @@ const char* ast_inet_ntoa(struct in_addr ia)
 static int dev_urandom_fd = -1;
 
 #ifndef __linux__
-# undef pthread_create /* For ast_pthread_create function only */
-#endif /* !__linux__ */
+#undef pthread_create /* For ast_pthread_create function only */
+#endif                /* !__linux__ */
 
 #ifdef DEBUG_THREADS
 
-# if !defined(LOW_MEMORY)
+#if !defined(LOW_MEMORY)
 
 /*! \brief A reasonable maximum number of locks a thread would be holding ... */
-#  define AST_MAX_LOCKS 64
+#define AST_MAX_LOCKS 64
 
 /* Allow direct use of pthread_mutex_t and friends */
-#  undef pthread_mutex_t
-#  undef pthread_mutex_lock
-#  undef pthread_mutex_unlock
-#  undef pthread_mutex_init
-#  undef pthread_mutex_destroy
+#undef pthread_mutex_t
+#undef pthread_mutex_lock
+#undef pthread_mutex_unlock
+#undef pthread_mutex_init
+#undef pthread_mutex_destroy
 
 /*!
  * \brief Keep track of which locks a thread holds
@@ -749,12 +714,12 @@ struct thr_lock_info {
 
   /*! This is the actual container of info for what locks this thread holds */
   struct {
-    const char        *file;
-    const char        *func;
-    const char        *lock_name;
-    void              *lock_addr;
-    int                times_locked;
-    int                line_num;
+    const char *file;
+    const char *func;
+    const char *lock_name;
+    void *lock_addr;
+    int times_locked;
+    int line_num;
     enum ast_lock_type type;
 
     /*! This thread is waiting on this lock */
@@ -762,9 +727,9 @@ struct thr_lock_info {
 
     /*! A condition has suspended this lock */
     int suspended : 1;
-#  ifdef HAVE_BKTR
+#ifdef HAVE_BKTR
     struct ast_bt *backtrace;
-#  endif /* ifdef HAVE_BKTR */
+#endif /* ifdef HAVE_BKTR */
   } locks[AST_MAX_LOCKS];
 
   /*! This is the number of locks currently held by this thread.
@@ -796,15 +761,13 @@ static AST_LIST_HEAD_NOLOCK_STATIC(lock_infos, thr_lock_info);
  *
  * This gets called automatically when the thread stops
  */
-static void lock_info_destroy(void *data)
-{
+static void lock_info_destroy(void *data) {
   struct thr_lock_info *lock_info = data;
   int i;
 
   pthread_mutex_lock(&lock_infos_lock.mutex);
   AST_LIST_REMOVE(&lock_infos, lock_info, entry);
   pthread_mutex_unlock(&lock_infos_lock.mutex);
-
 
   for (i = 0; i < lock_info->num_locks; i++) {
     if (lock_info->locks[i].pending == -1) {
@@ -815,13 +778,9 @@ static void lock_info_destroy(void *data)
 
     ast_log(LOG_ERROR,
             "Thread '%s' still has a lock! - '%s' (%p) from '%s' in %s:%d!\n",
-            lock_info->thread_name,
-            lock_info->locks[i].lock_name,
-            lock_info->locks[i].lock_addr,
-            lock_info->locks[i].func,
-            lock_info->locks[i].file,
-            lock_info->locks[i].line_num
-            );
+            lock_info->thread_name, lock_info->locks[i].lock_name,
+            lock_info->locks[i].lock_addr, lock_info->locks[i].func,
+            lock_info->locks[i].file, lock_info->locks[i].line_num);
   }
 
   pthread_mutex_destroy(&lock_info->lock);
@@ -836,40 +795,34 @@ static void lock_info_destroy(void *data)
  * \brief The thread storage key for per-thread lock info
  */
 AST_THREADSTORAGE_CUSTOM(thread_lock_info, NULL, lock_info_destroy);
-# endif /* ! LOW_MEMORY */
+#endif /* ! LOW_MEMORY */
 
-# ifdef HAVE_BKTR
-void ast_store_lock_info(enum ast_lock_type type,
-                         const char        *filename,
-                         int                line_num,
-                         const char        *func,
-                         const char        *lock_name,
-                         void              *lock_addr,
-                         struct ast_bt     *bt)
-# else /* ifdef HAVE_BKTR */
-void ast_store_lock_info(enum ast_lock_type type,
-                         const char       * filename,
-                         int                line_num,
-                         const char       * func,
-                         const char       * lock_name,
-                         void             * lock_addr)
-# endif /* ifdef HAVE_BKTR */
+#ifdef HAVE_BKTR
+void ast_store_lock_info(enum ast_lock_type type, const char *filename,
+                         int line_num, const char *func, const char *lock_name,
+                         void *lock_addr, struct ast_bt *bt)
+#else  /* ifdef HAVE_BKTR */
+void ast_store_lock_info(enum ast_lock_type type, const char *filename,
+                         int line_num, const char *func, const char *lock_name,
+                         void *lock_addr)
+#endif /* ifdef HAVE_BKTR */
 {
-# if !defined(LOW_MEMORY)
+#if !defined(LOW_MEMORY)
   struct thr_lock_info *lock_info;
   int i;
 
   if (!(lock_info =
-          ast_threadstorage_get(&thread_lock_info, sizeof(*lock_info)))) return;
+            ast_threadstorage_get(&thread_lock_info, sizeof(*lock_info))))
+    return;
 
   pthread_mutex_lock(&lock_info->lock);
 
   for (i = 0; i < lock_info->num_locks; i++) {
     if (lock_info->locks[i].lock_addr == lock_addr) {
       lock_info->locks[i].times_locked++;
-#  ifdef HAVE_BKTR
+#ifdef HAVE_BKTR
       lock_info->locks[i].backtrace = bt;
-#  endif /* ifdef HAVE_BKTR */
+#endif /* ifdef HAVE_BKTR */
       pthread_mutex_unlock(&lock_info->lock);
       return;
     }
@@ -877,8 +830,10 @@ void ast_store_lock_info(enum ast_lock_type type,
 
   if (lock_info->num_locks == AST_MAX_LOCKS) {
     /* Can't use ast_log here, because it will cause infinite recursion */
-    fprintf(stderr, "XXX ERROR XXX A thread holds more locks than '%d'."
-                    "  Increase AST_MAX_LOCKS!\n", AST_MAX_LOCKS);
+    fprintf(stderr,
+            "XXX ERROR XXX A thread holds more locks than '%d'."
+            "  Increase AST_MAX_LOCKS!\n",
+            AST_MAX_LOCKS);
     pthread_mutex_unlock(&lock_info->lock);
     return;
   }
@@ -892,30 +847,30 @@ void ast_store_lock_info(enum ast_lock_type type,
     memset(&lock_info->locks[i], 0, sizeof(lock_info->locks[0]));
   }
 
-  lock_info->locks[i].file         = filename;
-  lock_info->locks[i].line_num     = line_num;
-  lock_info->locks[i].func         = func;
-  lock_info->locks[i].lock_name    = lock_name;
-  lock_info->locks[i].lock_addr    = lock_addr;
+  lock_info->locks[i].file = filename;
+  lock_info->locks[i].line_num = line_num;
+  lock_info->locks[i].func = func;
+  lock_info->locks[i].lock_name = lock_name;
+  lock_info->locks[i].lock_addr = lock_addr;
   lock_info->locks[i].times_locked = 1;
-  lock_info->locks[i].type         = type;
-  lock_info->locks[i].pending      = 1;
-#  ifdef HAVE_BKTR
+  lock_info->locks[i].type = type;
+  lock_info->locks[i].pending = 1;
+#ifdef HAVE_BKTR
   lock_info->locks[i].backtrace = bt;
-#  endif /* ifdef HAVE_BKTR */
+#endif /* ifdef HAVE_BKTR */
   lock_info->num_locks++;
 
   pthread_mutex_unlock(&lock_info->lock);
-# endif /* ! LOW_MEMORY */
+#endif /* ! LOW_MEMORY */
 }
 
-void ast_mark_lock_acquired(void *lock_addr)
-{
-# if !defined(LOW_MEMORY)
+void ast_mark_lock_acquired(void *lock_addr) {
+#if !defined(LOW_MEMORY)
   struct thr_lock_info *lock_info;
 
   if (!(lock_info =
-          ast_threadstorage_get(&thread_lock_info, sizeof(*lock_info)))) return;
+            ast_threadstorage_get(&thread_lock_info, sizeof(*lock_info))))
+    return;
 
   pthread_mutex_lock(&lock_info->lock);
 
@@ -923,16 +878,16 @@ void ast_mark_lock_acquired(void *lock_addr)
     lock_info->locks[lock_info->num_locks - 1].pending = 0;
   }
   pthread_mutex_unlock(&lock_info->lock);
-# endif /* ! LOW_MEMORY */
+#endif /* ! LOW_MEMORY */
 }
 
-void ast_mark_lock_failed(void *lock_addr)
-{
-# if !defined(LOW_MEMORY)
+void ast_mark_lock_failed(void *lock_addr) {
+#if !defined(LOW_MEMORY)
   struct thr_lock_info *lock_info;
 
   if (!(lock_info =
-          ast_threadstorage_get(&thread_lock_info, sizeof(*lock_info)))) return;
+            ast_threadstorage_get(&thread_lock_info, sizeof(*lock_info))))
+    return;
 
   pthread_mutex_lock(&lock_info->lock);
 
@@ -941,25 +896,19 @@ void ast_mark_lock_failed(void *lock_addr)
     lock_info->locks[lock_info->num_locks - 1].times_locked--;
   }
   pthread_mutex_unlock(&lock_info->lock);
-# endif /* ! LOW_MEMORY */
+#endif /* ! LOW_MEMORY */
 }
 
-int ast_find_lock_info(void  *lock_addr,
-                       char  *filename,
-                       size_t filename_size,
-                       int   *lineno,
-                       char  *func,
-                       size_t func_size,
-                       char  *mutex_name,
-                       size_t mutex_name_size)
-{
-# if !defined(LOW_MEMORY)
+int ast_find_lock_info(void *lock_addr, char *filename, size_t filename_size,
+                       int *lineno, char *func, size_t func_size,
+                       char *mutex_name, size_t mutex_name_size) {
+#if !defined(LOW_MEMORY)
   struct thr_lock_info *lock_info;
   int i = 0;
 
   if (!(lock_info =
-          ast_threadstorage_get(&thread_lock_info,
-                                sizeof(*lock_info)))) return -1;
+            ast_threadstorage_get(&thread_lock_info, sizeof(*lock_info))))
+    return -1;
 
   pthread_mutex_lock(&lock_info->lock);
 
@@ -973,29 +922,28 @@ int ast_find_lock_info(void  *lock_addr,
     return -1;
   }
 
-  ast_copy_string(filename,   lock_info->locks[i].file,      filename_size);
+  ast_copy_string(filename, lock_info->locks[i].file, filename_size);
   *lineno = lock_info->locks[i].line_num;
-  ast_copy_string(func,       lock_info->locks[i].func,      func_size);
+  ast_copy_string(func, lock_info->locks[i].func, func_size);
   ast_copy_string(mutex_name, lock_info->locks[i].lock_name, mutex_name_size);
 
   pthread_mutex_unlock(&lock_info->lock);
 
   return 0;
 
-# else /* if defined(LOW_MEMORY) */
+#else /* if defined(LOW_MEMORY) */
   return -1;
 
-# endif /* if !defined(LOW_MEMORY) */
+#endif /* if !defined(LOW_MEMORY) */
 }
 
-void ast_suspend_lock_info(void *lock_addr)
-{
-# if !defined(LOW_MEMORY)
+void ast_suspend_lock_info(void *lock_addr) {
+#if !defined(LOW_MEMORY)
   struct thr_lock_info *lock_info;
   int i = 0;
 
   if (!(lock_info =
-          ast_threadstorage_get(&thread_lock_info, sizeof(*lock_info)))) {
+            ast_threadstorage_get(&thread_lock_info, sizeof(*lock_info)))) {
     return;
   }
 
@@ -1014,17 +962,17 @@ void ast_suspend_lock_info(void *lock_addr)
   lock_info->locks[i].suspended = 1;
 
   pthread_mutex_unlock(&lock_info->lock);
-# endif /* ! LOW_MEMORY */
+#endif /* ! LOW_MEMORY */
 }
 
-void ast_restore_lock_info(void *lock_addr)
-{
-# if !defined(LOW_MEMORY)
+void ast_restore_lock_info(void *lock_addr) {
+#if !defined(LOW_MEMORY)
   struct thr_lock_info *lock_info;
   int i = 0;
 
   if (!(lock_info =
-          ast_threadstorage_get(&thread_lock_info, sizeof(*lock_info)))) return;
+            ast_threadstorage_get(&thread_lock_info, sizeof(*lock_info))))
+    return;
 
   pthread_mutex_lock(&lock_info->lock);
 
@@ -1041,21 +989,22 @@ void ast_restore_lock_info(void *lock_addr)
   lock_info->locks[i].suspended = 0;
 
   pthread_mutex_unlock(&lock_info->lock);
-# endif /* ! LOW_MEMORY */
+#endif /* ! LOW_MEMORY */
 }
 
-# ifdef HAVE_BKTR
+#ifdef HAVE_BKTR
 void ast_remove_lock_info(void *lock_addr, struct ast_bt *bt)
-# else /* ifdef HAVE_BKTR */
-void ast_remove_lock_info(void * lock_addr)
-# endif /* ifdef HAVE_BKTR */
+#else  /* ifdef HAVE_BKTR */
+void ast_remove_lock_info(void *lock_addr)
+#endif /* ifdef HAVE_BKTR */
 {
-# if !defined(LOW_MEMORY)
+#if !defined(LOW_MEMORY)
   struct thr_lock_info *lock_info;
   int i = 0;
 
   if (!(lock_info =
-          ast_threadstorage_get(&thread_lock_info, sizeof(*lock_info)))) return;
+            ast_threadstorage_get(&thread_lock_info, sizeof(*lock_info))))
+    return;
 
   pthread_mutex_lock(&lock_info->lock);
 
@@ -1071,9 +1020,9 @@ void ast_remove_lock_info(void * lock_addr)
 
   if (lock_info->locks[i].times_locked > 1) {
     lock_info->locks[i].times_locked--;
-#  ifdef HAVE_BKTR
+#ifdef HAVE_BKTR
     lock_info->locks[i].backtrace = bt;
-#  endif /* ifdef HAVE_BKTR */
+#endif /* ifdef HAVE_BKTR */
     pthread_mutex_unlock(&lock_info->lock);
     return;
   }
@@ -1087,31 +1036,30 @@ void ast_remove_lock_info(void * lock_addr)
   lock_info->num_locks--;
 
   pthread_mutex_unlock(&lock_info->lock);
-# endif /* ! LOW_MEMORY */
+#endif /* ! LOW_MEMORY */
 }
 
-# if !defined(LOW_MEMORY)
-static const char* locktype2str(enum ast_lock_type type)
-{
+#if !defined(LOW_MEMORY)
+static const char *locktype2str(enum ast_lock_type type) {
   switch (type) {
-  case AST_MUTEX:
-    return "MUTEX";
+    case AST_MUTEX:
+      return "MUTEX";
 
-  case AST_RDLOCK:
-    return "RDLOCK";
+    case AST_RDLOCK:
+      return "RDLOCK";
 
-  case AST_WRLOCK:
-    return "WRLOCK";
+    case AST_WRLOCK:
+      return "WRLOCK";
   }
 
   return "UNKNOWN";
 }
 
-#  ifdef HAVE_BKTR
-static void append_backtrace_information(struct ast_str **str, struct ast_bt *bt)
-{
+#ifdef HAVE_BKTR
+static void append_backtrace_information(struct ast_str **str,
+                                         struct ast_bt *bt) {
   char **symbols;
-  int    num_frames;
+  int num_frames;
 
   if (!bt) {
     ast_str_append(str, 0, "\tNo backtrace to print\n");
@@ -1135,42 +1083,36 @@ static void append_backtrace_information(struct ast_str **str, struct ast_bt *bt
   }
 }
 
-#  endif /* ifdef HAVE_BKTR */
+#endif /* ifdef HAVE_BKTR */
 
-static void append_lock_information(struct ast_str      **str,
-                                    struct thr_lock_info *lock_info,
-                                    int                   i)
-{
+static void append_lock_information(struct ast_str **str,
+                                    struct thr_lock_info *lock_info, int i) {
   int j;
   ast_mutex_t *lock;
   struct ast_lock_track *lt;
 
-  ast_str_append(str,
-                 0,
-                 "=== ---> %sLock #%d (%s): %s %d %s %s %p (%d%s)\n",
-                 lock_info->locks[i].pending > 0 ? "Waiting for " :
-                 lock_info->locks[i].pending < 0 ? "Tried and failed to get " : "",
-                 i,
-                 lock_info->locks[i].file,
-                 locktype2str(lock_info->locks[i].type),
-                 lock_info->locks[i].line_num,
-                 lock_info->locks[i].func,
-                 lock_info->locks[i].lock_name,
-                 lock_info->locks[i].lock_addr,
-                 lock_info->locks[i].times_locked,
-                 lock_info->locks[i].suspended ? " - suspended" : "");
-#  ifdef HAVE_BKTR
+  ast_str_append(
+      str, 0, "=== ---> %sLock #%d (%s): %s %d %s %s %p (%d%s)\n",
+      lock_info->locks[i].pending > 0
+          ? "Waiting for "
+          : lock_info->locks[i].pending < 0 ? "Tried and failed to get " : "",
+      i, lock_info->locks[i].file, locktype2str(lock_info->locks[i].type),
+      lock_info->locks[i].line_num, lock_info->locks[i].func,
+      lock_info->locks[i].lock_name, lock_info->locks[i].lock_addr,
+      lock_info->locks[i].times_locked,
+      lock_info->locks[i].suspended ? " - suspended" : "");
+#ifdef HAVE_BKTR
   append_backtrace_information(str, lock_info->locks[i].backtrace);
-#  endif /* ifdef HAVE_BKTR */
+#endif /* ifdef HAVE_BKTR */
 
-  if (!lock_info->locks[i].pending || (lock_info->locks[i].pending == -1)) return;
-
+  if (!lock_info->locks[i].pending || (lock_info->locks[i].pending == -1))
+    return;
 
   /* We only have further details for mutexes right now */
   if (lock_info->locks[i].type != AST_MUTEX) return;
 
   lock = lock_info->locks[i].lock_addr;
-  lt   = lock->track;
+  lt = lock->track;
   ast_reentrancy_lock(lt);
 
   for (j = 0; *str && j < lt->reentrancy; j++) {
@@ -1180,7 +1122,7 @@ static void append_lock_information(struct ast_str      **str,
   ast_reentrancy_unlock(lt);
 }
 
-# endif /* ! LOW_MEMORY */
+#endif /* ! LOW_MEMORY */
 
 /*! This function can help you find highly temporal locks; locks that happen for
    a
@@ -1209,9 +1151,8 @@ static void append_lock_information(struct ast_str      **str,
         which will give a stack trace and continue. -- that aught to do the job!
 
  */
-void ast_log_show_lock(void *this_lock_addr)
-{
-# if !defined(LOW_MEMORY)
+void ast_log_show_lock(void *this_lock_addr) {
+#if !defined(LOW_MEMORY)
   struct thr_lock_info *lock_info;
   struct ast_str *str;
 
@@ -1219,7 +1160,6 @@ void ast_log_show_lock(void *this_lock_addr)
     ast_log(LOG_NOTICE, "Could not create str\n");
     return;
   }
-
 
   pthread_mutex_lock(&lock_infos_lock.mutex);
   AST_LIST_TRAVERSE(&lock_infos, lock_info, entry) {
@@ -1240,12 +1180,11 @@ void ast_log_show_lock(void *this_lock_addr)
   }
   pthread_mutex_unlock(&lock_infos_lock.mutex);
   ast_free(str);
-# endif /* ! LOW_MEMORY */
+#endif /* ! LOW_MEMORY */
 }
 
-struct ast_str* ast_dump_locks(void)
-{
-# if !defined(LOW_MEMORY)
+struct ast_str *ast_dump_locks(void) {
+#if !defined(LOW_MEMORY)
   struct thr_lock_info *lock_info;
   struct ast_str *str;
 
@@ -1253,15 +1192,17 @@ struct ast_str* ast_dump_locks(void)
     return NULL;
   }
 
-  ast_str_append(&str,
-                 0,
+  ast_str_append(&str, 0,
                  "\n"
-                 "=======================================================================\n"
+                 "============================================================="
+                 "==========\n"
                  "=== %s\n"
                  "=== Currently Held Locks\n"
-                 "=======================================================================\n"
+                 "============================================================="
+                 "==========\n"
                  "===\n"
-                 "=== <pending> <lock#> (<file>): <lock type> <line num> <function> <lock name> <lock addr> (times locked)\n"
+                 "=== <pending> <lock#> (<file>): <lock type> <line num> "
+                 "<function> <lock name> <lock addr> (times locked)\n"
                  "===\n",
                  ast_get_version());
 
@@ -1284,16 +1225,11 @@ struct ast_str* ast_dump_locks(void)
 
       if (!header_printed) {
         if (lock_info->lwp != -1) {
-          ast_str_append(&str,
-                         0,
-                         "=== Thread ID: 0x%lx LWP:%d (%s)\n",
-                         (long unsigned)lock_info->thread_id,
-                         lock_info->lwp,
+          ast_str_append(&str, 0, "=== Thread ID: 0x%lx LWP:%d (%s)\n",
+                         (long unsigned)lock_info->thread_id, lock_info->lwp,
                          lock_info->thread_name);
         } else {
-          ast_str_append(&str,
-                         0,
-                         "=== Thread ID: 0x%lx (%s)\n",
+          ast_str_append(&str, 0, "=== Thread ID: 0x%lx (%s)\n",
                          (long unsigned)lock_info->thread_id,
                          lock_info->thread_name);
         }
@@ -1309,9 +1245,10 @@ struct ast_str* ast_dump_locks(void)
     }
 
     if (header_printed) {
-      ast_str_append(&str,
-                     0,
-                     "=== -------------------------------------------------------------------\n"
+      ast_str_append(&str, 0,
+                     "=== "
+                     "---------------------------------------------------------"
+                     "----------\n"
                      "===\n");
     }
 
@@ -1325,38 +1262,37 @@ struct ast_str* ast_dump_locks(void)
     return NULL;
   }
 
-  ast_str_append(&str,
-                 0,
-                 "=======================================================================\n"
+  ast_str_append(&str, 0,
+                 "============================================================="
+                 "==========\n"
                  "\n");
 
   return str;
 
-# else /* if defined(LOW_MEMORY) */
+#else /* if defined(LOW_MEMORY) */
   return NULL;
 
-# endif /* if !defined(LOW_MEMORY) */
+#endif /* if !defined(LOW_MEMORY) */
 }
 
-# if !defined(LOW_MEMORY)
-static char* handle_show_locks(struct ast_cli_entry *e,
-                               int                   cmd,
-                               struct ast_cli_args  *a)
-{
+#if !defined(LOW_MEMORY)
+static char *handle_show_locks(struct ast_cli_entry *e, int cmd,
+                               struct ast_cli_args *a) {
   struct ast_str *str;
 
   switch (cmd) {
-  case CLI_INIT:
-    e->command = "core show locks";
-    e->usage   =
-      "Usage: core show locks\n"
-      "       This command is for lock debugging.  It prints out which locks\n"
-      "are owned by each active thread.\n";
-    ast_cli_allow_at_shutdown(e);
-    return NULL;
+    case CLI_INIT:
+      e->command = "core show locks";
+      e->usage =
+          "Usage: core show locks\n"
+          "       This command is for lock debugging.  It prints out which "
+          "locks\n"
+          "are owned by each active thread.\n";
+      ast_cli_allow_at_shutdown(e);
+      return NULL;
 
-  case CLI_GENERATE:
-    return NULL;
+    case CLI_GENERATE:
+      return NULL;
   }
 
   str = ast_dump_locks();
@@ -1373,10 +1309,11 @@ static char* handle_show_locks(struct ast_cli_entry *e,
 }
 
 static struct ast_cli_entry utils_cli[] = {
-  AST_CLI_DEFINE(handle_show_locks, "Show which locks are held by which thread"),
+    AST_CLI_DEFINE(handle_show_locks,
+                   "Show which locks are held by which thread"),
 };
-# endif /* ! LOW_MEMORY */
-#endif  /* DEBUG_THREADS */
+#endif /* ! LOW_MEMORY */
+#endif /* DEBUG_THREADS */
 
 #if !defined(LOW_MEMORY)
 
@@ -1386,9 +1323,9 @@ static struct ast_cli_entry utils_cli[] = {
  * ast_unregister_thread() know the thread identifier.
  */
 struct thr_arg {
-  void * (*start_routine)(void *);
-  void  *data;
-  char  *name;
+  void *(*start_routine)(void *);
+  void *data;
+  char *name;
 };
 
 /*
@@ -1398,21 +1335,20 @@ struct thr_arg {
  * handler on exit.
  * On BSD we don't need this, but we keep it for compatibility.
  */
-static void* dummy_start(void *data)
-{
+static void *dummy_start(void *data) {
   void *ret;
   struct thr_arg a = *((struct thr_arg *)data); /* make a local copy */
 
-# ifdef DEBUG_THREADS
+#ifdef DEBUG_THREADS
   struct thr_lock_info *lock_info;
-  pthread_mutexattr_t   mutex_attr;
+  pthread_mutexattr_t mutex_attr;
 
   if (!(lock_info =
-          ast_threadstorage_get(&thread_lock_info,
-                                sizeof(*lock_info)))) return NULL;
+            ast_threadstorage_get(&thread_lock_info, sizeof(*lock_info))))
+    return NULL;
 
-  lock_info->thread_id   = pthread_self();
-  lock_info->lwp         = ast_get_tid();
+  lock_info->thread_id = pthread_self();
+  lock_info->lwp = ast_get_tid();
   lock_info->thread_name = ast_strdup(a.name);
 
   pthread_mutexattr_init(&mutex_attr);
@@ -1420,12 +1356,12 @@ static void* dummy_start(void *data)
   pthread_mutex_init(&lock_info->lock, &mutex_attr);
   pthread_mutexattr_destroy(&mutex_attr);
 
-  pthread_mutex_lock(&lock_infos_lock.mutex);   /* Intentionally not the wrapper
-                                                 */
+  pthread_mutex_lock(&lock_infos_lock.mutex); /* Intentionally not the wrapper
+                                               */
   AST_LIST_INSERT_TAIL(&lock_infos, lock_info, entry);
   pthread_mutex_unlock(&lock_infos_lock.mutex); /* Intentionally not the wrapper
                                                  */
-# endif /* DEBUG_THREADS */
+#endif                                          /* DEBUG_THREADS */
 
   /* note that even though data->name is a pointer to allocated memory,
      we are not freeing it here because ast_register_thread is going to
@@ -1445,8 +1381,7 @@ static void* dummy_start(void *data)
 
 #endif /* !LOW_MEMORY */
 
-int ast_background_stacksize(void)
-{
+int ast_background_stacksize(void) {
 #if !defined(LOW_MEMORY)
   return AST_STACKSIZE;
 
@@ -1456,16 +1391,11 @@ int ast_background_stacksize(void)
 #endif /* if !defined(LOW_MEMORY) */
 }
 
-int ast_pthread_create_stack(pthread_t      *thread,
-                             pthread_attr_t *attr,
-                             void *(*start_routine)(void *),
-                             void           *data,
-                             size_t          stacksize,
-                             const char     *file,
-                             const char     *caller,
-                             int             line,
-                             const char     *start_fn)
-{
+int ast_pthread_create_stack(pthread_t *thread, pthread_attr_t *attr,
+                             void *(*start_routine)(void *), void *data,
+                             size_t stacksize, const char *file,
+                             const char *caller, int line,
+                             const char *start_fn) {
 #if !defined(LOW_MEMORY)
   struct thr_arg *a;
 #endif /* if !defined(LOW_MEMORY) */
@@ -1485,55 +1415,43 @@ int ast_pthread_create_stack(pthread_t      *thread,
      This does mean that callers cannot set a different priority using
      PTHREAD_EXPLICIT_SCHED in the attr argument; instead they must set
      the priority afterwards with pthread_setschedparam(). */
-  if ((errno =
-         pthread_attr_setinheritsched(attr, PTHREAD_INHERIT_SCHED))) ast_log(
-      LOG_WARNING,
-      "pthread_attr_setinheritsched: %s\n",
-      strerror(
-        errno));
+  if ((errno = pthread_attr_setinheritsched(attr, PTHREAD_INHERIT_SCHED)))
+    ast_log(LOG_WARNING, "pthread_attr_setinheritsched: %s\n", strerror(errno));
 #endif /* if defined(__linux__) || defined(__FreeBSD__) */
 
   if (!stacksize) stacksize = AST_STACKSIZE;
 
-  if ((errno =
-         pthread_attr_setstacksize(attr,
-                                   stacksize ? stacksize : AST_STACKSIZE)))
-    ast_log(LOG_WARNING,
-            "pthread_attr_setstacksize: %s\n",
-            strerror(
-              errno));
+  if ((errno = pthread_attr_setstacksize(
+           attr, stacksize ? stacksize : AST_STACKSIZE)))
+    ast_log(LOG_WARNING, "pthread_attr_setstacksize: %s\n", strerror(errno));
 
 #if !defined(LOW_MEMORY)
 
   if ((a = ast_malloc(sizeof(*a)))) {
     a->start_routine = start_routine;
-    a->data          = data;
-    start_routine    = dummy_start;
+    a->data = data;
+    start_routine = dummy_start;
 
-    if (ast_asprintf(&a->name, "%-20s started at [%5d] %s %s()",
-                     start_fn, line, file, caller) < 0) {
+    if (ast_asprintf(&a->name, "%-20s started at [%5d] %s %s()", start_fn, line,
+                     file, caller) < 0) {
       a->name = NULL;
     }
     data = a;
   }
 #endif /* !LOW_MEMORY */
 
-  return pthread_create(thread, attr, start_routine, data);       /* We're in
-                                                                     ast_pthread_create,
-                                                                     so it's
-                                                                     okay */
+  return pthread_create(thread, attr, start_routine,
+                        data); /* We're in
+                                  ast_pthread_create,
+                                  so it's
+                                  okay */
 }
 
-int ast_pthread_create_detached_stack(pthread_t      *thread,
-                                      pthread_attr_t *attr,
+int ast_pthread_create_detached_stack(pthread_t *thread, pthread_attr_t *attr,
                                       void *(*start_routine)(void *),
-                                      void           *data,
-                                      size_t          stacksize,
-                                      const char     *file,
-                                      const char     *caller,
-                                      int             line,
-                                      const char     *start_fn)
-{
+                                      void *data, size_t stacksize,
+                                      const char *file, const char *caller,
+                                      int line, const char *start_fn) {
   unsigned char attr_destroy = 0;
   int res;
 
@@ -1543,54 +1461,47 @@ int ast_pthread_create_detached_stack(pthread_t      *thread,
     attr_destroy = 1;
   }
 
-  if ((errno =
-         pthread_attr_setdetachstate(attr, PTHREAD_CREATE_DETACHED))) ast_log(
-      LOG_WARNING,
-      "pthread_attr_setdetachstate: %s\n",
-      strerror(errno));
+  if ((errno = pthread_attr_setdetachstate(attr, PTHREAD_CREATE_DETACHED)))
+    ast_log(LOG_WARNING, "pthread_attr_setdetachstate: %s\n", strerror(errno));
 
-  res = ast_pthread_create_stack(thread, attr, start_routine, data,
-                                 stacksize, file, caller, line, start_fn);
+  res = ast_pthread_create_stack(thread, attr, start_routine, data, stacksize,
+                                 file, caller, line, start_fn);
 
   if (attr_destroy) pthread_attr_destroy(attr);
 
   return res;
 }
 
-int ast_wait_for_input(int fd, int ms)
-{
+int ast_wait_for_input(int fd, int ms) {
   struct pollfd pfd[1];
 
   memset(pfd, 0, sizeof(pfd));
-  pfd[0].fd     = fd;
+  pfd[0].fd = fd;
   pfd[0].events = POLLIN | POLLPRI;
   return ast_poll(pfd, 1, ms);
 }
 
-int ast_wait_for_output(int fd, int ms)
-{
+int ast_wait_for_output(int fd, int ms) {
   struct pollfd pfd[1];
 
   memset(pfd, 0, sizeof(pfd));
-  pfd[0].fd     = fd;
+  pfd[0].fd = fd;
   pfd[0].events = POLLOUT;
   return ast_poll(pfd, 1, ms);
 }
 
-static int wait_for_output(int fd, int timeoutms)
-{
+static int wait_for_output(int fd, int timeoutms) {
   struct pollfd pfd = {
-    .fd     = fd,
-    .events = POLLOUT,
+      .fd = fd, .events = POLLOUT,
   };
   int res;
   struct timeval start = ast_tvnow();
-  int elapsed          = 0;
+  int elapsed = 0;
 
   /* poll() until the fd is writable without blocking */
   while ((res = ast_poll(&pfd, 1, timeoutms - elapsed)) <= 0) {
     if (res == 0) {
-      /* timed out. */
+/* timed out. */
 #ifndef STANDALONE
       ast_debug(1, "Timed out trying to write\n");
 #endif /* ifndef STANDALONE */
@@ -1633,11 +1544,10 @@ static int wait_for_output(int fd, int timeoutms)
  * If the descriptor is blocking, all assumptions on the guaranteed
  * detail do not apply anymore.
  */
-int ast_carefulwrite(int fd, char *s, int len, int timeoutms)
-{
+int ast_carefulwrite(int fd, char *s, int len, int timeoutms) {
   struct timeval start = ast_tvnow();
-  int res              = 0;
-  int elapsed          = 0;
+  int res = 0;
+  int elapsed = 0;
 
   while (len) {
     if (wait_for_output(fd, timeoutms - elapsed)) {
@@ -1650,8 +1560,7 @@ int ast_carefulwrite(int fd, char *s, int len, int timeoutms)
       /* fatal error from write() */
       if (errno == EPIPE) {
 #ifndef STANDALONE
-        ast_debug(1,
-                  "write() failed due to reading end being closed: %s\n",
+        ast_debug(1, "write() failed due to reading end being closed: %s\n",
                   strerror(errno));
 #endif /* ifndef STANDALONE */
       } else {
@@ -1667,8 +1576,8 @@ int ast_carefulwrite(int fd, char *s, int len, int timeoutms)
 
     /* Update how much data we have left to write */
     len -= res;
-    s   += res;
-    res  = 0;
+    s += res;
+    res = 0;
 
     elapsed = ast_tvdiff_ms(ast_tvnow(), start);
 
@@ -1683,76 +1592,78 @@ int ast_carefulwrite(int fd, char *s, int len, int timeoutms)
   return res;
 }
 
-int ast_careful_fwrite(FILE *f, int fd, const char *src, size_t len, int timeoutms)
-{
-	struct timeval start = ast_tvnow();
-	int n = 0;
-	int elapsed = 0;
+int ast_careful_fwrite(FILE *f, int fd, const char *src, size_t len,
+                       int timeoutms) {
+  struct timeval start = ast_tvnow();
+  int n = 0;
+  int elapsed = 0;
 
-	while (len) {
-		if (wait_for_output(fd, timeoutms - elapsed)) {
-			/* poll returned a fatal error, so bail out immediately. */
-			return -1;
-		}
+  while (len) {
+    if (wait_for_output(fd, timeoutms - elapsed)) {
+      /* poll returned a fatal error, so bail out immediately. */
+      return -1;
+    }
 
-		/* Clear any errors from a previous write */
-		clearerr(f);
+    /* Clear any errors from a previous write */
+    clearerr(f);
 
-		n = fwrite(src, 1, len, f);
+    n = fwrite(src, 1, len, f);
 
-		if (ferror(f) && errno != EINTR && errno != EAGAIN) {
-			/* fatal error from fwrite() */
-			if (errno == EPIPE) {
-				ast_debug(1, "fwrite() failed due to reading end being closed: EPIPE\n");
-			} else if (!feof(f)) {
-				/* Don't spam the logs if it was just that the connection is closed. */
-				ast_log(LOG_ERROR, "fwrite() returned error: %s\n", strerror(errno));
-			}
-			n = -1;
-			break;
-		}
+    if (ferror(f) && errno != EINTR && errno != EAGAIN) {
+      /* fatal error from fwrite() */
+      if (errno == EPIPE) {
+        ast_debug(1,
+                  "fwrite() failed due to reading end being closed: EPIPE\n");
+      } else if (!feof(f)) {
+        /* Don't spam the logs if it was just that the connection is closed. */
+        ast_log(LOG_ERROR, "fwrite() returned error: %s\n", strerror(errno));
+      }
+      n = -1;
+      break;
+    }
 
-		/* Update for data already written to the socket */
-		len -= n;
-		src += n;
+    /* Update for data already written to the socket */
+    len -= n;
+    src += n;
 
-		elapsed = ast_tvdiff_ms(ast_tvnow(), start);
-		if (elapsed >= timeoutms) {
-			/* We've taken too long to write
-			 * This is only an error condition if we haven't finished writing. */
-			n = len ? -1 : 0;
-			break;
-		}
-	}
+    elapsed = ast_tvdiff_ms(ast_tvnow(), start);
+    if (elapsed >= timeoutms) {
+      /* We've taken too long to write
+       * This is only an error condition if we haven't finished writing. */
+      n = len ? -1 : 0;
+      break;
+    }
+  }
 
-	errno = 0;
-	while (fflush(f)) {
-		if (errno == EAGAIN || errno == EINTR) {
-			/* fflush() does not appear to reset errno if it flushes
-			 * and reaches EOF at the same time. It returns EOF with
-			 * the last seen value of errno, causing a possible loop.
-			 * Also usleep() to reduce CPU eating if it does loop */
-			errno = 0;
-			usleep(1);
-			continue;
-		}
-		if (errno && !feof(f)) {
-			if (errno == EPIPE) {
-				ast_debug(1, "fflush() failed due to reading end being closed: EPIPE\n");
-			} else {
-				/* Don't spam the logs if it was just that the connection is closed. */
-				ast_log(LOG_ERROR, "fflush() returned error: %s\n", strerror(errno));
-			}
-		}
-		n = -1;
-		break;
-	}
+  errno = 0;
+  while (fflush(f)) {
+    if (errno == EAGAIN || errno == EINTR) {
+      /* fflush() does not appear to reset errno if it flushes
+       * and reaches EOF at the same time. It returns EOF with
+       * the last seen value of errno, causing a possible loop.
+       * Also usleep() to reduce CPU eating if it does loop */
+      errno = 0;
+      usleep(1);
+      continue;
+    }
+    if (errno && !feof(f)) {
+      if (errno == EPIPE) {
+        ast_debug(1,
+                  "fflush() failed due to reading end being closed: EPIPE\n");
+      } else {
+        /* Don't spam the logs if it was just that the connection is closed. */
+        ast_log(LOG_ERROR, "fflush() returned error: %s\n", strerror(errno));
+      }
+    }
+    n = -1;
+    break;
+  }
 
-	return n < 0 ? -1 : 0;
+  return n < 0 ? -1 : 0;
 }
 
-char* ast_strip_quoted(char *s, const char *beg_quotes, const char *end_quotes)
-{
+char *ast_strip_quoted(char *s, const char *beg_quotes,
+                       const char *end_quotes) {
   char *e;
   char *q;
 
@@ -1770,13 +1681,12 @@ char* ast_strip_quoted(char *s, const char *beg_quotes, const char *end_quotes)
   return s;
 }
 
-char* ast_strsep(char **iss, const char sep, uint32_t flags)
-{
+char *ast_strsep(char **iss, const char sep, uint32_t flags) {
   char *st = *iss;
   char *is;
-  int   inquote = 0;
-  int   found   = 0;
-  char  stack[8];
+  int inquote = 0;
+  int found = 0;
+  char stack[8];
 
   if ((iss == NULL) || (*iss == '\0')) {
     return NULL;
@@ -1805,9 +1715,9 @@ char* ast_strsep(char **iss, const char sep, uint32_t flags)
     }
 
     if ((*is == sep) && !inquote) {
-      *is   = '\0';
+      *is = '\0';
       found = 1;
-      *iss  = is + 1;
+      *iss = is + 1;
       break;
     }
   }
@@ -1831,8 +1741,7 @@ char* ast_strsep(char **iss, const char sep, uint32_t flags)
   return st;
 }
 
-char* ast_unescape_semicolon(char *s)
-{
+char *ast_unescape_semicolon(char *s) {
   char *e;
   char *work = s;
 
@@ -1851,39 +1760,38 @@ char* ast_unescape_semicolon(char *s)
 /* !\brief unescape some C sequences in place, return pointer to the original
    string.
  */
-char* ast_unescape_c(char *src)
-{
+char *ast_unescape_c(char *src) {
   char c, *ret, *dst;
 
   if (src == NULL) return NULL;
 
   for (ret = dst = src; (c = *src++); *dst++ = c) {
-    if (c != '\\') continue;  /* copy char at the end of the loop */
+    if (c != '\\') continue; /* copy char at the end of the loop */
 
     switch ((c = *src++)) {
-    case '\0':                /* special, trailing '\' */
-      c = '\\';
-      break;
+      case '\0': /* special, trailing '\' */
+        c = '\\';
+        break;
 
-    case 'b': /* backspace */
-      c = '\b';
-      break;
+      case 'b': /* backspace */
+        c = '\b';
+        break;
 
-    case 'f': /* form feed */
-      c = '\f';
-      break;
+      case 'f': /* form feed */
+        c = '\f';
+        break;
 
-    case 'n':
-      c = '\n';
-      break;
+      case 'n':
+        c = '\n';
+        break;
 
-    case 'r':
-      c = '\r';
-      break;
+      case 'r':
+        c = '\r';
+        break;
 
-    case 't':
-      c = '\t';
-      break;
+      case 't':
+        c = '\t';
+        break;
     }
 
     /* default, use the char literally */
@@ -1896,20 +1804,18 @@ char* ast_unescape_c(char *src)
  * Standard escape sequences - Note, '\0' is not included as a valid character
  * to escape, but instead is used here as a NULL terminator for the string.
  */
-char escape_sequences[] = {
-  '\a', '\b', '\f', '\n', '\r', '\t', '\v', '\\', '\'', '\"', '\?', '\0'
-};
+char escape_sequences[] = {'\a', '\b', '\f', '\n', '\r', '\t',
+                           '\v', '\\', '\'', '\"', '\?', '\0'};
 
 /*
  * Standard escape sequences output map (has to maintain matching order with
  * escape_sequences). '\0' is included here as a NULL terminator for the string.
  */
-static char escape_sequences_map[] = {
-  'a', 'b', 'f', 'n', 'r', 't', 'v', '\\', '\'', '"', '?', '\0'
-};
+static char escape_sequences_map[] = {'a', 'b',  'f',  'n', 'r', 't',
+                                      'v', '\\', '\'', '"', '?', '\0'};
 
-char* ast_escape(char *dest, const char *s, size_t size, const char *to_escape)
-{
+char *ast_escape(char *dest, const char *s, size_t size,
+                 const char *to_escape) {
   char *p;
   char *c;
 
@@ -1940,9 +1846,9 @@ char* ast_escape(char *dest, const char *s, size_t size, const char *to_escape)
        * sequences. If so we'll have to use its mapped counterpart
        * otherwise just use the current character.
        */
-      c    = strchr(escape_sequences, *s);
+      c = strchr(escape_sequences, *s);
       *p++ = '\\';
-      *p   = c ? escape_sequences_map[c - escape_sequences] : *s;
+      *p = c ? escape_sequences_map[c - escape_sequences] : *s;
     } else {
       *p = *s;
     }
@@ -1952,8 +1858,7 @@ char* ast_escape(char *dest, const char *s, size_t size, const char *to_escape)
   return dest;
 }
 
-char* ast_escape_c(char *dest, const char *s, size_t size)
-{
+char *ast_escape_c(char *dest, const char *s, size_t size) {
   /*
    * Note - This is an optimized version of ast_escape. When looking only
    * for escape_sequences a couple of checks used in the generic case can
@@ -1985,7 +1890,7 @@ char* ast_escape_c(char *dest, const char *s, size_t size)
       }
 
       *p++ = '\\';
-      *p   = escape_sequences_map[c - escape_sequences];
+      *p = escape_sequences_map[c - escape_sequences];
     } else {
       *p = *s;
     }
@@ -1995,8 +1900,7 @@ char* ast_escape_c(char *dest, const char *s, size_t size)
   return dest;
 }
 
-static char* escape_alloc(const char *s, size_t *size)
-{
+static char *escape_alloc(const char *s, size_t *size) {
   if (!s) {
     return NULL;
   }
@@ -2009,42 +1913,41 @@ static char* escape_alloc(const char *s, size_t *size)
   return ast_malloc(*size);
 }
 
-char* ast_escape_alloc(const char *s, const char *to_escape)
-{
+char *ast_escape_alloc(const char *s, const char *to_escape) {
   size_t size = 0;
-  char  *dest = escape_alloc(s, &size);
+  char *dest = escape_alloc(s, &size);
 
   return ast_escape(dest, s, size, to_escape);
 }
 
-char* ast_escape_c_alloc(const char *s)
-{
+char *ast_escape_c_alloc(const char *s) {
   size_t size = 0;
-  char  *dest = escape_alloc(s, &size);
+  char *dest = escape_alloc(s, &size);
 
   return ast_escape_c(dest, s, size);
 }
 
-int ast_build_string_va(char **buffer, size_t *space, const char *fmt, va_list ap)
-{
+int ast_build_string_va(char **buffer, size_t *space, const char *fmt,
+                        va_list ap) {
   int result;
 
   if (!buffer || !*buffer || !space || !*space) return -1;
 
   result = vsnprintf(*buffer, *space, fmt, ap);
 
-  if (result < 0) return -1;
-  else if (result > *space) result = *space;
+  if (result < 0)
+    return -1;
+  else if (result > *space)
+    result = *space;
 
   *buffer += result;
-  *space  -= result;
+  *space -= result;
   return 0;
 }
 
-int ast_build_string(char **buffer, size_t *space, const char *fmt, ...)
-{
+int ast_build_string(char **buffer, size_t *space, const char *fmt, ...) {
   va_list ap;
-  int     result;
+  int result;
 
   va_start(ap, fmt);
   result = ast_build_string_va(buffer, space, fmt, ap);
@@ -2053,11 +1956,10 @@ int ast_build_string(char **buffer, size_t *space, const char *fmt, ...)
   return result;
 }
 
-int ast_regex_string_to_regex_pattern(const char      *regex_string,
-                                      struct ast_str **regex_pattern)
-{
+int ast_regex_string_to_regex_pattern(const char *regex_string,
+                                      struct ast_str **regex_pattern) {
   int regex_len = strlen(regex_string);
-  int ret       = 3;
+  int ret = 3;
 
   /* Chop off the leading / if there is one */
   if ((regex_len >= 1) && (regex_string[0] == '/')) {
@@ -2074,63 +1976,53 @@ int ast_regex_string_to_regex_pattern(const char      *regex_string,
   return ret;
 }
 
-int ast_true(const char *s)
-{
+int ast_true(const char *s) {
   if (ast_strlen_zero(s)) return 0;
 
   /* Determine if this is a true value */
-  if (!strcasecmp(s, "yes") ||
-      !strcasecmp(s, "true") ||
-      !strcasecmp(s, "y") ||
-      !strcasecmp(s, "t") ||
-      !strcasecmp(s, "1") ||
-      !strcasecmp(s, "on")) return -1;
+  if (!strcasecmp(s, "yes") || !strcasecmp(s, "true") || !strcasecmp(s, "y") ||
+      !strcasecmp(s, "t") || !strcasecmp(s, "1") || !strcasecmp(s, "on"))
+    return -1;
 
   return 0;
 }
 
-int ast_false(const char *s)
-{
+int ast_false(const char *s) {
   if (ast_strlen_zero(s)) return 0;
 
   /* Determine if this is a false value */
-  if (!strcasecmp(s, "no") ||
-      !strcasecmp(s, "false") ||
-      !strcasecmp(s, "n") ||
-      !strcasecmp(s, "f") ||
-      !strcasecmp(s, "0") ||
-      !strcasecmp(s, "off")) return -1;
+  if (!strcasecmp(s, "no") || !strcasecmp(s, "false") || !strcasecmp(s, "n") ||
+      !strcasecmp(s, "f") || !strcasecmp(s, "0") || !strcasecmp(s, "off"))
+    return -1;
 
   return 0;
 }
 
-#define ONE_MILLION     1000000
+#define ONE_MILLION 1000000
 
 /*
  * put timeval in a valid range. usec is 0..999999
  * negative values are not allowed and truncated.
  */
-static struct timeval tvfix(struct timeval a)
-{
+static struct timeval tvfix(struct timeval a) {
   if (a.tv_usec >= ONE_MILLION) {
     ast_log(LOG_WARNING, "warning too large timestamp %ld.%ld\n",
             (long)a.tv_sec, (long int)a.tv_usec);
-    a.tv_sec  += a.tv_usec / ONE_MILLION;
+    a.tv_sec += a.tv_usec / ONE_MILLION;
     a.tv_usec %= ONE_MILLION;
   } else if (a.tv_usec < 0) {
-    ast_log(LOG_WARNING, "warning negative timestamp %ld.%ld\n",
-            (long)a.tv_sec, (long int)a.tv_usec);
+    ast_log(LOG_WARNING, "warning negative timestamp %ld.%ld\n", (long)a.tv_sec,
+            (long int)a.tv_usec);
     a.tv_usec = 0;
   }
   return a;
 }
 
-struct timeval ast_tvadd(struct timeval a, struct timeval b)
-{
+struct timeval ast_tvadd(struct timeval a, struct timeval b) {
   /* consistency checks to guarantee usec in 0..999999 */
-  a          = tvfix(a);
-  b          = tvfix(b);
-  a.tv_sec  += b.tv_sec;
+  a = tvfix(a);
+  b = tvfix(b);
+  a.tv_sec += b.tv_sec;
   a.tv_usec += b.tv_usec;
 
   if (a.tv_usec >= ONE_MILLION) {
@@ -2140,12 +2032,11 @@ struct timeval ast_tvadd(struct timeval a, struct timeval b)
   return a;
 }
 
-struct timeval ast_tvsub(struct timeval a, struct timeval b)
-{
+struct timeval ast_tvsub(struct timeval a, struct timeval b) {
   /* consistency checks to guarantee usec in 0..999999 */
-  a          = tvfix(a);
-  b          = tvfix(b);
-  a.tv_sec  -= b.tv_sec;
+  a = tvfix(a);
+  b = tvfix(b);
+  a.tv_sec -= b.tv_sec;
   a.tv_usec -= b.tv_usec;
 
   if (a.tv_usec < 0) {
@@ -2155,8 +2046,7 @@ struct timeval ast_tvsub(struct timeval a, struct timeval b)
   return a;
 }
 
-int ast_remaining_ms(struct timeval start, int max_ms)
-{
+int ast_remaining_ms(struct timeval start, int max_ms) {
   int ms;
 
   if (max_ms < 0) {
@@ -2172,8 +2062,7 @@ int ast_remaining_ms(struct timeval start, int max_ms)
   return ms;
 }
 
-void ast_format_duration_hh_mm_ss(int duration, char *buf, size_t length)
-{
+void ast_format_duration_hh_mm_ss(int duration, char *buf, size_t length) {
   int durh, durm, durs;
 
   durh = duration / 3600;
@@ -2188,8 +2077,7 @@ void ast_format_duration_hh_mm_ss(int duration, char *buf, size_t length)
 AST_MUTEX_DEFINE_STATIC(randomlock);
 #endif /* ifndef linux */
 
-long int ast_random(void)
-{
+long int ast_random(void) {
   long int res;
 
   if (dev_urandom_fd >= 0) {
@@ -2203,16 +2091,16 @@ long int ast_random(void)
     }
   }
 
-  /* XXX - Thread safety really depends on the libc, not the OS.
-   *
-   * But... popular Linux libc's (uClibc, glibc, eglibc), all have a
-   * somewhat thread safe random(3) (results are random, but not
-   * reproducible). The libc's for other systems (BSD, et al.), not so
-   * much.
-   */
+/* XXX - Thread safety really depends on the libc, not the OS.
+ *
+ * But... popular Linux libc's (uClibc, glibc, eglibc), all have a
+ * somewhat thread safe random(3) (results are random, but not
+ * reproducible). The libc's for other systems (BSD, et al.), not so
+ * much.
+ */
 #ifdef linux
   res = random();
-#else /* ifdef linux */
+#else  /* ifdef linux */
   ast_mutex_lock(&randomlock);
   res = random();
   ast_mutex_unlock(&randomlock);
@@ -2220,8 +2108,7 @@ long int ast_random(void)
   return res;
 }
 
-void ast_replace_subargument_delimiter(char *s)
-{
+void ast_replace_subargument_delimiter(char *s) {
   for (; *s; s++) {
     if (*s == '^') {
       *s = ',';
@@ -2229,25 +2116,25 @@ void ast_replace_subargument_delimiter(char *s)
   }
 }
 
-char* ast_process_quotes_and_slashes(char *start, char find, char replace_with)
-{
-  char *dataPut  = start;
-  int   inEscape = 0;
-  int   inQuotes = 0;
+char *ast_process_quotes_and_slashes(char *start, char find,
+                                     char replace_with) {
+  char *dataPut = start;
+  int inEscape = 0;
+  int inQuotes = 0;
 
   for (; *start; start++) {
     if (inEscape) {
       *dataPut++ = *start; /* Always goes verbatim */
-      inEscape   = 0;
+      inEscape = 0;
     } else {
       if (*start == '\\') {
-        inEscape = 1;            /* Do not copy \ into the data */
+        inEscape = 1; /* Do not copy \ into the data */
       } else if (*start == '\'') {
         inQuotes = 1 - inQuotes; /* Do not copy ' into the data */
       } else {
         /* Replace , with |, unless in quotes */
         *dataPut++ =
-          inQuotes ? *start : ((*start == find) ? replace_with : *start);
+            inQuotes ? *start : ((*start == find) ? replace_with : *start);
       }
     }
   }
@@ -2256,12 +2143,8 @@ char* ast_process_quotes_and_slashes(char *start, char find, char replace_with)
   return dataPut;
 }
 
-void ast_join_delim(char             *s,
-                    size_t            len,
-                    const char *const w[],
-                    unsigned int      size,
-                    char              delim)
-{
+void ast_join_delim(char *s, size_t len, const char *const w[],
+                    unsigned int size, char delim) {
   int x, ofs = 0;
   const char *src;
 
@@ -2278,19 +2161,18 @@ void ast_join_delim(char             *s,
   s[ofs] = '\0';
 }
 
-char* ast_to_camel_case_delim(const char *s, const char *delim)
-{
+char *ast_to_camel_case_delim(const char *s, const char *delim) {
   char *res = ast_strdup(s);
   char *front, *back, *buf = res;
-  int   size;
+  int size;
 
   front = strtok_r(buf, delim, &back);
 
   while (front) {
-    size   = strlen(front);
+    size = strlen(front);
     *front = toupper(*front);
     ast_copy_string(buf, front, size + 1);
-    buf  += size;
+    buf += size;
     front = strtok_r(NULL, delim, &back);
   }
 
@@ -2299,8 +2181,7 @@ char* ast_to_camel_case_delim(const char *s, const char *delim)
 
 AST_MUTEX_DEFINE_STATIC(fetchadd_m); /* used for all fetc&add ops */
 
-int ast_atomic_fetchadd_int_slow(volatile int *p, int v)
-{
+int ast_atomic_fetchadd_int_slow(volatile int *p, int v) {
   int ret;
 
   ast_mutex_lock(&fetchadd_m);
@@ -2313,11 +2194,8 @@ int ast_atomic_fetchadd_int_slow(volatile int *p, int v)
 /*! \brief
  * get values from config variables.
  */
-int ast_get_timeval(const char     *src,
-                    struct timeval *dst,
-                    struct timeval  _default,
-                    int            *consumed)
-{
+int ast_get_timeval(const char *src, struct timeval *dst,
+                    struct timeval _default, int *consumed) {
   long double dtv = 0.0;
   int scanned;
 
@@ -2329,21 +2207,22 @@ int ast_get_timeval(const char     *src,
 
   /* only integer at the moment, but one day we could accept more formats */
   if (sscanf(src, "%30Lf%n", &dtv, &scanned) > 0) {
-    dst->tv_sec  = dtv;
+    dst->tv_sec = dtv;
     dst->tv_usec = (dtv - dst->tv_sec) * 1000000.0;
 
     if (consumed) *consumed = scanned;
     return 0;
-  } else return -1;
+  } else
+    return -1;
 }
 
 /*! \brief
  * get values from config variables.
  */
-int ast_get_time_t(const char *src, time_t *dst, time_t _default, int *consumed)
-{
+int ast_get_time_t(const char *src, time_t *dst, time_t _default,
+                   int *consumed) {
   long t;
-  int  scanned;
+  int scanned;
 
   if (dst == NULL) return -1;
 
@@ -2357,29 +2236,29 @@ int ast_get_time_t(const char *src, time_t *dst, time_t _default, int *consumed)
 
     if (consumed) *consumed = scanned;
     return 0;
-  } else return -1;
+  } else
+    return -1;
 }
 
-void ast_enable_packet_fragmentation(int sock)
-{
+void ast_enable_packet_fragmentation(int sock) {
 #if defined(HAVE_IP_MTU_DISCOVER)
   int val = IP_PMTUDISC_DONT;
 
-  if (setsockopt(sock, IPPROTO_IP, IP_MTU_DISCOVER, &val, sizeof(val))) ast_log(
-      LOG_WARNING,
-      "Unable to disable PMTU discovery. Large UDP packets may fail to be delivered when sent from this socket.\n");
+  if (setsockopt(sock, IPPROTO_IP, IP_MTU_DISCOVER, &val, sizeof(val)))
+    ast_log(LOG_WARNING,
+            "Unable to disable PMTU discovery. Large UDP packets may fail to "
+            "be delivered when sent from this socket.\n");
 
 #endif /* HAVE_IP_MTU_DISCOVER */
 }
 
-int ast_mkdir(const char *path, int mode)
-{
-  char  *ptr;
-  int    len = strlen(path), count = 0, x, piececount = 0;
-  char  *tmp = ast_strdupa(path);
+int ast_mkdir(const char *path, int mode) {
+  char *ptr;
+  int len = strlen(path), count = 0, x, piececount = 0;
+  char *tmp = ast_strdupa(path);
   char **pieces;
-  char  *fullpath = ast_alloca(len + 1);
-  int    res      = 0;
+  char *fullpath = ast_alloca(len + 1);
+  int res = 0;
 
   for (ptr = tmp; *ptr; ptr++) {
     if (*ptr == '/') count++;
@@ -2390,7 +2269,7 @@ int ast_mkdir(const char *path, int mode)
 
   for (ptr = tmp; *ptr; ptr++) {
     if (*ptr == '/') {
-      *ptr                 = '\0';
+      *ptr = '\0';
       pieces[piececount++] = ptr + 1;
     }
   }
@@ -2409,8 +2288,7 @@ int ast_mkdir(const char *path, int mode)
   return 0;
 }
 
-static int safe_mkdir(const char *base_path, char *path, int mode)
-{
+static int safe_mkdir(const char *base_path, char *path, int mode) {
   RAII_VAR(char *, absolute_path, NULL, ast_std_free);
 
   absolute_path = realpath(path, NULL);
@@ -2443,8 +2321,7 @@ static int safe_mkdir(const char *base_path, char *path, int mode)
 
       if (absolute_subpath) {
         /* Subpath exists, but is it safe? */
-        parent_is_safe = ast_begins_with(
-          absolute_subpath, base_path);
+        parent_is_safe = ast_begins_with(absolute_subpath, base_path);
       } else if (parent_is_safe) {
         /* Subpath does not exist, but parent is safe
          * Create it */
@@ -2484,10 +2361,9 @@ static int safe_mkdir(const char *base_path, char *path, int mode)
   }
 }
 
-int ast_safe_mkdir(const char *base_path, const char *path, int mode)
-{
+int ast_safe_mkdir(const char *base_path, const char *path, int mode) {
   RAII_VAR(char *, absolute_base_path, NULL, ast_std_free);
-  RAII_VAR(char *, p,                  NULL, ast_free);
+  RAII_VAR(char *, p, NULL, ast_free);
 
   if ((base_path == NULL) || (path == NULL)) {
     errno = EFAULT;
@@ -2510,8 +2386,7 @@ int ast_safe_mkdir(const char *base_path, const char *path, int mode)
   return safe_mkdir(absolute_base_path, p, mode);
 }
 
-static void utils_shutdown(void)
-{
+static void utils_shutdown(void) {
   close(dev_urandom_fd);
   dev_urandom_fd = -1;
 #if defined(DEBUG_THREADS) && !defined(LOW_MEMORY)
@@ -2519,15 +2394,14 @@ static void utils_shutdown(void)
 #endif /* if defined(DEBUG_THREADS) && !defined(LOW_MEMORY) */
 }
 
-int ast_utils_init(void)
-{
+int ast_utils_init(void) {
   dev_urandom_fd = open("/dev/urandom", O_RDONLY);
   base64_init();
 #ifdef DEBUG_THREADS
-# if !defined(LOW_MEMORY)
+#if !defined(LOW_MEMORY)
   ast_cli_register_multiple(utils_cli, ARRAY_LEN(utils_cli));
-# endif /* if !defined(LOW_MEMORY) */
-#endif  /* ifdef DEBUG_THREADS */
+#endif /* if !defined(LOW_MEMORY) */
+#endif /* ifdef DEBUG_THREADS */
   ast_register_cleanup(utils_shutdown);
   return 0;
 }
@@ -2539,33 +2413,32 @@ int ast_utils_init(void)
  * request arg is set to nonzero, if we parse Digest Request.
  * pedantic arg can be set to nonzero if we need to do addition Digest check.
  */
-int ast_parse_digest(const char             *digest,
-                     struct ast_http_digest *d,
-                     int                     request,
-                     int                     pedantic) {
+int ast_parse_digest(const char *digest, struct ast_http_digest *d, int request,
+                     int pedantic) {
   char *c;
   struct ast_str *str = ast_str_create(16);
 
   /* table of recognised keywords, and places where they should be copied */
   const struct x {
-    const char             *key;
+    const char *key;
     const ast_string_field *field;
-  } *i, keys[] = {
-    { "username=",  &d->username                                 },
-    { "realm=",     &d->realm                                    },
-    { "nonce=",     &d->nonce                                    },
-    { "uri=",       &d->uri                                      },
-    { "domain=",    &d->domain                                   },
-    { "response=",  &d->response                                 },
-    { "cnonce=",    &d->cnonce                                   },
-    { "opaque=",    &d->opaque                                   },
+  } * i,
+      keys[] = {
+          {"username=", &d->username},
+          {"realm=", &d->realm},
+          {"nonce=", &d->nonce},
+          {"uri=", &d->uri},
+          {"domain=", &d->domain},
+          {"response=", &d->response},
+          {"cnonce=", &d->cnonce},
+          {"opaque=", &d->opaque},
 
-    /* Special cases that cannot be directly copied */
-    { "algorithm=", NULL                                         },
-    { "qop=",       NULL                                         },
-    { "nc=",        NULL                                         },
-    { NULL,                                                    0 },
-  };
+          /* Special cases that cannot be directly copied */
+          {"algorithm=", NULL},
+          {"qop=", NULL},
+          {"nc=", NULL},
+          {NULL, 0},
+      };
 
   if (ast_strlen_zero(digest) || !d || !str) {
     ast_free(str);
@@ -2588,7 +2461,7 @@ int ast_parse_digest(const char             *digest,
     /* find key */
     for (i = keys; i->key != NULL; i++) {
       char *src, *separator;
-      int   unescape = 0;
+      int unescape = 0;
 
       if (strncasecmp(c, i->key, strlen(i->key)) != 0) {
         continue;
@@ -2598,11 +2471,11 @@ int ast_parse_digest(const char             *digest,
       c += strlen(i->key);
 
       if (*c == '"') {
-        src       = ++c;
+        src = ++c;
         separator = "\"";
-        unescape  = 1;
+        unescape = 1;
       } else {
-        src       = c;
+        src = c;
         separator = ",";
       }
       strsep(&c, separator); /* clear separator and move ptr */
@@ -2667,13 +2540,8 @@ int ast_parse_digest(const char             *digest,
 }
 
 #ifndef __AST_DEBUG_MALLOC
-int __ast_asprintf(const char *file,
-                   int         lineno,
-                   const char *func,
-                   char      **ret,
-                   const char *fmt,
-                   ...)
-{
+int __ast_asprintf(const char *file, int lineno, const char *func, char **ret,
+                   const char *fmt, ...) {
   int res;
   va_list ap;
 
@@ -2689,8 +2557,7 @@ int __ast_asprintf(const char *file,
 
 #endif /* ifndef __AST_DEBUG_MALLOC */
 
-int ast_get_tid(void)
-{
+int ast_get_tid(void) {
   int ret = -1;
 
 #if defined(__linux) && defined(SYS_gettid)
@@ -2708,8 +2575,8 @@ int ast_get_tid(void)
   return ret;
 }
 
-char* ast_utils_which(const char *binary, char *fullpath, size_t fullpath_size)
-{
+char *ast_utils_which(const char *binary, char *fullpath,
+                      size_t fullpath_size) {
   const char *envPATH = getenv("PATH");
   char *tpath, *path;
   struct stat unused;
@@ -2729,8 +2596,7 @@ char* ast_utils_which(const char *binary, char *fullpath, size_t fullpath_size)
   return NULL;
 }
 
-int ast_check_ipv6(void)
-{
+int ast_check_ipv6(void) {
   int udp6_socket = socket(AF_INET6, SOCK_DGRAM, 0);
 
   if (udp6_socket < 0) {
@@ -2741,8 +2607,7 @@ int ast_check_ipv6(void)
   return 1;
 }
 
-void DO_CRASH_NORETURN ast_do_crash(void)
-{
+void DO_CRASH_NORETURN ast_do_crash(void) {
 #if defined(DO_CRASH)
   abort();
 
@@ -2754,20 +2619,18 @@ void DO_CRASH_NORETURN ast_do_crash(void)
 #endif /* defined(DO_CRASH) */
 }
 
-void DO_CRASH_NORETURN __ast_assert_failed(int         condition,
+void DO_CRASH_NORETURN __ast_assert_failed(int condition,
                                            const char *condition_str,
-                                           const char *file,
-                                           int         line,
-                                           const char *function)
-{
+                                           const char *file, int line,
+                                           const char *function) {
   /*
    * Attempt to put it into the logger, but hope that at least
    * someone saw the message on stderr ...
    */
   fprintf(stderr, "FRACK!, Failed assertion %s (%d) at line %d in %s of %s\n",
           condition_str, condition, line, function, file);
-  ast_log(__LOG_ERROR, file, line, function, "FRACK!, Failed assertion %s (%d)\n",
-          condition_str, condition);
+  ast_log(__LOG_ERROR, file, line, function,
+          "FRACK!, Failed assertion %s (%d)\n", condition_str, condition);
 
   /* Generate a backtrace for the assert */
   ast_log_backtrace();
@@ -2781,9 +2644,8 @@ void DO_CRASH_NORETURN __ast_assert_failed(int         condition,
   ast_do_crash();
 }
 
-char* ast_eid_to_str(char *s, int maxlen, struct ast_eid *eid)
-{
-  int   x;
+char *ast_eid_to_str(char *s, int maxlen, struct ast_eid *eid) {
+  int x;
   char *os = s;
 
   if (maxlen < 18) {
@@ -2801,32 +2663,33 @@ char* ast_eid_to_str(char *s, int maxlen, struct ast_eid *eid)
 }
 
 #if defined(__OpenBSD__) || defined(__NetBSD__) || defined(__FreeBSD__) || \
-  defined(__Darwin__)
-# include <ifaddrs.h>
-# include <net/if_dl.h>
+    defined(__Darwin__)
+#include <ifaddrs.h>
+#include <net/if_dl.h>
 
-void ast_set_default_eid(struct ast_eid *eid)
-{
+void ast_set_default_eid(struct ast_eid *eid) {
   struct ifaddrs *ifap, *ifaphead;
   int rtnerr;
   const struct sockaddr_dl *sdl;
   int alen;
   caddr_t ap;
-  char    eid_str[20];
-  unsigned char empty_mac[6] = { 0, 0, 0, 0, 0, 0 };
-  unsigned char full_mac[6]  = { 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF };
+  char eid_str[20];
+  unsigned char empty_mac[6] = {0, 0, 0, 0, 0, 0};
+  unsigned char full_mac[6] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
 
   rtnerr = getifaddrs(&ifaphead);
 
   if (rtnerr) {
-    ast_log(LOG_WARNING, "No ethernet interface found for seeding global EID. "
-                         "You will have to set it manually.\n");
+    ast_log(LOG_WARNING,
+            "No ethernet interface found for seeding global EID. "
+            "You will have to set it manually.\n");
     return;
   }
 
   if (!ifaphead) {
-    ast_log(LOG_WARNING, "No ethernet interface found for seeding global EID. "
-                         "You will have to set it manually.\n");
+    ast_log(LOG_WARNING,
+            "No ethernet interface found for seeding global EID. "
+            "You will have to set it manually.\n");
     return;
   }
 
@@ -2835,11 +2698,12 @@ void ast_set_default_eid(struct ast_eid *eid)
       continue;
     }
 
-    sdl  = (const struct sockaddr_dl *)ifap->ifa_addr;
-    ap   = ((caddr_t)((sdl)->sdl_data + (sdl)->sdl_nlen));
+    sdl = (const struct sockaddr_dl *)ifap->ifa_addr;
+    ap = ((caddr_t)((sdl)->sdl_data + (sdl)->sdl_nlen));
     alen = sdl->sdl_alen;
 
-    if ((alen != 6) || !(memcmp(ap, &empty_mac, 6) && memcmp(ap, &full_mac, 6))) {
+    if ((alen != 6) ||
+        !(memcmp(ap, &empty_mac, 6) && memcmp(ap, &full_mac, 6))) {
       continue;
     }
 
@@ -2850,47 +2714,49 @@ void ast_set_default_eid(struct ast_eid *eid)
     return;
   }
 
-  ast_log(LOG_WARNING, "No ethernet interface found for seeding global EID. "
-                       "You will have to set it manually.\n");
+  ast_log(LOG_WARNING,
+          "No ethernet interface found for seeding global EID. "
+          "You will have to set it manually.\n");
   freeifaddrs(ifaphead);
 }
 
 #elif defined(SOLARIS)
-# include <sys/sockio.h>
-# include <net/if_arp.h>
+#include <sys/sockio.h>
+#include <net/if_arp.h>
 
-void ast_set_default_eid(struct ast_eid *eid)
-{
+void ast_set_default_eid(struct ast_eid *eid) {
   int s;
   int x;
-  int res            = 0;
+  int res = 0;
   struct lifreq *ifr = NULL;
-  struct lifnum  ifn;
+  struct lifnum ifn;
   struct lifconf ifc;
-  struct arpreq  ar;
+  struct arpreq ar;
   struct sockaddr_in *sa, *sa2;
   char *buf = NULL;
-  char  eid_str[20];
-  int   bufsz;
-  unsigned char empty_mac[6] = { 0, 0, 0, 0, 0, 0 };
-  unsigned char full_mac[6]  = { 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF };
+  char eid_str[20];
+  int bufsz;
+  unsigned char empty_mac[6] = {0, 0, 0, 0, 0, 0};
+  unsigned char full_mac[6] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
 
   s = socket(AF_INET, SOCK_STREAM, 0);
 
   if (s <= 0) {
-    ast_log(LOG_WARNING, "Unable to open a socket for seeding global EID. "
-                         " You will have to set it manually.\n");
+    ast_log(LOG_WARNING,
+            "Unable to open a socket for seeding global EID. "
+            " You will have to set it manually.\n");
     return;
   }
 
   /* Get a count of interfaces on the machine */
   ifn.lifn_family = AF_UNSPEC;
-  ifn.lifn_flags  = 0;
-  ifn.lifn_count  = 0;
+  ifn.lifn_flags = 0;
+  ifn.lifn_count = 0;
 
   if (ioctl(s, SIOCGLIFNUM, &ifn) < 0) {
-    ast_log(LOG_WARNING, "No ethernet interface found for seeding global EID. "
-                         " You will have to set it manually.\n");
+    ast_log(LOG_WARNING,
+            "No ethernet interface found for seeding global EID. "
+            " You will have to set it manually.\n");
     close(s);
     return;
   }
@@ -2898,22 +2764,24 @@ void ast_set_default_eid(struct ast_eid *eid)
   bufsz = ifn.lifn_count * sizeof(struct lifreq);
 
   if (!(buf = ast_malloc(bufsz))) {
-    ast_log(LOG_WARNING, "Unable to allocate memory for seeding global EID. "
-                         "You will have to set it manually.\n");
+    ast_log(LOG_WARNING,
+            "Unable to allocate memory for seeding global EID. "
+            "You will have to set it manually.\n");
     close(s);
     return;
   }
   memset(buf, 0, bufsz);
 
   /* Get a list of interfaces on the machine */
-  ifc.lifc_len    = bufsz;
-  ifc.lifc_buf    = buf;
+  ifc.lifc_len = bufsz;
+  ifc.lifc_buf = buf;
   ifc.lifc_family = AF_UNSPEC;
-  ifc.lifc_flags  = 0;
+  ifc.lifc_flags = 0;
 
   if (ioctl(s, SIOCGLIFCONF, &ifc) < 0) {
-    ast_log(LOG_WARNING, "No ethernet interface found for seeding global EID. "
-                         "You will have to set it manually.\n");
+    ast_log(LOG_WARNING,
+            "No ethernet interface found for seeding global EID. "
+            "You will have to set it manually.\n");
     ast_free(buf);
     close(s);
     return;
@@ -2922,8 +2790,8 @@ void ast_set_default_eid(struct ast_eid *eid)
   for (ifr = (struct lifreq *)buf, x = 0; x < ifn.lifn_count; ifr++, x++) {
     unsigned char *p;
 
-    sa   = (struct sockaddr_in *)&(ifr->lifr_addr);
-    sa2  = (struct sockaddr_in *)&(ar.arp_pa);
+    sa = (struct sockaddr_in *)&(ifr->lifr_addr);
+    sa2 = (struct sockaddr_in *)&(ar.arp_pa);
     *sa2 = *sa;
 
     if (ioctl(s, SIOCGARP, &ar) >= 0) {
@@ -2942,32 +2810,34 @@ void ast_set_default_eid(struct ast_eid *eid)
     }
   }
 
-  ast_log(LOG_WARNING, "No ethernet interface found for seeding global EID. "
-                       "You will have to set it manually.\n");
+  ast_log(LOG_WARNING,
+          "No ethernet interface found for seeding global EID. "
+          "You will have to set it manually.\n");
   ast_free(buf);
   close(s);
 }
 
-#else /* if defined(__OpenBSD__) || defined(__NetBSD__) || defined(__FreeBSD__)
+#else /* if defined(__OpenBSD__) || defined(__NetBSD__) || \
+      defined(__FreeBSD__)                                 \
       || defined(__Darwin__) */
-void ast_set_default_eid(struct ast_eid *eid)
-{
+void ast_set_default_eid(struct ast_eid *eid) {
   int s;
   int i;
   struct ifreq *ifr;
   struct ifreq *ifrp;
   struct ifconf ifc;
   char *buf = NULL;
-  char  eid_str[20];
-  int   bufsz, num_interfaces;
-  unsigned char empty_mac[6] = { 0, 0, 0, 0, 0, 0 };
-  unsigned char full_mac[6]  = { 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF };
+  char eid_str[20];
+  int bufsz, num_interfaces;
+  unsigned char empty_mac[6] = {0, 0, 0, 0, 0, 0};
+  unsigned char full_mac[6] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
 
   s = socket(AF_INET, SOCK_STREAM, 0);
 
   if (s <= 0) {
-    ast_log(LOG_WARNING, "Unable to open socket for seeding global EID. "
-                         "You will have to set it manually.\n");
+    ast_log(LOG_WARNING,
+            "Unable to open socket for seeding global EID. "
+            "You will have to set it manually.\n");
     return;
   }
 
@@ -2975,16 +2845,18 @@ void ast_set_default_eid(struct ast_eid *eid)
   ifc.ifc_buf = NULL;
 
   if (ioctl(s, SIOCGIFCONF, &ifc) || (ifc.ifc_len <= 0)) {
-    ast_log(LOG_WARNING, "No ethernet interface found for seeding global EID. "
-                         "You will have to set it manually.\n");
+    ast_log(LOG_WARNING,
+            "No ethernet interface found for seeding global EID. "
+            "You will have to set it manually.\n");
     close(s);
     return;
   }
   bufsz = ifc.ifc_len;
 
   if (!(buf = ast_malloc(bufsz))) {
-    ast_log(LOG_WARNING, "Unable to allocate memory for seeding global EID. "
-                         "You will have to set it manually.\n");
+    ast_log(LOG_WARNING,
+            "Unable to allocate memory for seeding global EID. "
+            "You will have to set it manually.\n");
     close(s);
     return;
   }
@@ -3000,7 +2872,7 @@ void ast_set_default_eid(struct ast_eid *eid)
     return;
   }
 
-  ifrp           = ifc.ifc_req;
+  ifrp = ifc.ifc_req;
   num_interfaces = ifc.ifc_len / sizeof(*ifr);
 
   for (i = 0; i < num_interfaces; i++) {
@@ -3022,21 +2894,21 @@ void ast_set_default_eid(struct ast_eid *eid)
     }
   }
 
-  ast_log(LOG_WARNING, "No ethernet interface found for seeding global EID. "
-                       "You will have to set it manually.\n");
+  ast_log(LOG_WARNING,
+          "No ethernet interface found for seeding global EID. "
+          "You will have to set it manually.\n");
   ast_free(buf);
   close(s);
 }
 
 #endif /* LINUX */
 
-int ast_str_to_eid(struct ast_eid *eid, const char *s)
-{
+int ast_str_to_eid(struct ast_eid *eid, const char *s) {
   unsigned int eid_int[6];
   int x;
 
-  if (sscanf(s, "%2x:%2x:%2x:%2x:%2x:%2x", &eid_int[0], &eid_int[1], &eid_int[2],
-             &eid_int[3], &eid_int[4], &eid_int[5]) != 6) {
+  if (sscanf(s, "%2x:%2x:%2x:%2x:%2x:%2x", &eid_int[0], &eid_int[1],
+             &eid_int[2], &eid_int[3], &eid_int[4], &eid_int[5]) != 6) {
     return -1;
   }
 
@@ -3047,29 +2919,26 @@ int ast_str_to_eid(struct ast_eid *eid, const char *s)
   return 0;
 }
 
-int ast_eid_cmp(const struct ast_eid *eid1, const struct ast_eid *eid2)
-{
+int ast_eid_cmp(const struct ast_eid *eid1, const struct ast_eid *eid2) {
   return memcmp(eid1, eid2, sizeof(*eid1));
 }
 
-int ast_eid_is_empty(const struct ast_eid *eid)
-{
+int ast_eid_is_empty(const struct ast_eid *eid) {
   struct ast_eid empty_eid;
 
   memset(&empty_eid, 0, sizeof(empty_eid));
   return memcmp(eid, &empty_eid, sizeof(empty_eid)) ? 0 : 1;
 }
 
-int ast_file_is_readable(const char *filename)
-{
+int ast_file_is_readable(const char *filename) {
 #if defined(HAVE_EACCESS) || defined(HAVE_EUIDACCESS)
-# if defined(HAVE_EUIDACCESS) && !defined(HAVE_EACCESS)
-#  define eaccess euidaccess
-# endif /* if defined(HAVE_EUIDACCESS) && !defined(HAVE_EACCESS) */
+#if defined(HAVE_EUIDACCESS) && !defined(HAVE_EACCESS)
+#define eaccess euidaccess
+#endif /* if defined(HAVE_EUIDACCESS) && !defined(HAVE_EACCESS) */
   return eaccess(filename, R_OK) == 0;
 
-#else  /* if defined(HAVE_EACCESS) || defined(HAVE_EUIDACCESS) */
-  int fd = open(filename, O_RDONLY |  O_NONBLOCK);
+#else /* if defined(HAVE_EACCESS) || defined(HAVE_EUIDACCESS) */
+  int fd = open(filename, O_RDONLY | O_NONBLOCK);
 
   if (fd < 0) {
     return 0;
@@ -3080,12 +2949,11 @@ int ast_file_is_readable(const char *filename)
 #endif /* if defined(HAVE_EACCESS) || defined(HAVE_EUIDACCESS) */
 }
 
-int ast_compare_versions(const char *version1, const char *version2)
-{
-  unsigned int major[2] = { 0 };
-  unsigned int minor[2] = { 0 };
-  unsigned int patch[2] = { 0 };
-  unsigned int extra[2] = { 0 };
+int ast_compare_versions(const char *version1, const char *version2) {
+  unsigned int major[2] = {0};
+  unsigned int minor[2] = {0};
+  unsigned int patch[2] = {0};
+  unsigned int extra[2] = {0};
   int res;
 
   sscanf(version1, "%u.%u.%u.%u", &major[0], &minor[0], &patch[0], &extra[0]);
@@ -3109,36 +2977,37 @@ int ast_compare_versions(const char *version1, const char *version2)
   return extra[0] - extra[1];
 }
 
-char *ast_read_textfile(const char *filename)
-{
-	int fd, count = 0, res;
-	char *output = NULL;
-	struct stat filesize;
+char *ast_read_textfile(const char *filename) {
+  int fd, count = 0, res;
+  char *output = NULL;
+  struct stat filesize;
 
-	if (stat(filename, &filesize) == -1) {
-		ast_log(LOG_WARNING, "Error can't stat %s\n", filename);
-		return NULL;
-	}
+  if (stat(filename, &filesize) == -1) {
+    ast_log(LOG_WARNING, "Error can't stat %s\n", filename);
+    return NULL;
+  }
 
-	count = filesize.st_size + 1;
+  count = filesize.st_size + 1;
 
-	if ((fd = open(filename, O_RDONLY)) < 0) {
-		ast_log(LOG_WARNING, "Cannot open file '%s' for reading: %s\n", filename, strerror(errno));
-		return NULL;
-	}
+  if ((fd = open(filename, O_RDONLY)) < 0) {
+    ast_log(LOG_WARNING, "Cannot open file '%s' for reading: %s\n", filename,
+            strerror(errno));
+    return NULL;
+  }
 
-	if ((output = ast_malloc(count))) {
-		res = read(fd, output, count - 1);
-		if (res == count - 1) {
-			output[res] = '\0';
-		} else {
-			ast_log(LOG_WARNING, "Short read of %s (%d of %d): %s\n", filename, res, count - 1, strerror(errno));
-			ast_free(output);
-			output = NULL;
-		}
-	}
+  if ((output = ast_malloc(count))) {
+    res = read(fd, output, count - 1);
+    if (res == count - 1) {
+      output[res] = '\0';
+    } else {
+      ast_log(LOG_WARNING, "Short read of %s (%d of %d): %s\n", filename, res,
+              count - 1, strerror(errno));
+      ast_free(output);
+      output = NULL;
+    }
+  }
 
-	close(fd);
+  close(fd);
 
-	return output;
+  return output;
 }

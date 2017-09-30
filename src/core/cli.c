@@ -45,7 +45,7 @@
 #include <regex.h>
 #include <pwd.h>
 #include <grp.h>
-#include <editline/readline.h>
+#include <src/core/editline/readline.h>
 
 #include "libcutil/cli.h"
 #include "libcutil/linkedlists.h"
@@ -56,13 +56,12 @@
 
 #include "libcutil/config.h"
 
-
 /*!
  * \brief List of restrictions per user.
  */
 struct cli_perm {
   unsigned int permit : 1; /*!< 1=Permit 0=Deny */
-  char        *command;    /*!< Command name (to apply restrictions) */
+  char *command;           /*!< Command name (to apply restrictions) */
   AST_LIST_ENTRY(cli_perm) list;
 };
 
@@ -70,8 +69,8 @@ AST_LIST_HEAD_NOLOCK(cli_perm_head, cli_perm);
 
 /*! \brief list of users to apply restrictions. */
 struct usergroup_cli_perm {
-  int                   uid;               /*!< User ID (-1 disabled) */
-  int                   gid;               /*!< Group ID (-1 disabled) */
+  int uid;                                 /*!< User ID (-1 disabled) */
+  int gid;                                 /*!< Group ID (-1 disabled) */
   struct cli_perm_head *perms;             /*!< List of permissions. */
   AST_LIST_ENTRY(usergroup_cli_perm) list; /*!< List mechanics */
 };
@@ -96,10 +95,9 @@ AST_RWLOCK_DEFINE_STATIC(shutdown_commands_lock);
 static AST_VECTOR(, struct ast_cli_entry *) shutdown_commands;
 
 /*! \brief Initial buffer size for resulting strings in ast_cli() */
-#define AST_CLI_INITLEN   256
+#define AST_CLI_INITLEN 256
 
-void ast_cli(int fd, const char *fmt, ...)
-{
+void ast_cli(int fd, const char *fmt, ...) {
   int res;
   struct ast_str *buf;
   va_list ap;
@@ -115,17 +113,13 @@ void ast_cli(int fd, const char *fmt, ...)
   }
 }
 
-unsigned int ast_debug_get_by_module(const char *module)
-{
+unsigned int ast_debug_get_by_module(const char *module) {
   unsigned int res = 0;
 
   return res;
 }
 
-unsigned int ast_verbose_get_by_module(const char *module)
-{
-  return 0;
-}
+unsigned int ast_verbose_get_by_module(const char *module) { return 0; }
 
 /*! \internal
  *  \brief Check if the user with 'uid' and 'gid' is allow to execute 'command',
@@ -140,8 +134,7 @@ unsigned int ast_verbose_get_by_module(const char *module)
  *  \retval 1 if has permission
  *  \retval 0 if it is not allowed.
  */
-static int cli_has_permissions(int uid, int gid, const char *command)
-{
+static int cli_has_permissions(int uid, int gid, const char *command) {
   struct usergroup_cli_perm *user_perm;
   struct cli_perm *perm;
 
@@ -166,12 +159,10 @@ static int cli_has_permissions(int uid, int gid, const char *command)
       continue;
     }
     AST_LIST_TRAVERSE(user_perm->perms, perm, list) {
-      if (strcasecmp(perm->command,
-                     "all") &&
+      if (strcasecmp(perm->command, "all") &&
           strncasecmp(perm->command, command, strlen(perm->command))) {
         /* if the perm->command is a pattern, check it against command. */
-        ispattern = !regcomp(&regexbuf,
-                             perm->command,
+        ispattern = !regcomp(&regexbuf, perm->command,
                              REG_EXTENDED | REG_NOSUB | REG_ICASE);
 
         if (ispattern && regexec(&regexbuf, command, 0, NULL, 0)) {
@@ -206,12 +197,8 @@ static int cli_has_permissions(int uid, int gid, const char *command)
 
 static AST_RWLIST_HEAD_STATIC(helpers, ast_cli_entry);
 
-
-static char* complete_number(const char  *partial,
-                             unsigned int min,
-                             unsigned int max,
-                             int          n)
-{
+static char *complete_number(const char *partial, unsigned int min,
+                             unsigned int max, int n) {
   int i, count = 0;
   unsigned int prospective[2];
   unsigned int part = strtoul(partial, NULL, 10);
@@ -251,11 +238,8 @@ static char* complete_number(const char  *partial,
   return NULL;
 }
 
-static void status_debug_verbose(struct ast_cli_args *a,
-                                 const char          *what,
-                                 int                  old_val,
-                                 int                  cur_val)
-{
+static void status_debug_verbose(struct ast_cli_args *a, const char *what,
+                                 int old_val, int cur_val) {
   char was_buf[30];
   const char *was;
 
@@ -283,62 +267,62 @@ static void status_debug_verbose(struct ast_cli_args *a,
   }
 }
 
-static char* handle_debug(struct ast_cli_entry *e, int cmd,
-                          struct ast_cli_args *a)
-{
+static char *handle_debug(struct ast_cli_entry *e, int cmd,
+                          struct ast_cli_args *a) {
   int oldval;
   int newlevel;
-  int atleast       = 0;
+  int atleast = 0;
   const char *argv3 = a->argv ? S_OR(a->argv[3], "") : "";
   struct module_level *ml;
 
   switch (cmd) {
-  case CLI_INIT:
-    e->command = "core set debug";
-    e->usage   =
-      "Usage: core set debug [atleast] <level> [module]\n"
-      "       core set debug off\n"
-      "\n"
-      "       Sets level of debug messages to be displayed or\n"
-      "       sets a module name to display debug messages from.\n"
-      "       0 or off means no messages should be displayed.\n"
-      "       Equivalent to -d[d[...]] on startup\n";
-    return NULL;
+    case CLI_INIT:
+      e->command = "core set debug";
+      e->usage =
+          "Usage: core set debug [atleast] <level> [module]\n"
+          "       core set debug off\n"
+          "\n"
+          "       Sets level of debug messages to be displayed or\n"
+          "       sets a module name to display debug messages from.\n"
+          "       0 or off means no messages should be displayed.\n"
+          "       Equivalent to -d[d[...]] on startup\n";
+      return NULL;
 
-  case CLI_GENERATE:
+    case CLI_GENERATE:
 
-    if (!strcasecmp(argv3, "atleast")) {
-      atleast = 1;
-    }
+      if (!strcasecmp(argv3, "atleast")) {
+        atleast = 1;
+      }
 
-    if ((a->pos == 3) || ((a->pos == 4) && atleast)) {
-      const char *pos = a->pos == 3 ? argv3 : S_OR(a->argv[4], "");
-      int numbermatch =
-        (ast_strlen_zero(pos) || strchr("123456789", pos[0])) ? 0 : 21;
+      if ((a->pos == 3) || ((a->pos == 4) && atleast)) {
+        const char *pos = a->pos == 3 ? argv3 : S_OR(a->argv[4], "");
+        int numbermatch =
+            (ast_strlen_zero(pos) || strchr("123456789", pos[0])) ? 0 : 21;
 
-      if ((a->n < 21) && (numbermatch == 0)) {
-        return complete_number(pos, 0, 0x7fffffff, a->n);
-      } else if (pos[0] == '0') {
-        if (a->n == 0) {
-          return ast_strdup("0");
-        }
-      } else if (a->n == (21 - numbermatch)) {
-        if ((a->pos == 3) && !strncasecmp(argv3, "off", strlen(argv3))) {
-          return ast_strdup("off");
-        } else if ((a->pos == 3) &&
-                   !strncasecmp(argv3, "atleast", strlen(argv3))) {
+        if ((a->n < 21) && (numbermatch == 0)) {
+          return complete_number(pos, 0, 0x7fffffff, a->n);
+        } else if (pos[0] == '0') {
+          if (a->n == 0) {
+            return ast_strdup("0");
+          }
+        } else if (a->n == (21 - numbermatch)) {
+          if ((a->pos == 3) && !strncasecmp(argv3, "off", strlen(argv3))) {
+            return ast_strdup("off");
+          } else if ((a->pos == 3) &&
+                     !strncasecmp(argv3, "atleast", strlen(argv3))) {
+            return ast_strdup("atleast");
+          }
+        } else if ((a->n == (22 - numbermatch)) && (a->pos == 3) &&
+                   ast_strlen_zero(argv3)) {
           return ast_strdup("atleast");
         }
-      } else if ((a->n == (22 - numbermatch)) && (a->pos == 3) &&
-                 ast_strlen_zero(argv3)) {
-        return ast_strdup("atleast");
-      }
-    } /*else if ((a->pos == 4 && !atleast && strcasecmp(argv3, "off") &&
-         strcasecmp(argv3, "channel"))
-       || (a->pos == 5 && atleast)) {
-            return ast_module_helper(a->line, a->word, a->pos, a->n, a->pos, 0);
-         }*/
-    return NULL;
+      } /*else if ((a->pos == 4 && !atleast && strcasecmp(argv3, "off") &&
+           strcasecmp(argv3, "channel"))
+         || (a->pos == 5 && atleast)) {
+              return ast_module_helper(a->line, a->word, a->pos, a->n, a->pos,
+         0);
+           }*/
+      return NULL;
   }
 
   /* all the above return, so we proceed with the handler.
@@ -379,67 +363,65 @@ static char* handle_debug(struct ast_cli_entry *e, int cmd,
   return CLI_SUCCESS;
 }
 
-static char* handle_verbose(struct ast_cli_entry *e,
-                            int                   cmd,
-                            struct ast_cli_args  *a)
-{
+static char *handle_verbose(struct ast_cli_entry *e, int cmd,
+                            struct ast_cli_args *a) {
   int oldval;
   int newlevel;
-  int atleast       = 0;
-  int silent        = 0;
+  int atleast = 0;
+  int silent = 0;
   const char *argv3 = a->argv ? S_OR(a->argv[3], "") : "";
 
   switch (cmd) {
-  case CLI_INIT:
-    e->command = "core set verbose";
-    e->usage   =
-      "Usage: core set verbose [atleast] <level> [silent]\n"
-      "       core set verbose off\n"
-      "\n"
-      "       Sets level of verbose messages to be displayed.\n"
-      "       0 or off means no verbose messages should be displayed.\n"
-      "       The silent option means the command does not report what\n"
-      "       happened to the verbose level.\n"
-      "       Equivalent to -v[v[...]] on startup\n";
-    return NULL;
+    case CLI_INIT:
+      e->command = "core set verbose";
+      e->usage =
+          "Usage: core set verbose [atleast] <level> [silent]\n"
+          "       core set verbose off\n"
+          "\n"
+          "       Sets level of verbose messages to be displayed.\n"
+          "       0 or off means no verbose messages should be displayed.\n"
+          "       The silent option means the command does not report what\n"
+          "       happened to the verbose level.\n"
+          "       Equivalent to -v[v[...]] on startup\n";
+      return NULL;
 
-  case CLI_GENERATE:
+    case CLI_GENERATE:
 
-    if (!strcasecmp(argv3, "atleast")) {
-      atleast = 1;
-    }
+      if (!strcasecmp(argv3, "atleast")) {
+        atleast = 1;
+      }
 
-    if ((a->pos == 3) || ((a->pos == 4) && atleast)) {
-      const char *pos = a->pos == 3 ? argv3 : S_OR(a->argv[4], "");
-      int numbermatch =
-        (ast_strlen_zero(pos) || strchr("123456789", pos[0])) ? 0 : 21;
+      if ((a->pos == 3) || ((a->pos == 4) && atleast)) {
+        const char *pos = a->pos == 3 ? argv3 : S_OR(a->argv[4], "");
+        int numbermatch =
+            (ast_strlen_zero(pos) || strchr("123456789", pos[0])) ? 0 : 21;
 
-      if ((a->n < 21) && (numbermatch == 0)) {
-        return complete_number(pos, 0, 0x7fffffff, a->n);
-      } else if (pos[0] == '0') {
-        if (a->n == 0) {
-          return ast_strdup("0");
-        }
-      } else if (a->n == (21 - numbermatch)) {
-        if ((a->pos == 3) && !strncasecmp(argv3, "off", strlen(argv3))) {
-          return ast_strdup("off");
-        } else if ((a->pos == 3) &&
-                   !strncasecmp(argv3, "atleast", strlen(argv3))) {
+        if ((a->n < 21) && (numbermatch == 0)) {
+          return complete_number(pos, 0, 0x7fffffff, a->n);
+        } else if (pos[0] == '0') {
+          if (a->n == 0) {
+            return ast_strdup("0");
+          }
+        } else if (a->n == (21 - numbermatch)) {
+          if ((a->pos == 3) && !strncasecmp(argv3, "off", strlen(argv3))) {
+            return ast_strdup("off");
+          } else if ((a->pos == 3) &&
+                     !strncasecmp(argv3, "atleast", strlen(argv3))) {
+            return ast_strdup("atleast");
+          }
+        } else if ((a->n == (22 - numbermatch)) && (a->pos == 3) &&
+                   ast_strlen_zero(argv3)) {
           return ast_strdup("atleast");
         }
-      } else if ((a->n == (22 - numbermatch)) && (a->pos == 3) &&
-                 ast_strlen_zero(argv3)) {
-        return ast_strdup("atleast");
-      }
-    } else if (((a->pos == 4) && !atleast && strcasecmp(argv3, "off"))
-               || ((a->pos == 5) && atleast)) {
-      const char *pos = S_OR(a->argv[a->pos], "");
+      } else if (((a->pos == 4) && !atleast && strcasecmp(argv3, "off")) ||
+                 ((a->pos == 5) && atleast)) {
+        const char *pos = S_OR(a->argv[a->pos], "");
 
-      if ((a->n == 0) && !strncasecmp(pos, "silent", strlen(pos))) {
-        return ast_strdup("silent");
+        if ((a->n == 0) && !strncasecmp(pos, "silent", strlen(pos))) {
+          return ast_strdup("silent");
+        }
       }
-    }
-    return NULL;
+      return NULL;
   }
 
   /* all the above return, so we proceed with the handler.
@@ -457,8 +439,8 @@ static char* handle_verbose(struct ast_cli_entry *e,
       atleast = 1;
     }
 
-    if ((a->argc == e->args + atleast + 2)
-        && !strcasecmp(a->argv[e->args + atleast + 1], "silent")) {
+    if ((a->argc == e->args + atleast + 2) &&
+        !strcasecmp(a->argv[e->args + atleast + 1], "silent")) {
       silent = 1;
     }
 
@@ -491,37 +473,35 @@ static char* handle_verbose(struct ast_cli_entry *e,
   return CLI_SUCCESS;
 }
 
-static char* handle_logger_mute(struct ast_cli_entry *e,
-                                int                   cmd,
-                                struct ast_cli_args  *a)
-{
+static char *handle_logger_mute(struct ast_cli_entry *e, int cmd,
+                                struct ast_cli_args *a) {
   switch (cmd) {
-  case CLI_INIT:
-    e->command = "logger mute";
-    e->usage   =
-      "Usage: logger mute\n"
-      "       Disables logging output to the current console, making it possible to\n"
-      "       gather information without being disturbed by scrolling lines.\n";
-    return NULL;
+    case CLI_INIT:
+      e->command = "logger mute";
+      e->usage =
+          "Usage: logger mute\n"
+          "       Disables logging output to the current console, making it "
+          "possible to\n"
+          "       gather information without being disturbed by scrolling "
+          "lines.\n";
+      return NULL;
 
-  case CLI_GENERATE:
-    return NULL;
+    case CLI_GENERATE:
+      return NULL;
   }
 
   if ((a->argc < 2) || (a->argc > 3)) return CLI_SHOWUSAGE;
 
-  if ((a->argc == 3) &&
-      !strcasecmp(a->argv[2], "silent")) ast_console_toggle_mute(a->fd, 1);
-  else ast_console_toggle_mute(a->fd, 0);
+  if ((a->argc == 3) && !strcasecmp(a->argv[2], "silent"))
+    ast_console_toggle_mute(a->fd, 1);
+  else
+    ast_console_toggle_mute(a->fd, 0);
 
   return CLI_SUCCESS;
 }
 
-static void print_uptimestr(int            fd,
-                            struct timeval timeval,
-                            const char    *prefix,
-                            int            printsec)
-{
+static void print_uptimestr(int fd, struct timeval timeval, const char *prefix,
+                            int printsec) {
   int x; /* the main part - years, weeks, etc. */
   struct ast_str *out;
 
@@ -533,41 +513,44 @@ static void print_uptimestr(int            fd,
 #define YEAR (DAY * 365)
 #define NEEDCOMMA(x) ((x) ? ", " : "") /* define if we need a comma */
 
-  if (timeval.tv_sec < 0)              /* invalid, nothing to show */
+  if (timeval.tv_sec < 0) /* invalid, nothing to show */
     return;
 
-  if (printsec)  {                     /* plain seconds output */
+  if (printsec) { /* plain seconds output */
     ast_cli(fd, "%s%lu\n", prefix, (u_long)timeval.tv_sec);
     return;
   }
   out = ast_str_alloca(256);
 
   if (timeval.tv_sec > YEAR) {
-    x               = (timeval.tv_sec / YEAR);
+    x = (timeval.tv_sec / YEAR);
     timeval.tv_sec -= (x * YEAR);
-    ast_str_append(&out, 0, "%d year%s%s", x, ESS(x), NEEDCOMMA(timeval.tv_sec));
+    ast_str_append(&out, 0, "%d year%s%s", x, ESS(x),
+                   NEEDCOMMA(timeval.tv_sec));
   }
 
   if (timeval.tv_sec > WEEK) {
-    x               = (timeval.tv_sec / WEEK);
+    x = (timeval.tv_sec / WEEK);
     timeval.tv_sec -= (x * WEEK);
-    ast_str_append(&out, 0, "%d week%s%s", x, ESS(x), NEEDCOMMA(timeval.tv_sec));
+    ast_str_append(&out, 0, "%d week%s%s", x, ESS(x),
+                   NEEDCOMMA(timeval.tv_sec));
   }
 
   if (timeval.tv_sec > DAY) {
-    x               = (timeval.tv_sec / DAY);
+    x = (timeval.tv_sec / DAY);
     timeval.tv_sec -= (x * DAY);
     ast_str_append(&out, 0, "%d day%s%s", x, ESS(x), NEEDCOMMA(timeval.tv_sec));
   }
 
   if (timeval.tv_sec > HOUR) {
-    x               = (timeval.tv_sec / HOUR);
+    x = (timeval.tv_sec / HOUR);
     timeval.tv_sec -= (x * HOUR);
-    ast_str_append(&out, 0, "%d hour%s%s", x, ESS(x), NEEDCOMMA(timeval.tv_sec));
+    ast_str_append(&out, 0, "%d hour%s%s", x, ESS(x),
+                   NEEDCOMMA(timeval.tv_sec));
   }
 
   if (timeval.tv_sec > MINUTE) {
-    x               = (timeval.tv_sec / MINUTE);
+    x = (timeval.tv_sec / MINUTE);
     timeval.tv_sec -= (x * MINUTE);
     ast_str_append(&out, 0, "%d minute%s%s", x, ESS(x),
                    NEEDCOMMA(timeval.tv_sec));
@@ -581,8 +564,7 @@ static void print_uptimestr(int            fd,
   ast_cli(fd, "%s%s\n", prefix, ast_str_buffer(out));
 }
 
-static struct ast_cli_entry* cli_next(struct ast_cli_entry *e)
-{
+static struct ast_cli_entry *cli_next(struct ast_cli_entry *e) {
   if (e) {
     return AST_LIST_NEXT(e, list);
   } else {
@@ -590,66 +572,62 @@ static struct ast_cli_entry* cli_next(struct ast_cli_entry *e)
   }
 }
 
-static char* handle_showuptime(struct ast_cli_entry *e,
-                               int                   cmd,
-                               struct ast_cli_args  *a)
-{
+static char *handle_showuptime(struct ast_cli_entry *e, int cmd,
+                               struct ast_cli_args *a) {
   struct timeval curtime = ast_tvnow();
   int printsec;
 
   switch (cmd) {
-  case CLI_INIT:
-    e->command = "core show uptime [seconds]";
-    e->usage   =
-      "Usage: core show uptime [seconds]\n"
-      "       Shows Asterisk uptime information.\n"
-      "       The seconds word returns the uptime in seconds only.\n";
-    return NULL;
+    case CLI_INIT:
+      e->command = "core show uptime [seconds]";
+      e->usage =
+          "Usage: core show uptime [seconds]\n"
+          "       Shows Asterisk uptime information.\n"
+          "       The seconds word returns the uptime in seconds only.\n";
+      return NULL;
 
-  case CLI_GENERATE:
-    return NULL;
+    case CLI_GENERATE:
+      return NULL;
   }
 
   /* regular handler */
-  if ((a->argc == e->args) &&
-      !strcasecmp(a->argv[e->args - 1], "seconds")) printsec = 1;
-  else if (a->argc == e->args - 1) printsec = 0;
-  else return CLI_SHOWUSAGE;
+  if ((a->argc == e->args) && !strcasecmp(a->argv[e->args - 1], "seconds"))
+    printsec = 1;
+  else if (a->argc == e->args - 1)
+    printsec = 0;
+  else
+    return CLI_SHOWUSAGE;
 
   if (libcutil_get_startup_time().tv_sec) {
-    print_uptimestr(a->fd, ast_tvsub(curtime,
-                                     libcutil_get_startup_time()), "System uptime: ",
-                    printsec);
+    print_uptimestr(a->fd, ast_tvsub(curtime, libcutil_get_startup_time()),
+                    "System uptime: ", printsec);
   }
 
   if (libcutil_get_lastreload_time().tv_sec) {
-    print_uptimestr(a->fd, ast_tvsub(curtime,
-                                     libcutil_get_lastreload_time()), "Last reload: ",
-                    printsec);
+    print_uptimestr(a->fd, ast_tvsub(curtime, libcutil_get_lastreload_time()),
+                    "Last reload: ", printsec);
   }
   return CLI_SUCCESS;
 }
 
 /*! \brief handles CLI command 'cli show permissions' */
-static char* handle_cli_show_permissions(struct ast_cli_entry *e,
-                                         int                   cmd,
-                                         struct ast_cli_args  *a)
-{
+static char *handle_cli_show_permissions(struct ast_cli_entry *e, int cmd,
+                                         struct ast_cli_args *a) {
   struct usergroup_cli_perm *cp;
   struct cli_perm *perm;
-  struct passwd   *pw = NULL;
-  struct group    *gr = NULL;
+  struct passwd *pw = NULL;
+  struct group *gr = NULL;
 
   switch (cmd) {
-  case CLI_INIT:
-    e->command = "cli show permissions";
-    e->usage   =
-      "Usage: cli show permissions\n"
-      "       Shows CLI configured permissions.\n";
-    return NULL;
+    case CLI_INIT:
+      e->command = "cli show permissions";
+      e->usage =
+          "Usage: cli show permissions\n"
+          "       Shows CLI configured permissions.\n";
+      return NULL;
 
-  case CLI_GENERATE:
-    return NULL;
+    case CLI_GENERATE:
+      return NULL;
   }
 
   AST_RWLIST_RDLOCK(&cli_perms);
@@ -671,9 +649,7 @@ static char* handle_cli_show_permissions(struct ast_cli_entry *e,
 
     if (cp->perms) {
       AST_LIST_TRAVERSE(cp->perms, perm, list) {
-        ast_cli(a->fd,
-                "\t%s -> %s\n",
-                perm->permit ? "permit" : "deny",
+        ast_cli(a->fd, "\t%s -> %s\n", perm->permit ? "permit" : "deny",
                 perm->command);
       }
     }
@@ -685,20 +661,18 @@ static char* handle_cli_show_permissions(struct ast_cli_entry *e,
 }
 
 /*! \brief handles CLI command 'cli reload permissions' */
-static char* handle_cli_reload_permissions(struct ast_cli_entry *e,
-                                           int                   cmd,
-                                           struct ast_cli_args  *a)
-{
+static char *handle_cli_reload_permissions(struct ast_cli_entry *e, int cmd,
+                                           struct ast_cli_args *a) {
   switch (cmd) {
-  case CLI_INIT:
-    e->command = "cli reload permissions";
-    e->usage   =
-      "Usage: cli reload permissions\n"
-      "       Reload the 'cli_permissions.conf' file.\n";
-    return NULL;
+    case CLI_INIT:
+      e->command = "cli reload permissions";
+      e->usage =
+          "Usage: cli reload permissions\n"
+          "       Reload the 'cli_permissions.conf' file.\n";
+      return NULL;
 
-  case CLI_GENERATE:
-    return NULL;
+    case CLI_GENERATE:
+      return NULL;
   }
 
   ast_cli_perms_init(1);
@@ -707,41 +681,42 @@ static char* handle_cli_reload_permissions(struct ast_cli_entry *e,
 }
 
 /*! \brief handles CLI command 'cli check permissions' */
-static char* handle_cli_check_permissions(struct ast_cli_entry *e,
-                                          int                   cmd,
-                                          struct ast_cli_args  *a)
-{
+static char *handle_cli_check_permissions(struct ast_cli_entry *e, int cmd,
+                                          struct ast_cli_args *a) {
   struct passwd *pw = NULL;
-  struct group  *gr;
-  int  gid = -1, uid = -1;
+  struct group *gr;
+  int gid = -1, uid = -1;
   char command[AST_MAX_ARGS] = "";
   struct ast_cli_entry *ce = NULL;
-  int   found = 0;
+  int found = 0;
   char *group, *tmp;
 
   switch (cmd) {
-  case CLI_INIT:
-    e->command = "cli check permissions";
-    e->usage   =
-      "Usage: cli check permissions {<username>|@<groupname>|<username>@<groupname>} [<command>]\n"
-      "       Check permissions config for a user@group or list the allowed commands for the specified user.\n"
-      "       The username or the groupname may be omitted.\n";
-    return NULL;
+    case CLI_INIT:
+      e->command = "cli check permissions";
+      e->usage =
+          "Usage: cli check permissions "
+          "{<username>|@<groupname>|<username>@<groupname>} [<command>]\n"
+          "       Check permissions config for a user@group or list the "
+          "allowed commands for the specified user.\n"
+          "       The username or the groupname may be omitted.\n";
+      return NULL;
 
-  case CLI_GENERATE:
+    case CLI_GENERATE:
 
-    if (a->pos >= 4) {
-      return ast_cli_generator(a->line + strlen("cli check permissions") +
-                               strlen(a->argv[3]) + 1, a->word, a->n);
-    }
-    return NULL;
+      if (a->pos >= 4) {
+        return ast_cli_generator(
+            a->line + strlen("cli check permissions") + strlen(a->argv[3]) + 1,
+            a->word, a->n);
+      }
+      return NULL;
   }
 
   if (a->argc < 4) {
     return CLI_SHOWUSAGE;
   }
 
-  tmp   = ast_strdupa(a->argv[3]);
+  tmp = ast_strdupa(a->argv[3]);
   group = strchr(tmp, '@');
 
   if (group) {
@@ -752,7 +727,7 @@ static char* handle_cli_check_permissions(struct ast_cli_entry *e,
       return CLI_FAILURE;
     }
     group[0] = '\0';
-    gid      = gr->gr_gid;
+    gid = gr->gr_gid;
   }
 
   if (!group && ast_strlen_zero(tmp)) {
@@ -783,11 +758,8 @@ static char* handle_cli_check_permissions(struct ast_cli_entry *e,
     }
   } else {
     ast_join(command, sizeof(command), a->argv + 4);
-    ast_cli(a->fd,
-            "%s '%s%s%s' is %s to run command: '%s'\n",
-            uid >= 0 ? "User" : "Group",
-            tmp,
-            group && uid >= 0 ? "@" : "",
+    ast_cli(a->fd, "%s '%s%s%s' is %s to run command: '%s'\n",
+            uid >= 0 ? "User" : "Group", tmp, group && uid >= 0 ? "@" : "",
             group ? &group[1] : "",
             cli_has_permissions(uid, gid, command) ? "allowed" : "not allowed",
             command);
@@ -796,32 +768,29 @@ static char* handle_cli_check_permissions(struct ast_cli_entry *e,
   return CLI_SUCCESS;
 }
 
-static char* __ast_cli_generator(const char *text,
-                                 const char *word,
-                                 int         state,
-                                 int         lock);
+static char *__ast_cli_generator(const char *text, const char *word, int state,
+                                 int lock);
 
-static char* handle_commandmatchesarray(struct ast_cli_entry *e,
-                                        int                   cmd,
-                                        struct ast_cli_args  *a)
-{
-  char  *buf, *obuf;
-  int    buflen = 2048;
-  int    len    = 0;
+static char *handle_commandmatchesarray(struct ast_cli_entry *e, int cmd,
+                                        struct ast_cli_args *a) {
+  char *buf, *obuf;
+  int buflen = 2048;
+  int len = 0;
   char **matches;
-  int    x, matchlen;
+  int x, matchlen;
 
   switch (cmd) {
-  case CLI_INIT:
-    e->command = "_command matchesarray";
-    e->usage   =
-      "Usage: _command matchesarray \"<line>\" text \n"
-      "       This function is used internally to help with command completion and should.\n"
-      "       never be called by the user directly.\n";
-    return NULL;
+    case CLI_INIT:
+      e->command = "_command matchesarray";
+      e->usage =
+          "Usage: _command matchesarray \"<line>\" text \n"
+          "       This function is used internally to help with command "
+          "completion and should.\n"
+          "       never be called by the user directly.\n";
+      return NULL;
 
-  case CLI_GENERATE:
-    return NULL;
+    case CLI_GENERATE:
+      return NULL;
   }
 
   if (a->argc != 4) return CLI_SHOWUSAGE;
@@ -829,7 +798,7 @@ static char* handle_commandmatchesarray(struct ast_cli_entry *e,
   if (!(buf = ast_malloc(buflen))) return CLI_FAILURE;
 
   buf[len] = '\0';
-  matches  = ast_cli_completion_matches(a->argv[2], a->argv[3]);
+  matches = ast_cli_completion_matches(a->argv[2], a->argv[3]);
 
   if (matches) {
     for (x = 0; matches[x]; x++) {
@@ -837,7 +806,7 @@ static char* handle_commandmatchesarray(struct ast_cli_entry *e,
 
       if (len + matchlen >= buflen) {
         buflen += matchlen * 3;
-        obuf    = buf;
+        obuf = buf;
 
         if (!(buf = ast_realloc(obuf, buflen)))
           /* Memory allocation failure...  Just free old buffer and be done */
@@ -854,28 +823,28 @@ static char* handle_commandmatchesarray(struct ast_cli_entry *e,
   if (buf) {
     ast_cli(a->fd, "%s%s", buf, AST_CLI_COMPLETE_EOF);
     ast_free(buf);
-  } else ast_cli(a->fd, "NULL\n");
+  } else
+    ast_cli(a->fd, "NULL\n");
 
   return CLI_SUCCESS;
 }
 
-static char* handle_commandnummatches(struct ast_cli_entry *e,
-                                      int                   cmd,
-                                      struct ast_cli_args  *a)
-{
+static char *handle_commandnummatches(struct ast_cli_entry *e, int cmd,
+                                      struct ast_cli_args *a) {
   int matches = 0;
 
   switch (cmd) {
-  case CLI_INIT:
-    e->command = "_command nummatches";
-    e->usage   =
-      "Usage: _command nummatches \"<line>\" text \n"
-      "       This function is used internally to help with command completion and should.\n"
-      "       never be called by the user directly.\n";
-    return NULL;
+    case CLI_INIT:
+      e->command = "_command nummatches";
+      e->usage =
+          "Usage: _command nummatches \"<line>\" text \n"
+          "       This function is used internally to help with command "
+          "completion and should.\n"
+          "       never be called by the user directly.\n";
+      return NULL;
 
-  case CLI_GENERATE:
-    return NULL;
+    case CLI_GENERATE:
+      return NULL;
   }
 
   if (a->argc != 4) return CLI_SHOWUSAGE;
@@ -887,23 +856,22 @@ static char* handle_commandnummatches(struct ast_cli_entry *e,
   return CLI_SUCCESS;
 }
 
-static char* handle_commandcomplete(struct ast_cli_entry *e,
-                                    int                   cmd,
-                                    struct ast_cli_args  *a)
-{
+static char *handle_commandcomplete(struct ast_cli_entry *e, int cmd,
+                                    struct ast_cli_args *a) {
   char *buf;
 
   switch (cmd) {
-  case CLI_INIT:
-    e->command = "_command complete";
-    e->usage   =
-      "Usage: _command complete \"<line>\" text state\n"
-      "       This function is used internally to help with command completion and should.\n"
-      "       never be called by the user directly.\n";
-    return NULL;
+    case CLI_INIT:
+      e->command = "_command complete";
+      e->usage =
+          "Usage: _command complete \"<line>\" text state\n"
+          "       This function is used internally to help with command "
+          "completion and should.\n"
+          "       never be called by the user directly.\n";
+      return NULL;
 
-  case CLI_GENERATE:
-    return NULL;
+    case CLI_GENERATE:
+      return NULL;
   }
 
   if (a->argc != 5) return CLI_SHOWUSAGE;
@@ -913,7 +881,8 @@ static char* handle_commandcomplete(struct ast_cli_entry *e,
   if (buf) {
     ast_cli(a->fd, "%s", buf);
     ast_free(buf);
-  } else ast_cli(a->fd, "NULL\n");
+  } else
+    ast_cli(a->fd, "NULL\n");
   return CLI_SUCCESS;
 }
 
@@ -921,52 +890,47 @@ static char* handle_commandcomplete(struct ast_cli_entry *e,
  * helper function to generate CLI matches from a fixed set of values.
  * A NULL word is acceptable.
  */
-char* ast_cli_complete(const char *word, const char *const choices[], int state)
-{
+char *ast_cli_complete(const char *word, const char *const choices[],
+                       int state) {
   int i, which = 0, len;
 
   len = ast_strlen_zero(word) ? 0 : strlen(word);
 
   for (i = 0; choices[i]; i++) {
-    if ((!len ||
-         !strncasecmp(word, choices[i],
-                      len)) && (++which > state)) return ast_strdup(
-        choices[i]);
+    if ((!len || !strncasecmp(word, choices[i], len)) && (++which > state))
+      return ast_strdup(choices[i]);
   }
   return NULL;
 }
 
-static char* handle_help(struct ast_cli_entry *e,
-                         int                   cmd,
-                         struct ast_cli_args  *a);
+static char *handle_help(struct ast_cli_entry *e, int cmd,
+                         struct ast_cli_args *a);
 
 static struct ast_cli_entry cli_cli[] = {
-  /* Deprecated, but preferred command is now consolidated (and already has a
-     deprecated command for it). */
-  AST_CLI_DEFINE(handle_commandcomplete,     "Command complete"),
-  AST_CLI_DEFINE(handle_commandnummatches,
-                 "Returns number of command matches"),
-  AST_CLI_DEFINE(handle_commandmatchesarray, "Returns command matches array"),
+    /* Deprecated, but preferred command is now consolidated (and already has a
+       deprecated command for it). */
+    AST_CLI_DEFINE(handle_commandcomplete, "Command complete"),
+    AST_CLI_DEFINE(handle_commandnummatches,
+                   "Returns number of command matches"),
+    AST_CLI_DEFINE(handle_commandmatchesarray, "Returns command matches array"),
 
-  AST_CLI_DEFINE(handle_debug,               "Set level of debug chattiness"),
-  AST_CLI_DEFINE(handle_verbose,
-                 "Set level of verbose chattiness"),
+    AST_CLI_DEFINE(handle_debug, "Set level of debug chattiness"),
+    AST_CLI_DEFINE(handle_verbose, "Set level of verbose chattiness"),
 
-  AST_CLI_DEFINE(handle_help,
-                 "Display help list, or specific help on a command"),
+    AST_CLI_DEFINE(handle_help,
+                   "Display help list, or specific help on a command"),
 
-  AST_CLI_DEFINE(handle_logger_mute,
-                 "Toggle logging output to a console"),
+    AST_CLI_DEFINE(handle_logger_mute, "Toggle logging output to a console"),
 
-  AST_CLI_DEFINE(handle_showuptime,             "Show uptime information"),
+    AST_CLI_DEFINE(handle_showuptime, "Show uptime information"),
 
+    AST_CLI_DEFINE(handle_cli_reload_permissions,
+                   "Reload CLI permissions config"),
 
-  AST_CLI_DEFINE(handle_cli_reload_permissions, "Reload CLI permissions config"),
+    AST_CLI_DEFINE(handle_cli_show_permissions, "Show CLI permissions"),
 
-  AST_CLI_DEFINE(handle_cli_show_permissions,   "Show CLI permissions"),
-
-  AST_CLI_DEFINE(handle_cli_check_permissions,
-                 "Try a permissions config for a user"),
+    AST_CLI_DEFINE(handle_cli_check_permissions,
+                   "Try a permissions config for a user"),
 };
 
 /*!
@@ -978,9 +942,8 @@ static const char cli_rsvd[] = "[]{}|*%";
  * initialize the _full_cmd string and related parameters,
  * return 0 on success, -1 on error.
  */
-static int set_full_cmd(struct ast_cli_entry *e)
-{
-  int  i;
+static int set_full_cmd(struct ast_cli_entry *e) {
+  int i;
   char buf[80];
 
   ast_join(buf, sizeof(buf), e->cmda);
@@ -992,14 +955,14 @@ static int set_full_cmd(struct ast_cli_entry *e)
   }
   e->cmdlen = strcspn(e->_full_cmd, cli_rsvd);
 
-  for (i = 0; e->cmda[i]; i++) ;
+  for (i = 0; e->cmda[i]; i++)
+    ;
   e->args = i;
   return 0;
 }
 
 /*! \brief cleanup (free) cli_perms linkedlist. */
-static void destroy_user_perms(void)
-{
+static void destroy_user_perms(void) {
   struct cli_perm *perm;
   struct usergroup_cli_perm *user_perm;
 
@@ -1015,24 +978,25 @@ static void destroy_user_perms(void)
   AST_RWLIST_UNLOCK(&cli_perms);
 }
 
-int ast_cli_perms_init(int reload)
-{
-  struct ast_flags   config_flags = { reload ? CONFIG_FLAG_FILEUNCHANGED : 0 };
+int ast_cli_perms_init(int reload) {
+  struct ast_flags config_flags = {reload ? CONFIG_FLAG_FILEUNCHANGED : 0};
   struct ast_config *cfg;
   char *cat = NULL;
   struct ast_variable *v;
   struct usergroup_cli_perm *user_group, *cp_entry;
   struct cli_perm *perm = NULL;
-  struct passwd   *pw;
-  struct group    *gr;
+  struct passwd *pw;
+  struct group *gr;
 
   if (ast_mutex_trylock(&permsconfiglock)) {
-    ast_log(LOG_NOTICE,
-            "You must wait until last 'cli reload permissions' command finish\n");
+    ast_log(
+        LOG_NOTICE,
+        "You must wait until last 'cli reload permissions' command finish\n");
     return 1;
   }
 
-  cfg = ast_config_load2(perms_config, "" /* core, can't reload */, config_flags);
+  cfg =
+      ast_config_load2(perms_config, "" /* core, can't reload */, config_flags);
 
   if (!cfg) {
     ast_mutex_unlock(&permsconfiglock);
@@ -1098,8 +1062,8 @@ int ast_cli_perms_init(int reload)
       if (!user_group) {
         continue;
       }
-      user_group->uid   = (pw ? pw->pw_uid : -1);
-      user_group->gid   = (gr ? gr->gr_gid : -1);
+      user_group->uid = (pw ? pw->pw_uid : -1);
+      user_group->gid = (gr ? gr->gr_gid : -1);
       user_group->perms = ast_calloc(1, sizeof(*user_group->perms));
 
       if (!user_group->perms) {
@@ -1119,14 +1083,14 @@ int ast_cli_perms_init(int reload)
         perm = ast_calloc(1, sizeof(*perm));
 
         if (perm) {
-          perm->permit  = 1;
+          perm->permit = 1;
           perm->command = ast_strdup(v->value);
         }
       } else if (!strcasecmp(v->name, "deny")) {
         perm = ast_calloc(1, sizeof(*perm));
 
         if (perm) {
-          perm->permit  = 0;
+          perm->permit = 0;
           perm->command = ast_strdup(v->value);
         }
       } else {
@@ -1151,14 +1115,12 @@ int ast_cli_perms_init(int reload)
   return 0;
 }
 
-static void cli_shutdown(void)
-{
+static void cli_shutdown(void) {
   ast_cli_unregister_multiple(cli_cli, ARRAY_LEN(cli_cli));
 }
 
 /*! \brief initialize the _full_cmd string in * each of the builtins. */
-void ast_builtins_init(void)
-{
+void ast_builtins_init(void) {
   AST_VECTOR_INIT(&shutdown_commands, 0);
   ast_cli_register_multiple(cli_cli, ARRAY_LEN(cli_cli));
   ast_register_cleanup(cli_shutdown);
@@ -1175,9 +1137,8 @@ void ast_builtins_init(void)
  *   {foo|bar|baz}      exactly, one of these words
  *   %                  any word
  */
-static int word_match(const char *cmd, const char *cli_word)
-{
-  int   l;
+static int word_match(const char *cmd, const char *cli_word) {
+  int l;
   char *pos;
 
   if (ast_strlen_zero(cmd) || ast_strlen_zero(cli_word)) return -1;
@@ -1204,8 +1165,8 @@ static int word_match(const char *cmd, const char *cli_word)
      * If it is surrounded by reserved chars and isn't at the beginning, it's a
      * match.
      */
-    if ((pos != cli_word) &&
-        strchr(cli_rsvd, pos[-1]) && strchr(cli_rsvd, pos[l])) {
+    if ((pos != cli_word) && strchr(cli_rsvd, pos[-1]) &&
+        strchr(cli_rsvd, pos[l])) {
       return 1; /* valid match */
     }
 
@@ -1223,24 +1184,24 @@ static int word_match(const char *cmd, const char *cli_word)
  * match as a malloced string, or NULL otherwise.
  * Always tell in *actual how many matches we got.
  */
-static char* is_prefix(const char *word, const char *token,
-                       int pos, int *actual)
-{
-  int   lw;
+static char *is_prefix(const char *word, const char *token, int pos,
+                       int *actual) {
+  int lw;
   char *s, *t1;
 
   *actual = 0;
 
   if (ast_strlen_zero(token)) return NULL;
 
-  if (ast_strlen_zero(word)) word = "";            /* dummy */
+  if (ast_strlen_zero(word)) word = ""; /* dummy */
   lw = strlen(word);
 
-  if (strcspn(word, cli_rsvd) != lw) return NULL;  /* no match if word has
-                                                      reserved chars */
+  if (strcspn(word, cli_rsvd) != lw)
+    return NULL; /* no match if word has
+                    reserved chars */
 
-  if (strchr(cli_rsvd, token[0]) == NULL) {        /* regular match */
-    if (strncasecmp(token, word, lw))              /* no match */
+  if (strchr(cli_rsvd, token[0]) == NULL) { /* regular match */
+    if (strncasecmp(token, word, lw))       /* no match */
       return NULL;
 
     *actual = 1;
@@ -1251,10 +1212,10 @@ static char* is_prefix(const char *word, const char *token,
 
   /* Wildcard always matches, so we never do is_prefix on them */
 
-  t1 = ast_strdupa(token + 1);    /* copy, skipping first char */
+  t1 = ast_strdupa(token + 1); /* copy, skipping first char */
 
   while (pos >= 0 && (s = strsep(&t1, cli_rsvd)) && *s) {
-    if (*s == '%')                /* wildcard */
+    if (*s == '%') /* wildcard */
       continue;
 
     if (strncasecmp(s, word, lw)) /* no match */
@@ -1280,8 +1241,8 @@ static char* is_prefix(const char *word, const char *token,
  *      1       true only on complete, exact match.
  *
  */
-static struct ast_cli_entry* find_cli(const char *const cmds[], int match_type)
-{
+static struct ast_cli_entry *find_cli(const char *const cmds[],
+                                      int match_type) {
   int matchlen = -1; /* length of longest match so far */
   struct ast_cli_entry *cand = NULL, *e = NULL;
 
@@ -1289,7 +1250,7 @@ static struct ast_cli_entry* find_cli(const char *const cmds[], int match_type)
     /* word-by word regexp comparison */
     const char *const *src = cmds;
     const char *const *dst = e->cmda;
-    int n                  = 0;
+    int n = 0;
 
     for (;; dst++, src += n) {
       n = word_match(*src, *dst);
@@ -1304,13 +1265,14 @@ static struct ast_cli_entry* find_cli(const char *const cmds[], int match_type)
         break;
 
       /* Here, cmds has more words than the entry 'e' */
-      if (match_type != 0)                  /* but we look for almost exact
-                                               match... */
-        continue;                           /* so we skip this one. */
+      if (match_type != 0) /* but we look for almost exact
+                              match... */
+        continue;          /* so we skip this one. */
       /* otherwise we like it (case 0) */
-    } else {                                /* still words in 'e' */
-      if (ast_strlen_zero(*src)) continue;  /* cmds is shorter than 'e', not
-                                               good */
+    } else { /* still words in 'e' */
+      if (ast_strlen_zero(*src))
+        continue; /* cmds is shorter than 'e', not
+                     good */
 
       /* Here we have leftover words in cmds and 'e',
        * but there is a mismatch. We only accept this one if match_type == -1
@@ -1325,20 +1287,21 @@ static struct ast_cli_entry* find_cli(const char *const cmds[], int match_type)
 
     if (src - cmds > matchlen) { /* remember the candidate */
       matchlen = src - cmds;
-      cand     = e;
+      cand = e;
     }
   }
 
   return e ? e : cand;
 }
 
-static char* find_best(const char *argv[])
-{
+static char *find_best(const char *argv[]) {
   static char cmdline[80];
   int x;
 
   /* See how close we get, then print the candidate */
-  const char *myargv[AST_MAX_CMD_LEN] = { NULL, };
+  const char *myargv[AST_MAX_CMD_LEN] = {
+      NULL,
+  };
 
   AST_RWLIST_RDLOCK(&helpers);
 
@@ -1352,8 +1315,7 @@ static char* find_best(const char *argv[])
   return cmdline;
 }
 
-static int cli_is_registered(struct ast_cli_entry *e)
-{
+static int cli_is_registered(struct ast_cli_entry *e) {
   struct ast_cli_entry *cur = NULL;
 
   while ((cur = cli_next(cur))) {
@@ -1364,17 +1326,14 @@ static int cli_is_registered(struct ast_cli_entry *e)
   return 0;
 }
 
-static void remove_shutdown_command(struct ast_cli_entry *e)
-{
+static void remove_shutdown_command(struct ast_cli_entry *e) {
   ast_rwlock_wrlock(&shutdown_commands_lock);
-  AST_VECTOR_REMOVE_ELEM_UNORDERED(&shutdown_commands,
-                                   e,
+  AST_VECTOR_REMOVE_ELEM_UNORDERED(&shutdown_commands, e,
                                    AST_VECTOR_ELEM_CLEANUP_NOOP);
   ast_rwlock_unlock(&shutdown_commands_lock);
 }
 
-int ast_cli_unregister(struct ast_cli_entry *e)
-{
+int ast_cli_unregister(struct ast_cli_entry *e) {
   if (e->inuse) {
     ast_log(LOG_WARNING, "Can't remove command that is in use\n");
   } else {
@@ -1391,20 +1350,19 @@ int ast_cli_unregister(struct ast_cli_entry *e)
       memset(cmda, '\0', sizeof(e->cmda));
       ast_free(e->command);
       e->command = NULL;
-      e->usage   = NULL;
+      e->usage = NULL;
     }
   }
   return 0;
 }
 
-int __ast_cli_register(struct ast_cli_entry *e, struct ast_module *module)
-{
+int __ast_cli_register(struct ast_cli_entry *e, struct ast_module *module) {
   struct ast_cli_entry *cur;
   int i, lf, ret = -1;
 
   struct ast_cli_args a;         /* fake argument */
   char **dst = (char **)e->cmda; /* need to cast as the entry is readonly */
-  char  *s;
+  char *s;
 
   AST_RWLIST_WRLOCK(&helpers);
 
@@ -1428,13 +1386,13 @@ int __ast_cli_register(struct ast_cli_entry *e, struct ast_module *module)
   s = e->command = ast_strdup(s);
 
   for (i = 0; !ast_strlen_zero(s) && i < AST_MAX_CMD_LEN - 1; i++) {
-    *dst++ = s;     /* store string */
-    s      = ast_skip_nonblanks(s);
+    *dst++ = s; /* store string */
+    s = ast_skip_nonblanks(s);
 
     if (*s == '\0') /* we are done */
       break;
     *s++ = '\0';
-    s    = ast_skip_blanks(s);
+    s = ast_skip_blanks(s);
   }
   *dst++ = NULL;
 
@@ -1481,10 +1439,8 @@ done:
 /*
  * register/unregister an array of entries.
  */
-int __ast_cli_register_multiple(struct ast_cli_entry *e,
-                                int                   len,
-                                struct ast_module    *module)
-{
+int __ast_cli_register_multiple(struct ast_cli_entry *e, int len,
+                                struct ast_module *module) {
   int i, res = 0;
 
   for (i = 0; i < len; i++) {
@@ -1494,8 +1450,7 @@ int __ast_cli_register_multiple(struct ast_cli_entry *e,
   return res;
 }
 
-int ast_cli_unregister_multiple(struct ast_cli_entry *e, int len)
-{
+int ast_cli_unregister_multiple(struct ast_cli_entry *e, int len) {
   int i, res = 0;
 
   for (i = 0; i < len; i++) res |= ast_cli_unregister(e + i);
@@ -1506,12 +1461,11 @@ int ast_cli_unregister_multiple(struct ast_cli_entry *e, int len)
 /*! \brief helper for final part of handle_help
  *  if locked = 1, assume the list is already locked
  */
-static char* help1(int fd, const char *const match[], int locked)
-{
-  char matchstr[80]       = "";
+static char *help1(int fd, const char *const match[], int locked) {
+  char matchstr[80] = "";
   struct ast_cli_entry *e = NULL;
-  int len                 = 0;
-  int found               = 0;
+  int len = 0;
+  int found = 0;
 
   if (match) {
     ast_join(matchstr, sizeof(matchstr), match);
@@ -1536,19 +1490,19 @@ static char* help1(int fd, const char *const match[], int locked)
   return CLI_SUCCESS;
 }
 
-static char* handle_help(struct ast_cli_entry *e, int cmd, struct ast_cli_args *a)
-{
+static char *handle_help(struct ast_cli_entry *e, int cmd,
+                         struct ast_cli_args *a) {
   char fullcmd[80];
   struct ast_cli_entry *my_e;
   char *res = CLI_SUCCESS;
 
   if (cmd == CLI_INIT) {
     e->command = "core show help";
-    e->usage   =
-      "Usage: core show help [topic]\n"
-      "       When called with a topic as an argument, displays usage\n"
-      "       information on the given command. If called without a\n"
-      "       topic, it provides a list of commands.\n";
+    e->usage =
+        "Usage: core show help [topic]\n"
+        "       When called with a topic as an argument, displays usage\n"
+        "       information on the given command. If called without a\n"
+        "       topic, it provides a list of commands.\n";
     return NULL;
   } else if (cmd == CLI_GENERATE) {
     /* skip first 14 or 15 chars, "core show help " */
@@ -1575,7 +1529,8 @@ static char* handle_help(struct ast_cli_entry *e, int cmd, struct ast_cli_args *
     return res;
   }
 
-  if (my_e->usage) ast_cli(a->fd, "%s", my_e->usage);
+  if (my_e->usage)
+    ast_cli(a->fd, "%s", my_e->usage);
   else {
     ast_join(fullcmd, sizeof(fullcmd), a->argv + 3);
     ast_cli(a->fd, "No help text available for '%s'.\n", fullcmd);
@@ -1584,18 +1539,14 @@ static char* handle_help(struct ast_cli_entry *e, int cmd, struct ast_cli_args *
   return res;
 }
 
-static char* parse_args(const char *s,
-                        int        *argc,
-                        const char *argv[],
-                        int         max,
-                        int        *trailingwhitespace)
-{
+static char *parse_args(const char *s, int *argc, const char *argv[], int max,
+                        int *trailingwhitespace) {
   char *duplicate, *cur;
-  int   x          = 0;
-  int   quoted     = 0;
-  int   escaped    = 0;
-  int   whitespace = 1;
-  int   dummy      = 0;
+  int x = 0;
+  int quoted = 0;
+  int escaped = 0;
+  int whitespace = 1;
+  int dummy = 0;
 
   if (trailingwhitespace == NULL) trailingwhitespace = &dummy;
   *trailingwhitespace = 0;
@@ -1626,7 +1577,7 @@ static char* parse_args(const char *s,
 
       if (quoted && whitespace) {
         /* start a quoted string from previous whitespace: new argument */
-        argv[x++]  = cur;
+        argv[x++] = cur;
         whitespace = 0;
       }
     } else if (((*s == ' ') || (*s == '\t')) && !(quoted || escaped)) {
@@ -1635,7 +1586,7 @@ static char* parse_args(const char *s,
          finalize the previous argument and remember that we are in whitespace
        */
       if (!whitespace) {
-        *cur++     = '\0';
+        *cur++ = '\0';
         whitespace = 1;
       }
     } else if ((*s == '\\') && !escaped) {
@@ -1643,10 +1594,10 @@ static char* parse_args(const char *s,
     } else {
       if (whitespace) {
         /* we leave whitespace, and are not quoted. So it's a new argument */
-        argv[x++]  = cur;
+        argv[x++] = cur;
         whitespace = 0;
       }
-      *cur++  = *s;
+      *cur++ = *s;
       escaped = 0;
     }
   }
@@ -1658,16 +1609,15 @@ static char* parse_args(const char *s,
    * the array may want a null-terminated array.
    * argc still reflects the number of non-NULL entries.
    */
-  argv[x]             = NULL;
-  *argc               = x;
+  argv[x] = NULL;
+  *argc = x;
   *trailingwhitespace = whitespace;
   return duplicate;
 }
 
 /*! \brief Return the number of unique matches for the generator */
-int ast_cli_generatornummatches(const char *text, const char *word)
-{
-  int   matches = 0, i = 0;
+int ast_cli_generatornummatches(const char *text, const char *word) {
+  int matches = 0, i = 0;
   char *buf = NULL, *oldbuf = NULL;
 
   while ((buf = ast_cli_generator(text, word, i++))) {
@@ -1681,8 +1631,7 @@ int ast_cli_generatornummatches(const char *text, const char *word)
   return matches;
 }
 
-static void destroy_match_list(char **match_list, int matches)
-{
+static void destroy_match_list(char **match_list, int matches) {
   if (match_list) {
     int idx;
 
@@ -1693,12 +1642,11 @@ static void destroy_match_list(char **match_list, int matches)
   }
 }
 
-char** ast_cli_completion_matches(const char *text, const char *word)
-{
+char **ast_cli_completion_matches(const char *text, const char *word) {
   char **match_list = NULL, *retstr, *prevstr;
   char **new_list;
   size_t match_list_len, max_equal, which, i;
-  int    matches = 0;
+  int matches = 0;
 
   /* leave entry 0 free for the longest common substring */
   match_list_len = 1;
@@ -1706,8 +1654,7 @@ char** ast_cli_completion_matches(const char *text, const char *word)
   while ((retstr = ast_cli_generator(text, word, matches)) != NULL) {
     if (matches + 1 >= match_list_len) {
       match_list_len <<= 1;
-      new_list         =
-        ast_realloc(match_list, match_list_len * sizeof(*match_list));
+      new_list = ast_realloc(match_list, match_list_len * sizeof(*match_list));
 
       if (!new_list) {
         destroy_match_list(match_list, matches);
@@ -1725,13 +1672,14 @@ char** ast_cli_completion_matches(const char *text, const char *word)
   /* Find the longest substring that is common to all results
    * (it is a candidate for completion), and store a copy in entry 0.
    */
-  prevstr   = match_list[1];
+  prevstr = match_list[1];
   max_equal = strlen(prevstr);
 
   for (which = 2; which <= matches; which++) {
     for (i = 0;
          i < max_equal && toupper(prevstr[i]) == toupper(match_list[which][i]);
-         i++) continue;
+         i++)
+      continue;
     max_equal = i;
   }
 
@@ -1747,7 +1695,7 @@ char** ast_cli_completion_matches(const char *text, const char *word)
   /* ensure that the array is NULL terminated */
   if (matches + 1 >= match_list_len) {
     new_list =
-      ast_realloc(match_list, (match_list_len + 1) * sizeof(*match_list));
+        ast_realloc(match_list, (match_list_len + 1) * sizeof(*match_list));
 
     if (!new_list) {
       ast_free(retstr);
@@ -1762,8 +1710,7 @@ char** ast_cli_completion_matches(const char *text, const char *word)
 }
 
 /*! \brief returns true if there are more words to match */
-static int more_words(const char *const *dst)
-{
+static int more_words(const char *const *dst) {
   int i;
 
   for (i = 0; dst[i]; i++) {
@@ -1775,18 +1722,15 @@ static int more_words(const char *const *dst)
 /*
  * generate the entry at position 'state'
  */
-static char* __ast_cli_generator(const char *text,
-                                 const char *word,
-                                 int         state,
-                                 int         lock)
-{
+static char *__ast_cli_generator(const char *text, const char *word, int state,
+                                 int lock) {
   const char *argv[AST_MAX_ARGS];
   struct ast_cli_entry *e = NULL;
-  int   x = 0, argindex, matchlen;
-  int   matchnum     = 0;
-  char *ret          = NULL;
-  char  matchstr[80] = "";
-  int   tws          = 0;
+  int x = 0, argindex, matchlen;
+  int matchnum = 0;
+  char *ret = NULL;
+  char matchstr[80] = "";
+  int tws = 0;
 
   /* Split the argument into an array of words */
   char *duplicate = parse_args(text, &x, argv, ARRAY_LEN(argv), &tws);
@@ -1827,9 +1771,9 @@ static char* __ast_cli_generator(const char *text,
 
     if ((src != argindex) && more_words(e->cmda + dst)) /* not a match */
       continue;
-    ret       = is_prefix(argv[src], e->cmda[dst], state - matchnum, &n);
-    matchnum += n;                                      /* this many matches
-                                                           here */
+    ret = is_prefix(argv[src], e->cmda[dst], state - matchnum, &n);
+    matchnum += n; /* this many matches
+                      here */
 
     if (ret) {
       /*
@@ -1846,14 +1790,12 @@ static char* __ast_cli_generator(const char *text,
        * Run the generator if one is available. In any case we are done.
        */
       if (e->handler) { /* new style command */
-        struct ast_cli_args a = {
-          .line = matchstr,
-          .word = word,
-          .pos  = argindex,
-          .n    = state - matchnum,
-          .argv = argv,
-          .argc = x
-        };
+        struct ast_cli_args a = {.line = matchstr,
+                                 .word = word,
+                                 .pos = argindex,
+                                 .n = state - matchnum,
+                                 .argv = argv,
+                                 .argc = x};
 
         // ast_module_ref(e->module);
         ret = e->handler(e, CLI_GENERATE, &a);
@@ -1870,13 +1812,11 @@ static char* __ast_cli_generator(const char *text,
   return ret;
 }
 
-char* ast_cli_generator(const char *text, const char *word, int state)
-{
+char *ast_cli_generator(const char *text, const char *word, int state) {
   return __ast_cli_generator(text, word, state, 1);
 }
 
-static int allowed_on_shutdown(struct ast_cli_entry *e)
-{
+static int allowed_on_shutdown(struct ast_cli_entry *e) {
   int found = 0;
   int i;
 
@@ -1893,17 +1833,14 @@ static int allowed_on_shutdown(struct ast_cli_entry *e)
   return found;
 }
 
-int ast_cli_command_full(int uid, int gid, int fd, const char *s)
-{
+int ast_cli_command_full(int uid, int gid, int fd, const char *s) {
   const char *args[AST_MAX_ARGS + 1];
   struct ast_cli_entry *e = NULL;
-  int   x;
+  int x;
   char *duplicate = parse_args(s, &x, args + 1, AST_MAX_ARGS, NULL);
-  char  tmp[AST_MAX_ARGS + 1];
-  char *retval          = CLI_FAILURE;
-  struct ast_cli_args a = {
-    .fd = fd, .argc = x, .argv = args + 1
-  };
+  char tmp[AST_MAX_ARGS + 1];
+  char *retval = CLI_FAILURE;
+  struct ast_cli_args a = {.fd = fd, .argc = x, .argv = args + 1};
 
   if (duplicate == NULL) return RESULT_FAILURE;
 
@@ -1918,9 +1855,9 @@ int ast_cli_command_full(int uid, int gid, int fd, const char *s)
 
   if (e == NULL) {
     ast_cli(fd,
-            "No such command '%s' (type 'core show help %s' for other possible commands)\n",
-            s,
-            find_best(args + 1));
+            "No such command '%s' (type 'core show help %s' for other possible "
+            "commands)\n",
+            s, find_best(args + 1));
     goto done;
   }
 
@@ -1952,9 +1889,9 @@ int ast_cli_command_full(int uid, int gid, int fd, const char *s)
   // ast_module_unref(e->module);
 
   if (retval == CLI_SHOWUSAGE) {
-    ast_cli(fd, "%s",
-            S_OR(e->usage,
-                 "Invalid usage, but no usage information available.\n"));
+    ast_cli(
+        fd, "%s",
+        S_OR(e->usage, "Invalid usage, but no usage information available.\n"));
   } else if (retval == CLI_FAILURE) {
     ast_cli(fd, "Command '%s' failed.\n", s);
   }
@@ -1968,14 +1905,10 @@ done:
   return retval == CLI_SUCCESS ? RESULT_SUCCESS : RESULT_FAILURE;
 }
 
-int ast_cli_command_multiple_full(int         uid,
-                                  int         gid,
-                                  int         fd,
-                                  size_t      size,
-                                  const char *s)
-{
+int ast_cli_command_multiple_full(int uid, int gid, int fd, size_t size,
+                                  const char *s) {
   char cmd[512];
-  int  x, y = 0, count = 0;
+  int x, y = 0, count = 0;
 
   for (x = 0; x < size; x++) {
     cmd[y] = s[x];
@@ -1990,13 +1923,12 @@ int ast_cli_command_multiple_full(int         uid,
   return count;
 }
 
-void ast_cli_print_timestr_fromseconds(int fd, int seconds, const char *prefix)
-{
+void ast_cli_print_timestr_fromseconds(int fd, int seconds,
+                                       const char *prefix) {
   print_uptimestr(fd, ast_tv(seconds, 0), prefix, 0);
 }
 
-int ast_cli_allow_at_shutdown(struct ast_cli_entry *e)
-{
+int ast_cli_allow_at_shutdown(struct ast_cli_entry *e) {
   int res;
 
   ast_rwlock_wrlock(&shutdown_commands_lock);

@@ -24,7 +24,7 @@
 #ifndef ASTOBJ2_CONTAINER_PRIVATE_H_
 #define ASTOBJ2_CONTAINER_PRIVATE_H_
 
-#include "libcutil/astobj2.h"
+#include "libcutil/obj2.h"
 
 /*!
  * \internal
@@ -62,7 +62,7 @@ enum ao2_container_insert {
 };
 
 /*! Allow enough room for container specific traversal state structs */
-#define AO2_TRAVERSAL_STATE_SIZE        100
+#define AO2_TRAVERSAL_STATE_SIZE 100
 
 /*!
  * \brief Generic container node.
@@ -102,20 +102,9 @@ typedef void (*ao2_container_destroy_fn)(struct ao2_container *self);
  * \retval empty-container on success.
  * \retval NULL on error.
  */
-typedef struct ao2_container *(*ao2_container_alloc_empty_clone_fn)(struct
-                                                                    ao2_container
-                                                                    *self,
-                                                                    const char
-                                                                    *
-                                                                    tag,
-                                                                    const char
-                                                                    *
-                                                                    file,
-                                                                    int
-                                                                    line,
-                                                                    const char
-                                                                    *
-                                                                    func);
+typedef struct ao2_container *(*ao2_container_alloc_empty_clone_fn)(
+    struct ao2_container *self, const char *tag, const char *file, int line,
+    const char *func);
 
 /*!
  * \brief Create a new container node.
@@ -130,22 +119,9 @@ typedef struct ao2_container *(*ao2_container_alloc_empty_clone_fn)(struct
  * \retval initialized-node on success.
  * \retval NULL on error.
  */
-typedef struct ao2_container_node *(*ao2_container_new_node_fn)(struct
-                                                                ao2_container *
-                                                                 self,
-                                                                void
-                                                                *
-                                                                 obj_new,
-                                                                const char
-                                                                *tag,
-                                                                const char
-                                                                *
-                                                                file,
-                                                                int
-                                                                line,
-                                                                const char
-                                                                *
-                                                                func);
+typedef struct ao2_container_node *(*ao2_container_new_node_fn)(
+    struct ao2_container *self, void *obj_new, const char *tag,
+    const char *file, int line, const char *func);
 
 /*!
  * \brief Insert a node into this container.
@@ -155,11 +131,8 @@ typedef struct ao2_container_node *(*ao2_container_new_node_fn)(struct
  *
  * \return enum ao2_container_insert value.
  */
-typedef enum ao2_container_insert (*ao2_container_insert_fn)(struct ao2_container
-                                                             *self,
-                                                             struct
-                                                             ao2_container_node *
-node);
+typedef enum ao2_container_insert (*ao2_container_insert_fn)(
+    struct ao2_container *self, struct ao2_container_node *node);
 
 /*!
  * \brief Find the first container node in a traversal.
@@ -172,18 +145,9 @@ node);
  * \retval node-ptr of found node (Reffed).
  * \retval NULL when no node found.
  */
-typedef struct ao2_container_node *(*ao2_container_find_first_fn)(struct
-                                                                  ao2_container *
-                                                                  self,
-                                                                  enum
-                                                                  search_flags
-                                                                  flags,
-                                                                  void
-                                                                  *
-                                                                  arg,
-                                                                  void
-                                                                  *
-                                                                  v_state);
+typedef struct ao2_container_node *(*ao2_container_find_first_fn)(
+    struct ao2_container *self, enum search_flags flags, void *arg,
+    void *v_state);
 
 /*!
  * \brief Find the next container node in a traversal.
@@ -196,15 +160,8 @@ typedef struct ao2_container_node *(*ao2_container_find_first_fn)(struct
  * \retval node-ptr of found node (Reffed).
  * \retval NULL when no node found.
  */
-typedef struct ao2_container_node *(*ao2_container_find_next_fn)(struct
-                                                                 ao2_container
-                                                                 *self,
-                                                                 void
-                                                                 *
-                                                                 v_state,
-                                                                 struct
-                                                                 ao2_container_node
-                                                                 *prev);
+typedef struct ao2_container_node *(*ao2_container_find_next_fn)(
+    struct ao2_container *self, void *v_state, struct ao2_container_node *prev);
 
 /*!
  * \brief Cleanup the container traversal state.
@@ -228,14 +185,9 @@ typedef void (*ao2_container_find_cleanup_fn)(void *v_state);
  * \retval node on success.
  * \retval NULL on error or no more nodes in the container.
  */
-typedef struct ao2_container_node *(*ao2_iterator_next_fn)(struct ao2_container
-                                                           *
-                                                           self,
-                                                           struct
-                                                           ao2_container_node *
-                                                           prev,
-                                                           enum ao2_iterator_flags
-                                                           flags);
+typedef struct ao2_container_node *(*ao2_iterator_next_fn)(
+    struct ao2_container *self, struct ao2_container_node *prev,
+    enum ao2_iterator_flags flags);
 
 /*!
  * \brief Display contents of the specified container.
@@ -248,10 +200,9 @@ typedef struct ao2_container_node *(*ao2_iterator_next_fn)(struct ao2_container
  *
  * \return Nothing
  */
-typedef void (*ao2_container_display)(struct ao2_container *self,
-                                      void                 *where,
-                                      ao2_prnt_fn          *prnt,
-                                      ao2_prnt_obj_fn      *prnt_obj);
+typedef void (*ao2_container_display)(struct ao2_container *self, void *where,
+                                      ao2_prnt_fn *prnt,
+                                      ao2_prnt_obj_fn *prnt_obj);
 
 /*!
  * \brief Display statistics of the specified container.
@@ -265,8 +216,7 @@ typedef void (*ao2_container_display)(struct ao2_container *self,
  * \return Nothing
  */
 typedef void (*ao2_container_statistics)(struct ao2_container *self,
-                                         void                 *where,
-                                         ao2_prnt_fn          *prnt);
+                                         void *where, ao2_prnt_fn *prnt);
 
 /*!
  * \brief Perform an integrity check on the specified container.
@@ -290,7 +240,7 @@ typedef int (*ao2_container_integrity)(struct ao2_container *self);
  *
  * \return Nothing
  */
-typedef void (*ao2_link_node_stat_fn)(struct ao2_container      *container,
+typedef void (*ao2_link_node_stat_fn)(struct ao2_container *container,
                                       struct ao2_container_node *node);
 
 /*!
@@ -303,7 +253,7 @@ typedef void (*ao2_link_node_stat_fn)(struct ao2_container      *container,
  *
  * \return Nothing
  */
-typedef void (*ao2_unlink_node_stat_fn)(struct ao2_container      *container,
+typedef void (*ao2_unlink_node_stat_fn)(struct ao2_container *container,
                                         struct ao2_container_node *node);
 
 /*! Container virtual methods template. */
@@ -413,21 +363,14 @@ struct ao2_container {
  * \retval 1 on success.
  */
 int __container_unlink_node_debug(struct ao2_container_node *node,
-                                  uint32_t                   flags,
-                                  const char                *tag,
-                                  const char                *file,
-                                  int                        line,
-                                  const char                *func);
+                                  uint32_t flags, const char *tag,
+                                  const char *file, int line, const char *func);
 
-#define __container_unlink_node(node, flags) \
-  __container_unlink_node_debug(node,        \
-                                flags,       \
-                                NULL,        \
-                                __FILE__,    \
-                                __LINE__,    \
+#define __container_unlink_node(node, flags)                           \
+  __container_unlink_node_debug(node, flags, NULL, __FILE__, __LINE__, \
                                 __PRETTY_FUNCTION__)
 
 void container_destruct(void *_c);
-int  container_init(void);
+int container_init(void);
 
 #endif /* ASTOBJ2_CONTAINER_PRIVATE_H_ */

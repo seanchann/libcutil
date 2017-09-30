@@ -18,26 +18,25 @@
 #undef sched_setscheduler
 #undef setpriority
 
-#include <stdlib.h>  /* for closefrom(3) */
+#include <stdlib.h> /* for closefrom(3) */
 #include <signal.h>
 #ifndef HAVE_CLOSEFROM
-# include <dirent.h> /* for opendir(3)   */
-#endif /* ifndef HAVE_CLOSEFROM */
+#include <dirent.h> /* for opendir(3)   */
+#endif              /* ifndef HAVE_CLOSEFROM */
 
 #include <sys/types.h>
 #include <grp.h>
 #include <pwd.h>
 #include <stdlib.h>
 #include <sys/un.h>
-#include <editline/histedit.h>
+#include <src/core/editline/histedit.h>
 #include <fcntl.h>
 #include <grp.h>
 #include <pwd.h>
 
 #ifdef linux
-# include <sys/prctl.h>
+#include <sys/prctl.h>
 #endif /* ifdef linux */
-
 
 /* we define here the variables so to better agree on the prototype */
 #include "libcutil/utils.h"
@@ -48,52 +47,48 @@
 #include "libcutil/lock.h"
 #include "libcutil/localtime.h"
 #include "libcutil/term.h"
-#include "libcutil/ast_version.h"
+#include "libcutil/version.h"
 #include "internal.h"
 
 struct ast_atexit {
   void (*func)(void);
-  int  is_cleanup;
+  int is_cleanup;
   AST_LIST_ENTRY(ast_atexit) list;
 };
 
 static AST_LIST_HEAD_STATIC(atexits, ast_atexit);
 
-
 #if !defined(LOW_MEMORY)
 struct thread_list_t {
   AST_RWLIST_ENTRY(thread_list_t) list;
-  char     *name;
+  char *name;
   pthread_t id;
-  int       lwp;
+  int lwp;
 };
 
 static AST_RWLIST_HEAD_STATIC(thread_list, thread_list_t);
 
-
 /*console prompt string. set env(CUTIL_PROMPT) will be overried default*/
-# define CUTIL_PROMPT "*CLI> "
+#define CUTIL_PROMPT "*CLI> "
 
 static struct ast_str *prompt = NULL;
 
-
-# define AST_MAX_CONNECTS 128
-
+#define AST_MAX_CONNECTS 128
 
 struct console {
-  int       fd;                   /*!< File descriptor */
-  int       p[2];                 /*!< Pipe */
-  pthread_t t;                    /*!< Thread of handler */
-  int       mute;                 /*!< Is the console muted for logs */
-  int       uid;                  /*!< Remote user ID. */
-  int       gid;                  /*!< Remote group ID. */
-  int       levels[NUMLOGLEVELS]; /*!< Which log levels are enabled for the
-                                     console */
+  int fd;                   /*!< File descriptor */
+  int p[2];                 /*!< Pipe */
+  pthread_t t;              /*!< Thread of handler */
+  int mute;                 /*!< Is the console muted for logs */
+  int uid;                  /*!< Remote user ID. */
+  int gid;                  /*!< Remote group ID. */
+  int levels[NUMLOGLEVELS]; /*!< Which log levels are enabled for the
+                               console */
 
   /*! Verbosity level of this console. */
   int option_verbose;
 };
-struct console   consoles[AST_MAX_CONNECTS];
+struct console consoles[AST_MAX_CONNECTS];
 static pthread_t consolethread = AST_PTHREADT_NULL;
 static pthread_t lthread;
 
@@ -125,15 +120,14 @@ typedef enum {
   SHUTDOWN_REALLY_NICE
 } shutdown_nice_t;
 
-static int sig_alert_pipe[2] = { -1, -1 };
+static int sig_alert_pipe[2] = {-1, -1};
 static struct {
-  unsigned int need_reload       : 1;
-  unsigned int need_quit         : 1;
+  unsigned int need_reload : 1;
+  unsigned int need_quit : 1;
   unsigned int need_quit_handler : 1;
 } sig_flags;
 
 static shutdown_nice_t shuttingdown = NOT_SHUTTING_DOWN;
-
 
 static pthread_t mon_sig_flags;
 
@@ -141,43 +135,30 @@ pid_t ast_mainpid;
 
 static int multi_thread_safe;
 
-
 /*! \brief Welcome message when starting a CLI interface */
-# define WELCOME_MESSAGE                                                                          \
-  ast_verbose("LibCutil %s console interface, Copyright (C) 2016 - 2017, JYD, Inc. and others.\n" \
-              "Created by seanchann.zhou <xqzhou@bj-jyd.cn>\n"                                    \
-              "=========================================================================\n",      \
-              ast_get_version())                                                                  \
-
-
+#define WELCOME_MESSAGE                                                        \
+  ast_verbose(                                                                 \
+      "LibCutil %s console interface, Copyright (C) 2016 - 2017, JYD, Inc. "   \
+      "and others.\n"                                                          \
+      "Created by seanchann.zhou <xqzhou@bj-jyd.cn>\n"                         \
+      "======================================================================" \
+      "===\n",                                                                 \
+      ast_get_version())
 
 static int console_print(const char *s);
 
+pid_t mainpid(void) { return ast_mainpid; }
 
-pid_t      mainpid(void)
-{
-  return ast_mainpid;
-}
+unsigned int sig_need_quit(void) { return sig_flags.need_quit; }
 
-unsigned int sig_need_quit(void)
-{
-  return sig_flags.need_quit;
-}
-
-unsigned int sig_need_quit_handler(void)
-{
-  return sig_flags.need_quit_handler;
-}
+unsigned int sig_need_quit_handler(void) { return sig_flags.need_quit_handler; }
 
 /*! \brief NULL handler so we can collect the child exit status */
-static void _null_sig_handler(int sig)
-{}
+static void _null_sig_handler(int sig) {}
 
 static struct sigaction null_sig_handler = {
-  .sa_handler = _null_sig_handler,
-  .sa_flags   = SA_RESTART,
+    .sa_handler = _null_sig_handler, .sa_flags = SA_RESTART,
 };
-
 
 /*!
  * \brief read() function supporting the reception of user credentials.
@@ -190,23 +171,22 @@ static struct sigaction null_sig_handler = {
  * \retval the number of bytes received on success.
  */
 static int read_credentials(int fd, char *buffer, size_t size,
-                            struct console *con)
-{
-# if defined(SO_PEERCRED)
-#  ifdef HAVE_STRUCT_SOCKPEERCRED_UID
-#   define HAVE_STRUCT_UCRED_UID
+                            struct console *con) {
+#if defined(SO_PEERCRED)
+#ifdef HAVE_STRUCT_SOCKPEERCRED_UID
+#define HAVE_STRUCT_UCRED_UID
   struct sockpeercred cred;
-#  else /* ifdef HAVE_STRUCT_SOCKPEERCRED_UID */
+#else  /* ifdef HAVE_STRUCT_SOCKPEERCRED_UID */
   struct ucred cred;
-#  endif  /* ifdef HAVE_STRUCT_SOCKPEERCRED_UID */
+#endif /* ifdef HAVE_STRUCT_SOCKPEERCRED_UID */
   socklen_t len = sizeof(cred);
-# endif /* if defined(SO_PEERCRED) */
-# if defined(HAVE_GETPEEREID)
+#endif /* if defined(SO_PEERCRED) */
+#if defined(HAVE_GETPEEREID)
   uid_t uid;
   gid_t gid;
-# else /* if defined(HAVE_GETPEEREID) */
+#else  /* if defined(HAVE_GETPEEREID) */
   int uid, gid;
-# endif  /* if defined(HAVE_GETPEEREID) */
+#endif /* if defined(HAVE_GETPEEREID) */
   int result;
 
   result = read(fd, buffer, size);
@@ -215,31 +195,31 @@ static int read_credentials(int fd, char *buffer, size_t size,
     return result;
   }
 
-# if defined(SO_PEERCRED) && (defined(HAVE_STRUCT_UCRED_UID) || \
-  defined(HAVE_STRUCT_UCRED_CR_UID))
+#if defined(SO_PEERCRED) && \
+    (defined(HAVE_STRUCT_UCRED_UID) || defined(HAVE_STRUCT_UCRED_CR_UID))
 
   if (getsockopt(fd, SOL_SOCKET, SO_PEERCRED, &cred, &len)) {
     return result;
   }
-#  if defined(HAVE_STRUCT_UCRED_UID)
+#if defined(HAVE_STRUCT_UCRED_UID)
   uid = cred.uid;
   gid = cred.gid;
-#  else /* defined(HAVE_STRUCT_UCRED_CR_UID) */
+#else  /* defined(HAVE_STRUCT_UCRED_CR_UID) */
   uid = cred.cr_uid;
   gid = cred.cr_gid;
-#  endif  /* defined(HAVE_STRUCT_UCRED_UID) */
+#endif /* defined(HAVE_STRUCT_UCRED_UID) */
 
-# elif defined(HAVE_GETPEEREID)
+#elif defined(HAVE_GETPEEREID)
 
   if (getpeereid(fd, &uid, &gid)) {
     return result;
   }
-# else /* if defined(SO_PEERCRED) && (defined(HAVE_STRUCT_UCRED_UID) ||
-          defined(HAVE_STRUCT_UCRED_CR_UID)) */
+#else /* if defined(SO_PEERCRED) && (defined(HAVE_STRUCT_UCRED_UID) || \
+         defined(HAVE_STRUCT_UCRED_CR_UID)) */
   return result;
 
-# endif  /* if defined(SO_PEERCRED) && (defined(HAVE_STRUCT_UCRED_UID) ||
-            defined(HAVE_STRUCT_UCRED_CR_UID)) */
+#endif /* if defined(SO_PEERCRED) && (defined(HAVE_STRUCT_UCRED_UID) || \
+          defined(HAVE_STRUCT_UCRED_CR_UID)) */
   con->uid = uid;
   con->gid = gid;
 
@@ -247,73 +227,62 @@ static int read_credentials(int fd, char *buffer, size_t size,
 }
 
 /* This is the thread running the remote console on the main process. */
-static void* netconsole(void *vconsole)
-{
-  struct console *con           = vconsole;
+static void *netconsole(void *vconsole) {
+  struct console *con = vconsole;
   char hostname[MAXHOSTNAMELEN] = "";
   char inbuf[512];
   char outbuf[512];
   const char *const end_buf = inbuf + sizeof(inbuf);
-  char *start_read          = inbuf;
-  int   res;
+  char *start_read = inbuf;
+  int res;
   struct pollfd fds[2];
 
-  if (gethostname(hostname, sizeof(hostname) - 1)) ast_copy_string(hostname,
-                                                                   "<Unknown>",
-                                                                   sizeof(hostname));
+  if (gethostname(hostname, sizeof(hostname) - 1))
+    ast_copy_string(hostname, "<Unknown>", sizeof(hostname));
 
-
-
-  snprintf(outbuf, sizeof(outbuf), "%s/%ld/%s\n", hostname,
-           (long)mainpid(), ast_get_version());
+  snprintf(outbuf, sizeof(outbuf), "%s/%ld/%s\n", hostname, (long)mainpid(),
+           ast_get_version());
   fdprint(con->fd, outbuf);
   ast_verb_console_register(&con->option_verbose);
 
   for (;;) {
-    fds[0].fd      = con->fd;
-    fds[0].events  = POLLIN;
+    fds[0].fd = con->fd;
+    fds[0].events = POLLIN;
     fds[0].revents = 0;
-    fds[1].fd      = con->p[0];
-    fds[1].events  = POLLIN;
+    fds[1].fd = con->p[0];
+    fds[1].events = POLLIN;
     fds[1].revents = 0;
 
     res = ast_poll(fds, 2, -1);
 
     if (res < 0) {
-      if (errno != EINTR) ast_log(LOG_WARNING,
-                                  "poll returned < 0: %s\n",
-                                  strerror(errno));
+      if (errno != EINTR)
+        ast_log(LOG_WARNING, "poll returned < 0: %s\n", strerror(errno));
       continue;
     }
 
     if (fds[0].revents) {
       int cmds_read, bytes_read;
 
-
-      if ((bytes_read =
-             read_credentials(con->fd, start_read, end_buf - start_read,
-                              con)) < 1) {
+      if ((bytes_read = read_credentials(con->fd, start_read,
+                                         end_buf - start_read, con)) < 1) {
         break;
       }
 
       /* XXX This will only work if it is the first command, and I'm not sure
          fixing it is worth the effort. */
       if (strncmp(inbuf, "cli quit after ", 15) == 0) {
-        ast_cli_command_multiple_full(con->uid,
-                                      con->gid,
-                                      con->fd,
-                                      bytes_read - 15,
-                                      inbuf + 15);
+        ast_cli_command_multiple_full(con->uid, con->gid, con->fd,
+                                      bytes_read - 15, inbuf + 15);
         break;
       }
 
       /* ast_cli_command_multiple_full will only process individual commands
          terminated by a
        * NULL and not trailing partial commands. */
-      if (!(cmds_read =
-              ast_cli_command_multiple_full(con->uid, con->gid, con->fd,
-                                            bytes_read + start_read - inbuf,
-                                            inbuf))) {
+      if (!(cmds_read = ast_cli_command_multiple_full(
+                con->uid, con->gid, con->fd, bytes_read + start_read - inbuf,
+                inbuf))) {
         /* No commands were read. We either have a short read on the first
            command
          * with space left, or a command that is too long */
@@ -371,8 +340,7 @@ static void* netconsole(void *vconsole)
   return NULL;
 }
 
-static void* listener(void *unused)
-{
+static void *listener(void *unused) {
   struct sockaddr_un sunaddr;
   int s;
   socklen_t len;
@@ -383,34 +351,31 @@ static void* listener(void *unused)
   for (;;) {
     if (libcutil_get_socket() < 0) return NULL;
 
-    fds[0].fd     = libcutil_get_socket();
+    fds[0].fd = libcutil_get_socket();
     fds[0].events = POLLIN;
-    s             = ast_poll(fds, 1, -1);
+    s = ast_poll(fds, 1, -1);
     pthread_testcancel();
 
     if (s < 0) {
-      if (errno != EINTR) ast_log(LOG_WARNING,
-                                  "poll returned error: %s\n",
-                                  strerror(errno));
+      if (errno != EINTR)
+        ast_log(LOG_WARNING, "poll returned error: %s\n", strerror(errno));
       continue;
     }
     len = sizeof(sunaddr);
-    s   = accept(libcutil_get_socket(), (struct sockaddr *)&sunaddr, &len);
+    s = accept(libcutil_get_socket(), (struct sockaddr *)&sunaddr, &len);
 
     if (s < 0) {
-      if (errno != EINTR) ast_log(LOG_WARNING,
-                                  "Accept returned %d: %s\n",
-                                  s,
-                                  strerror(errno));
+      if (errno != EINTR)
+        ast_log(LOG_WARNING, "Accept returned %d: %s\n", s, strerror(errno));
     } else {
-# if defined(SO_PASSCRED)
+#if defined(SO_PASSCRED)
       int sckopt = 1;
 
       /* turn on socket credentials passing. */
       if (setsockopt(s, SOL_SOCKET, SO_PASSCRED, &sckopt, sizeof(sckopt)) < 0) {
         ast_log(LOG_WARNING, "Unable to turn on socket credentials passing\n");
       } else
-# endif /* if defined(SO_PASSCRED) */
+#endif /* if defined(SO_PASSCRED) */
       {
         for (x = 0; x < AST_MAX_CONNECTS; x++) {
           if (consoles[x].fd >= 0) {
@@ -436,11 +401,10 @@ static void* listener(void *unused)
 
           /* Server default of remote console verbosity level is OFF. */
           consoles[x].option_verbose = 0;
-          consoles[x].fd             = s;
+          consoles[x].fd = s;
 
-
-          if (ast_pthread_create_detached_background(&consoles[x].t, NULL,
-                                                     netconsole, &consoles[x])) {
+          if (ast_pthread_create_detached_background(
+                  &consoles[x].t, NULL, netconsole, &consoles[x])) {
             consoles[x].fd = -1;
             ast_log(LOG_ERROR,
                     "Unable to spawn thread to handle connection: %s\n",
@@ -466,11 +430,10 @@ static void* listener(void *unused)
   return NULL;
 }
 
-static int ast_makesocket(void)
-{
+static int ast_makesocket(void) {
   struct sockaddr_un sunaddr;
-  int   res;
-  int   x;
+  int res;
+  int x;
   uid_t uid = -1;
   gid_t gid = -1;
 
@@ -478,10 +441,8 @@ static int ast_makesocket(void)
   unlink(libcutil_get_config_socket());
   libcutil_set_socket(socket(PF_LOCAL, SOCK_STREAM, 0));
 
-  ast_log(LOG_NOTICE,
-          "bind local socket %s fd %d\r\n",
-          libcutil_get_config_socket(),
-          libcutil_get_socket());
+  ast_log(LOG_NOTICE, "bind local socket %s fd %d\r\n",
+          libcutil_get_config_socket(), libcutil_get_socket());
 
   if (libcutil_get_socket() < 0) {
     ast_log(LOG_WARNING, "Unable to create control socket: %s\n",
@@ -490,16 +451,14 @@ static int ast_makesocket(void)
   }
   memset(&sunaddr, 0, sizeof(sunaddr));
   sunaddr.sun_family = AF_LOCAL;
-  ast_copy_string(sunaddr.sun_path,
-                  libcutil_get_config_socket(),
+  ast_copy_string(sunaddr.sun_path, libcutil_get_config_socket(),
                   sizeof(sunaddr.sun_path));
-  res = bind(libcutil_get_socket(), (struct sockaddr *)&sunaddr, sizeof(sunaddr));
+  res =
+      bind(libcutil_get_socket(), (struct sockaddr *)&sunaddr, sizeof(sunaddr));
 
   if (res) {
-    ast_log(LOG_WARNING,
-            "Unable to bind socket to %s: %s\n",
-            libcutil_get_config_socket(),
-            strerror(errno));
+    ast_log(LOG_WARNING, "Unable to bind socket to %s: %s\n",
+            libcutil_get_config_socket(), strerror(errno));
     close(libcutil_get_socket());
     libcutil_set_socket(-1);
     return -1;
@@ -507,10 +466,8 @@ static int ast_makesocket(void)
   res = listen(libcutil_get_socket(), 2);
 
   if (res < 0) {
-    ast_log(LOG_WARNING,
-            "Unable to listen on socket %s: %s\n",
-            libcutil_get_config_socket(),
-            strerror(errno));
+    ast_log(LOG_WARNING, "Unable to listen on socket %s: %s\n",
+            libcutil_get_config_socket(), strerror(errno));
     close(libcutil_get_socket());
     libcutil_set_socket(-1);
     return -1;
@@ -525,58 +482,50 @@ static int ast_makesocket(void)
   if (!ast_strlen_zero(libcutil_get_ctl_owner())) {
     struct passwd *pw;
 
-    if ((pw = getpwnam(libcutil_get_ctl_owner())) == NULL) ast_log(LOG_WARNING,
-                                                                   "Unable to find uid of user %s\n",
-                                                                   libcutil_get_ctl_owner());
+    if ((pw = getpwnam(libcutil_get_ctl_owner())) == NULL)
+      ast_log(LOG_WARNING, "Unable to find uid of user %s\n",
+              libcutil_get_ctl_owner());
 
-
-
-    else uid = pw->pw_uid;
+    else
+      uid = pw->pw_uid;
   }
 
   if (!ast_strlen_zero(libcutil_get_ctl_group())) {
     struct group *grp;
 
-    if ((grp = getgrnam(libcutil_get_ctl_group())) == NULL) ast_log(LOG_WARNING,
-                                                                    "Unable to find gid of group %s\n",
-                                                                    libcutil_get_ctl_group());
+    if ((grp = getgrnam(libcutil_get_ctl_group())) == NULL)
+      ast_log(LOG_WARNING, "Unable to find gid of group %s\n",
+              libcutil_get_ctl_group());
 
-
-
-    else gid = grp->gr_gid;
+    else
+      gid = grp->gr_gid;
   }
 
-  if (chown(libcutil_get_config_socket(), uid, gid) < 0) ast_log(LOG_WARNING,
-                                                                 "Unable to change ownership of %s: %s\n",
-                                                                 libcutil_get_config_socket(),
-                                                                 strerror(errno));
-
-
+  if (chown(libcutil_get_config_socket(), uid, gid) < 0)
+    ast_log(LOG_WARNING, "Unable to change ownership of %s: %s\n",
+            libcutil_get_config_socket(), strerror(errno));
 
   if (!ast_strlen_zero(libcutil_get_ctl_permissions())) {
     unsigned int p1;
     mode_t p;
-    char   permissions[PATH_MAX];
+    char permissions[PATH_MAX];
     sscanf(permissions, "%30o", &p1);
     libcutil_set_ctl_permissions(permissions);
     p = p1;
 
-    if ((chmod(libcutil_get_config_socket(), p)) < 0) ast_log(LOG_WARNING,
-                                                              "Unable to change file permissions of %s: %s\n",
-                                                              libcutil_get_config_socket(),
-                                                              strerror(errno));
+    if ((chmod(libcutil_get_config_socket(), p)) < 0)
+      ast_log(LOG_WARNING, "Unable to change file permissions of %s: %s\n",
+              libcutil_get_config_socket(), strerror(errno));
   }
 
   return 0;
 }
 
-static int ast_tryconnect(void)
-{
+static int ast_tryconnect(void) {
   struct sockaddr_un sunaddr;
   int res;
 
   libcutil_set_consock(socket(PF_LOCAL, SOCK_STREAM, 0));
-
 
   if (libcutil_get_consock() < 0) {
     fprintf(stderr, "Unable to create socket: %s\n", strerror(errno));
@@ -584,21 +533,20 @@ static int ast_tryconnect(void)
   }
   memset(&sunaddr, 0, sizeof(sunaddr));
   sunaddr.sun_family = AF_LOCAL;
-  ast_copy_string(sunaddr.sun_path,
-                  libcutil_get_config_socket(),
+  ast_copy_string(sunaddr.sun_path, libcutil_get_config_socket(),
                   sizeof(sunaddr.sun_path));
-  res =
-    connect(libcutil_get_consock(), (struct sockaddr *)&sunaddr, sizeof(sunaddr));
+  res = connect(libcutil_get_consock(), (struct sockaddr *)&sunaddr,
+                sizeof(sunaddr));
 
   if (res) {
     close(libcutil_get_consock());
     libcutil_set_consock(-1);
     return 0;
-  } else return 1;
+  } else
+    return 1;
 }
 
-static void send_rasterisk_connect_commands(void)
-{
+static void send_rasterisk_connect_commands(void) {
   char buf[80];
 
   /*
@@ -606,17 +554,13 @@ static void send_rasterisk_connect_commands(void)
    * initially desired.
    */
   if (libcutil_get_option_verbose()) {
-    snprintf(buf,
-             sizeof(buf),
-             "core set verbose atleast %d silent",
+    snprintf(buf, sizeof(buf), "core set verbose atleast %d silent",
              libcutil_get_option_verbose());
     fdsend(libcutil_get_consock(), buf);
   }
 
   if (libcutil_get_option_debug()) {
-    snprintf(buf,
-             sizeof(buf),
-             "core set debug atleast %d",
+    snprintf(buf, sizeof(buf), "core set debug atleast %d",
              libcutil_get_option_debug());
     fdsend(libcutil_get_consock(), buf);
   }
@@ -624,12 +568,12 @@ static void send_rasterisk_connect_commands(void)
   if (!ast_opt_mute) {
     fdsend(libcutil_get_consock(), "logger mute silent");
   } else {
-    printf("log and verbose output currently muted ('logger mute' to unmute)\n");
+    printf(
+        "log and verbose output currently muted ('logger mute' to unmute)\n");
   }
 }
 
-static int ast_el_sort_compare(const void *i1, const void *i2)
-{
+static int ast_el_sort_compare(const void *i1, const void *i2) {
   char *s1, *s2;
 
   s1 = ((char **)i1)[0];
@@ -638,8 +582,7 @@ static int ast_el_sort_compare(const void *i1, const void *i2)
   return strcasecmp(s1, s2);
 }
 
-static int ast_cli_display_match_list(char **matches, int len, int max)
-{
+static int ast_cli_display_match_list(char **matches, int len, int max) {
   int i, idx, limit, count;
   int screenwidth = 0;
   int numoutput = 0, numoutputline = 0;
@@ -687,8 +630,7 @@ static int ast_cli_display_match_list(char **matches, int len, int max)
   return numoutput;
 }
 
-static void destroy_match_list(char **match_list, int matches)
-{
+static void destroy_match_list(char **match_list, int matches) {
   if (match_list) {
     int idx;
 
@@ -699,13 +641,12 @@ static void destroy_match_list(char **match_list, int matches)
   }
 }
 
-static char** ast_el_strtoarr(char *buf)
-{
-  char  *retstr;
+static char **ast_el_strtoarr(char *buf) {
+  char *retstr;
   char **match_list = NULL;
   char **new_list;
   size_t match_list_len = 1;
-  int    matches        = 0;
+  int matches = 0;
 
   while ((retstr = strsep(&buf, " "))) {
     if (!strcmp(retstr, AST_CLI_COMPLETE_EOF)) {
@@ -714,7 +655,7 @@ static char** ast_el_strtoarr(char *buf)
 
     if (matches + 1 >= match_list_len) {
       match_list_len <<= 1;
-      new_list         = ast_realloc(match_list, match_list_len * sizeof(char *));
+      new_list = ast_realloc(match_list, match_list_len * sizeof(char *));
 
       if (!new_list) {
         destroy_match_list(match_list, matches);
@@ -751,22 +692,20 @@ static char** ast_el_strtoarr(char *buf)
   return match_list;
 }
 
-static char* cli_complete(EditLine *editline, int ch)
-{
+static char *cli_complete(EditLine *editline, int ch) {
   int len = 0;
-  char  *ptr;
-  int    nummatches = 0;
+  char *ptr;
+  int nummatches = 0;
   char **matches;
-  int    retval = CC_ERROR;
-  char   buf[2048], savechr;
-  int    res;
-
+  int retval = CC_ERROR;
+  char buf[2048], savechr;
+  int res;
 
   LineInfo *lf = (LineInfo *)el_line(editline);
 
-  savechr             = *(char *)lf->cursor;
+  savechr = *(char *)lf->cursor;
   *(char *)lf->cursor = '\0';
-  ptr                 = (char *)lf->cursor;
+  ptr = (char *)lf->cursor;
 
   if (ptr) {
     while (ptr > lf->buffer) {
@@ -781,36 +720,30 @@ static char* cli_complete(EditLine *editline, int ch)
   len = lf->cursor - ptr;
 
   if (ast_opt_remote) {
-    snprintf(buf,
-             sizeof(buf),
-             "_COMMAND NUMMATCHES \"%s\" \"%s\"",
-             lf->buffer,
+    snprintf(buf, sizeof(buf), "_COMMAND NUMMATCHES \"%s\" \"%s\"", lf->buffer,
              ptr);
     fdsend(libcutil_get_consock(), buf);
 
     if ((res = read(libcutil_get_consock(), buf, sizeof(buf) - 1)) < 0) {
       return (char *)(CC_ERROR);
     }
-    buf[res]   = '\0';
+    buf[res] = '\0';
     nummatches = atoi(buf);
 
     if (nummatches > 0) {
       char *mbuf;
       char *new_mbuf;
-      int   mlen = 0, maxmbuf = 2048;
+      int mlen = 0, maxmbuf = 2048;
 
       /* Start with a 2048 byte buffer */
       if (!(mbuf = ast_malloc(maxmbuf))) {
         *((char *)lf->cursor) = savechr;
         return (char *)(CC_ERROR);
       }
-      snprintf(buf,
-               sizeof(buf),
-               "_COMMAND MATCHESARRAY \"%s\" \"%s\"",
-               lf->buffer,
-               ptr);
+      snprintf(buf, sizeof(buf), "_COMMAND MATCHESARRAY \"%s\" \"%s\"",
+               lf->buffer, ptr);
       fdsend(libcutil_get_consock(), buf);
-      res     = 0;
+      res = 0;
       mbuf[0] = '\0';
 
       while (!strstr(mbuf, AST_CLI_COMPLETE_EOF) && res != -1) {
@@ -836,11 +769,12 @@ static char* cli_complete(EditLine *editline, int ch)
 
       matches = ast_el_strtoarr(mbuf);
       ast_free(mbuf);
-    } else matches = (char **)NULL;
+    } else
+      matches = (char **)NULL;
   } else {
     char **p, *oldbuf = NULL;
     nummatches = 0;
-    matches    = ast_cli_completion_matches((char *)lf->buffer, ptr);
+    matches = ast_cli_completion_matches((char *)lf->buffer, ptr);
 
     for (p = matches; p && *p; p++) {
       if (!oldbuf || strcmp(*p, oldbuf)) nummatches++;
@@ -890,14 +824,13 @@ static char* cli_complete(EditLine *editline, int ch)
   return (char *)(long)retval;
 }
 
-static char* cli_prompt(EditLine *editline)
-{
-  char  tmp[100];
+static char *cli_prompt(EditLine *editline) {
+  char tmp[100];
   char *pfmt;
-  int   color_used              = 0;
+  int color_used = 0;
   static int cli_prompt_changes = 0;
   struct passwd *pw;
-  struct group  *gr;
+  struct group *gr;
 
   if (prompt == NULL) {
     prompt = ast_str_create(100);
@@ -908,119 +841,122 @@ static char* cli_prompt(EditLine *editline)
   }
 
   if ((pfmt = getenv("CUTIL_PROMPT"))) {
-    char *t           = pfmt;
+    char *t = pfmt;
     struct timeval ts = ast_tvnow();
 
     while (*t != '\0') {
       if (*t == '%') {
         char hostname[MAXHOSTNAMELEN] = "";
-        int  i, which;
-        struct ast_tm tm = { 0, };
+        int i, which;
+        struct ast_tm tm = {
+            0,
+        };
         int fgcolor = COLOR_WHITE, bgcolor = COLOR_BLACK;
 
         t++;
 
         switch (*t) {
-        case 'C': /* color */
-          t++;
+          case 'C': /* color */
+            t++;
 
-          if (sscanf(t, "%30d;%30d%n", &fgcolor, &bgcolor, &i) == 2) {
-            ast_term_color_code(&prompt, fgcolor, bgcolor);
-            t += i - 1;
-          } else if (sscanf(t, "%30d%n", &fgcolor, &i) == 1) {
-            ast_term_color_code(&prompt, fgcolor, 0);
-            t += i - 1;
-          }
-
-          /* If the color has been reset correctly, then there's no need to
-             reset it later */
-          color_used =
-            ((fgcolor == COLOR_WHITE) && (bgcolor == COLOR_BLACK)) ? 0 : 1;
-          break;
-
-        case 'd': /* date */
-
-          if (ast_localtime(&ts, &tm, NULL)) {
-            ast_strftime(tmp, sizeof(tmp), "%Y-%m-%d", &tm);
-            ast_str_append(&prompt, 0, "%s", tmp);
-            cli_prompt_changes++;
-          }
-          break;
-
-        case 'g': /* group */
-
-          if ((gr = getgrgid(getgid()))) {
-            ast_str_append(&prompt, 0, "%s", gr->gr_name);
-          }
-          break;
-
-        case 'h': /* hostname */
-
-          if (!gethostname(hostname, sizeof(hostname) - 1)) {
-            ast_str_append(&prompt, 0, "%s", hostname);
-          } else {
-            ast_str_append(&prompt, 0, "%s", "localhost");
-          }
-          break;
-
-        case 'H': /* short hostname */
-
-          if (!gethostname(hostname, sizeof(hostname) - 1)) {
-            char *dotptr;
-
-            if ((dotptr = strchr(hostname, '.'))) {
-              *dotptr = '\0';
+            if (sscanf(t, "%30d;%30d%n", &fgcolor, &bgcolor, &i) == 2) {
+              ast_term_color_code(&prompt, fgcolor, bgcolor);
+              t += i - 1;
+            } else if (sscanf(t, "%30d%n", &fgcolor, &i) == 1) {
+              ast_term_color_code(&prompt, fgcolor, 0);
+              t += i - 1;
             }
-            ast_str_append(&prompt, 0, "%s", hostname);
-          } else {
-            ast_str_append(&prompt, 0, "%s", "localhost");
-          }
-          break;
 
-# ifdef HAVE_GETLOADAVG
-        case 'l': /* load avg */
-          t++;
+            /* If the color has been reset correctly, then there's no need to
+               reset it later */
+            color_used =
+                ((fgcolor == COLOR_WHITE) && (bgcolor == COLOR_BLACK)) ? 0 : 1;
+            break;
 
-          if ((sscanf(t, "%30d", &which) == 1) && (which > 0) && (which <= 3)) {
-            double list[3];
-            getloadavg(list, 3);
-            ast_str_append(&prompt, 0, "%.2f", list[which - 1]);
-            cli_prompt_changes++;
-          }
-          break;
+          case 'd': /* date */
 
-# endif /* ifdef HAVE_GETLOADAVG */
-        case 's': /* Asterisk system name (from asterisk.conf) */
-          ast_str_append(&prompt, 0, "%s", libcutil_get_config_system_name());
-          break;
+            if (ast_localtime(&ts, &tm, NULL)) {
+              ast_strftime(tmp, sizeof(tmp), "%Y-%m-%d", &tm);
+              ast_str_append(&prompt, 0, "%s", tmp);
+              cli_prompt_changes++;
+            }
+            break;
 
-        case 't': /* time */
+          case 'g': /* group */
 
-          if (ast_localtime(&ts, &tm, NULL)) {
-            ast_strftime(tmp, sizeof(tmp), "%H:%M:%S", &tm);
-            ast_str_append(&prompt, 0, "%s", tmp);
-            cli_prompt_changes++;
-          }
-          break;
+            if ((gr = getgrgid(getgid()))) {
+              ast_str_append(&prompt, 0, "%s", gr->gr_name);
+            }
+            break;
 
-        case 'u': /* username */
+          case 'h': /* hostname */
 
-          if ((pw = getpwuid(getuid()))) {
-            ast_str_append(&prompt, 0, "%s", pw->pw_name);
-          }
-          break;
+            if (!gethostname(hostname, sizeof(hostname) - 1)) {
+              ast_str_append(&prompt, 0, "%s", hostname);
+            } else {
+              ast_str_append(&prompt, 0, "%s", "localhost");
+            }
+            break;
 
-        case '#': /* process console or remote? */
-          ast_str_append(&prompt, 0, "%c", ast_opt_remote ? '>' : '#');
-          break;
+          case 'H': /* short hostname */
 
-        case '%': /* literal % */
-          ast_str_append(&prompt, 0, "%c", '%');
-          break;
+            if (!gethostname(hostname, sizeof(hostname) - 1)) {
+              char *dotptr;
 
-        case '\0': /* % is last character - prevent bug */
-          t--;
-          break;
+              if ((dotptr = strchr(hostname, '.'))) {
+                *dotptr = '\0';
+              }
+              ast_str_append(&prompt, 0, "%s", hostname);
+            } else {
+              ast_str_append(&prompt, 0, "%s", "localhost");
+            }
+            break;
+
+#ifdef HAVE_GETLOADAVG
+          case 'l': /* load avg */
+            t++;
+
+            if ((sscanf(t, "%30d", &which) == 1) && (which > 0) &&
+                (which <= 3)) {
+              double list[3];
+              getloadavg(list, 3);
+              ast_str_append(&prompt, 0, "%.2f", list[which - 1]);
+              cli_prompt_changes++;
+            }
+            break;
+
+#endif              /* ifdef HAVE_GETLOADAVG */
+          case 's': /* Asterisk system name (from asterisk.conf) */
+            ast_str_append(&prompt, 0, "%s", libcutil_get_config_system_name());
+            break;
+
+          case 't': /* time */
+
+            if (ast_localtime(&ts, &tm, NULL)) {
+              ast_strftime(tmp, sizeof(tmp), "%H:%M:%S", &tm);
+              ast_str_append(&prompt, 0, "%s", tmp);
+              cli_prompt_changes++;
+            }
+            break;
+
+          case 'u': /* username */
+
+            if ((pw = getpwuid(getuid()))) {
+              ast_str_append(&prompt, 0, "%s", pw->pw_name);
+            }
+            break;
+
+          case '#': /* process console or remote? */
+            ast_str_append(&prompt, 0, "%c", ast_opt_remote ? '>' : '#');
+            break;
+
+          case '%': /* literal % */
+            ast_str_append(&prompt, 0, "%c", '%');
+            break;
+
+          case '\0': /* % is last character - prevent bug */
+            t--;
+            break;
         }
       } else {
         ast_str_append(&prompt, 0, "%c", *t);
@@ -1034,41 +970,41 @@ static char* cli_prompt(EditLine *editline)
     }
   } else {
     ast_str_set(&prompt, 0, "%s%s",
-                !ast_strlen_zero(
-                  libcutil_get_remotehostname()) ? libcutil_get_remotehostname() : "",
+                !ast_strlen_zero(libcutil_get_remotehostname())
+                    ? libcutil_get_remotehostname()
+                    : "",
                 CUTIL_PROMPT);
   }
 
   return ast_str_buffer(prompt);
 }
 
-# ifdef HAVE_LIBEDIT_IS_UNICODE
+#ifdef HAVE_LIBEDIT_IS_UNICODE
 static int ast_el_read_char(EditLine *editline, wchar_t *cp)
-# else /* ifdef HAVE_LIBEDIT_IS_UNICODE */
-static int ast_el_read_char(EditLine * editline, char * cp)
-# endif  /* ifdef HAVE_LIBEDIT_IS_UNICODE */
+#else  /* ifdef HAVE_LIBEDIT_IS_UNICODE */
+static int ast_el_read_char(EditLine *editline, char *cp)
+#endif /* ifdef HAVE_LIBEDIT_IS_UNICODE */
 {
   int num_read = 0;
-  int lastpos  = 0;
+  int lastpos = 0;
   struct pollfd fds[2];
   int res;
   int max;
 
-# define EL_BUF_SIZE 512
+#define EL_BUF_SIZE 512
   char buf[EL_BUF_SIZE];
 
   for (;;) {
-    max           = 1;
-    fds[0].fd     = libcutil_get_consock();
+    max = 1;
+    fds[0].fd = libcutil_get_consock();
     fds[0].events = POLLIN;
 
     if (!ast_opt_exec) {
-      fds[1].fd     = STDIN_FILENO;
+      fds[1].fd = STDIN_FILENO;
       fds[1].events = POLLIN;
       max++;
     }
     res = ast_poll(fds, max, -1);
-
 
     if (res < 0) {
       /*if (sig_flags.need_quit || sig_flags.need_quit_handler)*/
@@ -1083,15 +1019,14 @@ static int ast_el_read_char(EditLine * editline, char * cp)
       char c = '\0';
       num_read = read(STDIN_FILENO, &c, 1);
 
-
       if (num_read < 1) {
         break;
       } else {
-# ifdef  HAVE_LIBEDIT_IS_UNICODE
+#ifdef HAVE_LIBEDIT_IS_UNICODE
         *cp = btowc(c);
-# else /* ifdef  HAVE_LIBEDIT_IS_UNICODE */
+#else  /* ifdef  HAVE_LIBEDIT_IS_UNICODE */
         *cp = c;
-# endif  /* ifdef  HAVE_LIBEDIT_IS_UNICODE */
+#endif /* ifdef  HAVE_LIBEDIT_IS_UNICODE */
         return num_read;
       }
     }
@@ -1112,14 +1047,14 @@ static int ast_el_read_char(EditLine * editline, char * cp)
 
           for (tries = 0; tries < 30 * reconnects_per_second; tries++) {
             if (ast_tryconnect()) {
-              fprintf(stderr,
-                      "Reconnect succeeded after %.3f seconds\n",
+              fprintf(stderr, "Reconnect succeeded after %.3f seconds\n",
                       1.0 / reconnects_per_second * tries);
               printf("%s", term_quit());
               WELCOME_MESSAGE;
               send_rasterisk_connect_commands();
               break;
-            } else usleep(1000000 / reconnects_per_second);
+            } else
+              usleep(1000000 / reconnects_per_second);
           }
 
           if (tries >= 30 * reconnects_per_second) {
@@ -1134,18 +1069,19 @@ static int ast_el_read_char(EditLine * editline, char * cp)
 
       /* Write over the CLI prompt */
       if (!ast_opt_exec && !lastpos) {
-        if (write(STDOUT_FILENO, "\r[0K", 5) < 0) {}
+        if (write(STDOUT_FILENO, "\r[0K", 5) < 0) {
+        }
       }
 
       console_print(buf);
 
       if ((res < EL_BUF_SIZE - 1) &&
           ((buf[res - 1] == '\n') || ((res >= 2) && (buf[res - 2] == '\n')))) {
-# ifdef  HAVE_LIBEDIT_IS_UNICODE
+#ifdef HAVE_LIBEDIT_IS_UNICODE
         *cp = btowc(CC_REFRESH);
-# else /* ifdef  HAVE_LIBEDIT_IS_UNICODE */
+#else  /* ifdef  HAVE_LIBEDIT_IS_UNICODE */
         *cp = CC_REFRESH;
-# endif  /* ifdef  HAVE_LIBEDIT_IS_UNICODE */
+#endif /* ifdef  HAVE_LIBEDIT_IS_UNICODE */
         return 1;
       } else {
         lastpos = 1;
@@ -1153,18 +1089,17 @@ static int ast_el_read_char(EditLine * editline, char * cp)
     }
   }
 
-# ifdef  HAVE_LIBEDIT_IS_UNICODE
+#ifdef HAVE_LIBEDIT_IS_UNICODE
   *cp = btowc('\0');
-# else /* ifdef  HAVE_LIBEDIT_IS_UNICODE */
+#else  /* ifdef  HAVE_LIBEDIT_IS_UNICODE */
   *cp = '\0';
-# endif  /* ifdef  HAVE_LIBEDIT_IS_UNICODE */
+#endif /* ifdef  HAVE_LIBEDIT_IS_UNICODE */
 
   return 0;
 }
 
 /* This is the main console CLI command handler.  Run by the main() thread. */
-void consolehandler(const char *s)
-{
+void consolehandler(const char *s) {
   printf("%s", ast_insteadof_term_end());
   fflush(stdout);
 
@@ -1173,65 +1108,52 @@ void consolehandler(const char *s)
 
   /* The real handler for bang */
   if (s[0] == '!') {
-    if (s[1]) ast_safe_system(s + 1);
-    else ast_safe_system(getenv("SHELL") ? getenv("SHELL") : "/bin/sh");
-  } else ast_cli_command(STDOUT_FILENO, s);
+    if (s[1])
+      ast_safe_system(s + 1);
+    else
+      ast_safe_system(getenv("SHELL") ? getenv("SHELL") : "/bin/sh");
+  } else
+    ast_cli_command(STDOUT_FILENO, s);
 }
 
-int console_set_el_gchar_fn(void)
-{
+int console_set_el_gchar_fn(void) {
   return ast_el_set_gchar_handler(ast_el_read_char);
 }
 
-const char* console_el_get_buf(int *num)
-{
-  return ast_el_get_buf(num);
-}
+const char *console_el_get_buf(int *num) { return ast_el_get_buf(num); }
 
-int console_el_init(void)
-{
+int console_el_init(void) {
   ast_el_initialize_wrap(cli_prompt, cli_complete);
 
   ast_el_read_default_histfile();
   return 0;
 }
 
-void ast_close_fds_above_n(int n)
-{
-  closefrom(n + 1);
-}
+void ast_close_fds_above_n(int n) { closefrom(n + 1); }
 
 /* Sending messages from the daemon back to the display requires _excluding_ the
    terminating NULL */
-int fdprint(int fd, const char *s)
-{
-  return write(fd, s, strlen(s));
-}
+int fdprint(int fd, const char *s) { return write(fd, s, strlen(s)); }
 
 /* Sending commands from consoles back to the daemon requires a terminating NULL
  */
-int fdsend(int fd, const char *s)
-{
-  return write(fd, s, strlen(s) + 1);
-}
+int fdsend(int fd, const char *s) { return write(fd, s, strlen(s) + 1); }
 
-void ast_register_thread(char *name)
-{
+void ast_register_thread(char *name) {
   struct thread_list_t *new = ast_calloc(1, sizeof(*new));
 
   if (!new) return;
 
   ast_assert(multi_thread_safe);
-  new->id   = pthread_self();
-  new->lwp  = ast_get_tid();
+  new->id = pthread_self();
+  new->lwp = ast_get_tid();
   new->name = name; /* steal the allocated memory for the thread name */
   AST_RWLIST_WRLOCK(&thread_list);
   AST_RWLIST_INSERT_HEAD(&thread_list, new, list);
   AST_RWLIST_UNLOCK(&thread_list);
 }
 
-void ast_unregister_thread(void *id)
-{
+void ast_unregister_thread(void *id) {
   struct thread_list_t *x;
 
   AST_RWLIST_WRLOCK(&thread_list);
@@ -1252,9 +1174,7 @@ void ast_unregister_thread(void *id)
 
 #endif /* if !defined(LOW_MEMORY) */
 
-
-void ast_run_atexits(int run_cleanups)
-{
+void ast_run_atexits(int run_cleanups) {
   struct ast_atexit *ae;
 
   AST_LIST_LOCK(&atexits);
@@ -1268,8 +1188,7 @@ void ast_run_atexits(int run_cleanups)
   AST_LIST_UNLOCK(&atexits);
 }
 
-static void __ast_unregister_atexit(void (*func)(void))
-{
+static void __ast_unregister_atexit(void (*func)(void)) {
   struct ast_atexit *ae;
 
   AST_LIST_TRAVERSE_SAFE_BEGIN(&atexits, ae, list) {
@@ -1282,8 +1201,7 @@ static void __ast_unregister_atexit(void (*func)(void))
   AST_LIST_TRAVERSE_SAFE_END;
 }
 
-static int register_atexit(void (*func)(void), int is_cleanup)
-{
+static int register_atexit(void (*func)(void), int is_cleanup) {
   struct ast_atexit *ae;
 
   ae = ast_calloc(1, sizeof(*ae));
@@ -1291,7 +1209,7 @@ static int register_atexit(void (*func)(void), int is_cleanup)
   if (!ae) {
     return -1;
   }
-  ae->func       = func;
+  ae->func = func;
   ae->is_cleanup = is_cleanup;
 
   AST_LIST_LOCK(&atexits);
@@ -1302,40 +1220,34 @@ static int register_atexit(void (*func)(void), int is_cleanup)
   return 0;
 }
 
-int ast_register_atexit(void (*func)(void))
-{
-  return register_atexit(func, 0);
-}
+int ast_register_atexit(void (*func)(void)) { return register_atexit(func, 0); }
 
-int ast_register_cleanup(void (*func)(void))
-{
+int ast_register_cleanup(void (*func)(void)) {
   return register_atexit(func, 1);
 }
 
-void ast_unregister_atexit(void (*func)(void))
-{
+void ast_unregister_atexit(void (*func)(void)) {
   AST_LIST_LOCK(&atexits);
   __ast_unregister_atexit(func);
   AST_LIST_UNLOCK(&atexits);
 }
 
-int ast_safe_system(const char *s)
-{
+int ast_safe_system(const char *s) {
   pid_t pid;
-  int   res;
-  int   status;
+  int res;
+  int status;
 
 #if defined(HAVE_WORKING_FORK) || defined(HAVE_WORKING_VFORK)
   ast_replace_sigchld();
 
-# ifdef HAVE_WORKING_FORK
+#ifdef HAVE_WORKING_FORK
   pid = fork();
-# else /* ifdef HAVE_WORKING_FORK */
+#else  /* ifdef HAVE_WORKING_FORK */
   pid = vfork();
-# endif  /* ifdef HAVE_WORKING_FORK */
+#endif /* ifdef HAVE_WORKING_FORK */
 
   if (pid == 0) {
-# ifdef HAVE_CAP
+#ifdef HAVE_CAP
     cap_t cap = cap_from_text("cap_net_admin-eip");
 
     if (cap_set_proc(cap)) {
@@ -1343,14 +1255,14 @@ int ast_safe_system(const char *s)
       ast_log(LOG_WARNING, "Unable to remove capabilities.\n");
     }
     cap_free(cap);
-# endif /* ifdef HAVE_CAP */
-# ifdef HAVE_WORKING_FORK
+#endif /* ifdef HAVE_CAP */
+#ifdef HAVE_WORKING_FORK
 
     if (ast_opt_high_priority) ast_set_priority(0);
 
     /* Close file descriptors and launch system command */
     ast_close_fds_above_n(STDERR_FILENO);
-# endif /* ifdef HAVE_WORKING_FORK */
+#endif /* ifdef HAVE_WORKING_FORK */
     execl("/bin/sh", "/bin/sh", "-c", s, (char *)NULL);
     _exit(1);
   } else if (pid > 0) {
@@ -1360,7 +1272,8 @@ int ast_safe_system(const char *s)
       if (res > -1) {
         res = WIFEXITED(status) ? WEXITSTATUS(status) : -1;
         break;
-      } else if (errno != EINTR) break;
+      } else if (errno != EINTR)
+        break;
     }
   } else {
     ast_log(LOG_WARNING, "Fork failed: %s\n", strerror(errno));
@@ -1370,7 +1283,7 @@ int ast_safe_system(const char *s)
   ast_unreplace_sigchld();
 #else /* !defined(HAVE_WORKING_FORK) && !defined(HAVE_WORKING_VFORK) */
   res = -1;
-#endif  /* if defined(HAVE_WORKING_FORK) || defined(HAVE_WORKING_VFORK) */
+#endif /* if defined(HAVE_WORKING_FORK) || defined(HAVE_WORKING_VFORK) */
 
   return res;
 }
@@ -1379,8 +1292,7 @@ int ast_safe_system(const char *s)
  * everything else.  If your PBX has heavy activity on it, this is a
  * good thing.
  */
-int ast_set_priority(int pri)
-{
+int ast_set_priority(int pri) {
   struct sched_param sched;
 
   memset(&sched, 0, sizeof(sched));
@@ -1392,20 +1304,22 @@ int ast_set_priority(int pri)
     if (sched_setscheduler(0, SCHED_RR, &sched)) {
       ast_log(LOG_WARNING, "Unable to set high priority\n");
       return -1;
-    } else ast_verb(1, "Set to realtime thread\n");
+    } else
+      ast_verb(1, "Set to realtime thread\n");
   } else {
     sched.sched_priority = 0;
 
     /* According to the manpage, these parameters can never fail. */
     sched_setscheduler(0, SCHED_OTHER, &sched);
   }
-#else /* ifdef __linux__ */
+#else  /* ifdef __linux__ */
 
   if (pri) {
     if (setpriority(PRIO_PROCESS, 0, -10) == -1) {
       ast_log(LOG_WARNING, "Unable to set high priority\n");
       return -1;
-    } else ast_verb(1, "Set to high priority\n");
+    } else
+      ast_verb(1, "Set to high priority\n");
   } else {
     /* According to the manpage, these parameters can never fail. */
     setpriority(PRIO_PROCESS, 0, 0);
@@ -1414,8 +1328,7 @@ int ast_set_priority(int pri)
   return 0;
 }
 
-int ast_all_zeros(const char *s)
-{
+int ast_all_zeros(const char *s) {
   while (*s) {
     if (*s > 32) return 0;
 
@@ -1424,25 +1337,20 @@ int ast_all_zeros(const char *s)
   return 1;
 }
 
-int show_version(void)
-{
+int show_version(void) {
   printf("LibCutil CLI %s\n", ast_get_version());
   return 0;
 }
 
 /*! \brief Set an X-term or screen title */
-static void set_title(char *text)
-{
-  if (getenv("TERM") && strstr(getenv("TERM"), "xterm")) fprintf(stdout,
-                                                                 "\033]2;%s\007",
-                                                                 text);
+static void set_title(char *text) {
+  if (getenv("TERM") && strstr(getenv("TERM"), "xterm"))
+    fprintf(stdout, "\033]2;%s\007", text);
 }
 
-static void set_icon(char *text)
-{
-  if (getenv("TERM") && strstr(getenv("TERM"), "xterm")) fprintf(stdout,
-                                                                 "\033]1;%s\007",
-                                                                 text);
+static void set_icon(char *text) {
+  if (getenv("TERM") && strstr(getenv("TERM"), "xterm"))
+    fprintf(stdout, "\033]1;%s\007", text);
 }
 
 AST_MUTEX_DEFINE_STATIC(safe_system_lock);
@@ -1453,8 +1361,7 @@ AST_MUTEX_DEFINE_STATIC(safe_system_lock);
 static unsigned int safe_system_level = 0;
 static struct sigaction safe_system_prev_handler;
 
-void ast_replace_sigchld(void)
-{
+void ast_replace_sigchld(void) {
   unsigned int level;
 
   ast_mutex_lock(&safe_system_lock);
@@ -1468,8 +1375,7 @@ void ast_replace_sigchld(void)
   ast_mutex_unlock(&safe_system_lock);
 }
 
-void ast_unreplace_sigchld(void)
-{
+void ast_unreplace_sigchld(void) {
   unsigned int level;
 
   ast_mutex_lock(&safe_system_lock);
@@ -1483,8 +1389,7 @@ void ast_unreplace_sigchld(void)
   ast_mutex_unlock(&safe_system_lock);
 }
 
-static int can_safely_quit(shutdown_nice_t niceness, int restart)
-{
+static int can_safely_quit(shutdown_nice_t niceness, int restart) {
   int waited = 0;
 
   /* Check if someone else isn't already doing this. */
@@ -1499,7 +1404,6 @@ static int can_safely_quit(shutdown_nice_t niceness, int restart)
   }
   shuttingdown = niceness;
   ast_mutex_unlock(&safe_system_lock);
-
 
   /* Re-acquire lock and check if someone changed the niceness, in which
    * case someone else has taken over the shutdown.
@@ -1538,12 +1442,10 @@ static int can_safely_quit(shutdown_nice_t niceness, int restart)
 }
 
 /*! Called when exiting is certain. */
-static void really_quit(int num, shutdown_nice_t niceness, int restart)
-{
+static void really_quit(int num, shutdown_nice_t niceness, int restart) {
   int active_channels;
   struct ast_json *json_object = NULL;
-  int run_cleanups             = niceness >= SHUTDOWN_NICE;
-
+  int run_cleanups = niceness >= SHUTDOWN_NICE;
 
   if (!restart) {
     ast_sd_notify("STOPPING=1");
@@ -1577,11 +1479,9 @@ static void really_quit(int num, shutdown_nice_t niceness, int restart)
    * topics or message types
    */
   if (!ast_opt_remote) {
-    json_object = ast_json_pack("{s: s, s: s}",
-                                "Shutdown",
+    json_object = ast_json_pack("{s: s, s: s}", "Shutdown",
                                 active_channels ? "Uncleanly" : "Cleanly",
-                                "Restart",
-                                restart ? "True" : "False");
+                                "Restart", restart ? "True" : "False");
     ast_json_unref(json_object);
     json_object = NULL;
   }
@@ -1599,7 +1499,6 @@ static void really_quit(int num, shutdown_nice_t niceness, int restart)
   }
 
   if (libcutil_get_socket() > -1) close(libcutil_get_socket());
-
 
   if (!ast_opt_remote) unlink(libcutil_get_config_pid());
 
@@ -1639,7 +1538,7 @@ static void really_quit(int num, shutdown_nice_t niceness, int restart)
     close_logger();
     clean_time_zones();
   }
-#else /* if 0 */
+#else  /* if 0 */
 
   /* close logger */
   close_logger();
@@ -1649,8 +1548,7 @@ static void really_quit(int num, shutdown_nice_t niceness, int restart)
   exit(0);
 }
 
-void quit_handler(int num, shutdown_nice_t niceness, int restart)
-{
+void quit_handler(int num, shutdown_nice_t niceness, int restart) {
   if (can_safely_quit(niceness, restart)) {
     really_quit(num, niceness, restart);
 
@@ -1660,8 +1558,7 @@ void quit_handler(int num, shutdown_nice_t niceness, int restart)
   /* It wasn't our time. */
 }
 
-void shutdown_fast_wrap(int num,  int restart)
-{
+void shutdown_fast_wrap(int num, int restart) {
   if (can_safely_quit(SHUTDOWN_FAST, restart)) {
     really_quit(num, SHUTDOWN_FAST, restart);
 
@@ -1677,15 +1574,13 @@ void shutdown_fast_wrap(int num,  int restart)
  * system call.  We don't actually need to do anything though.
  * Remember: Cannot EVER ast_log from within a signal handler
  */
-static void _urg_handler(int num)
-{}
+static void _urg_handler(int num) {}
 
 static struct sigaction urg_handler = {
-  .sa_handler = _urg_handler,
+    .sa_handler = _urg_handler,
 };
 
-static void _hup_handler(int num)
-{
+static void _hup_handler(int num) {
   int a = 0, save_errno = errno;
 
   printf("Received HUP signal -- Reloading configs\n");
@@ -1704,34 +1599,29 @@ static void _hup_handler(int num)
 }
 
 static struct sigaction hup_handler = {
-  .sa_handler = _hup_handler,
-  .sa_flags   = SA_RESTART,
+    .sa_handler = _hup_handler, .sa_flags = SA_RESTART,
 };
 
-static void _child_handler(int sig)
-{
+static void _child_handler(int sig) {
   /* Must not ever ast_log or ast_verbose within signal handler */
   int n, status, save_errno = errno;
 
   /*
    * Reap all dead children -- not just one
    */
-  for (n = 0; waitpid(-1, &status, WNOHANG) > 0; n++) ;
+  for (n = 0; waitpid(-1, &status, WNOHANG) > 0; n++)
+    ;
 
-  if ((n == 0) &&
-      libcutil_get_option_debug()) printf(
-      "Huh?  Child handler, but nobody there?\n");
+  if ((n == 0) && libcutil_get_option_debug())
+    printf("Huh?  Child handler, but nobody there?\n");
   errno = save_errno;
 }
 
 static struct sigaction child_handler = {
-  .sa_handler = _child_handler,
-  .sa_flags   = SA_RESTART,
+    .sa_handler = _child_handler, .sa_flags = SA_RESTART,
 };
 
-
-static void __quit_handler(int num)
-{
+static void __quit_handler(int num) {
   int a = 0;
 
   sig_flags.need_quit = 1;
@@ -1747,14 +1637,12 @@ static void __quit_handler(int num)
 }
 
 static struct sigaction ignore_sig_handler = {
-  .sa_handler = SIG_IGN,
+    .sa_handler = SIG_IGN,
 };
 
-
-static void* monitor_sig_flags(void *unused)
-{
+static void *monitor_sig_flags(void *unused) {
   for (;;) {
-    struct pollfd p = { sig_alert_pipe[0], POLLIN, 0 };
+    struct pollfd p = {sig_alert_pipe[0], POLLIN, 0};
     int a;
     ast_poll(&p, 1, -1);
 
@@ -1770,14 +1658,14 @@ static void* monitor_sig_flags(void *unused)
       }
     }
 
-    if (read(sig_alert_pipe[0], &a, sizeof(a)) != sizeof(a)) {}
+    if (read(sig_alert_pipe[0], &a, sizeof(a)) != sizeof(a)) {
+    }
   }
 
   return NULL;
 }
 
-static inline void check_init(int init_result, const char *name)
-{
+static inline void check_init(int init_result, const char *name) {
   if (init_result) {
     printf("%s initialization failed.\n%s", name, term_quit());
     ast_run_atexits(0);
@@ -1788,8 +1676,7 @@ static inline void check_init(int init_result, const char *name)
 /*!
  * \brief enable or disable a logging level to a specified console
  */
-void ast_console_toggle_loglevel(int fd, int level, int state)
-{
+void ast_console_toggle_loglevel(int fd, int level, int state) {
   int x;
 
   if (level >= NUMLOGLEVELS) {
@@ -1811,8 +1698,7 @@ void ast_console_toggle_loglevel(int fd, int level, int state)
 /*!
  * \brief mute or unmute a console from logging
  */
-void ast_console_toggle_mute(int fd, int silent)
-{
+void ast_console_toggle_mute(int fd, int silent) {
   int x;
 
   for (x = 0; x < AST_MAX_CONNECTS; x++) {
@@ -1835,16 +1721,13 @@ void ast_console_toggle_mute(int fd, int silent)
 /*!
  * \brief log the string to all attached network console clients
  */
-static void ast_network_puts_mutable(const char *string, int level, int sublevel)
-{
+static void ast_network_puts_mutable(const char *string, int level,
+                                     int sublevel) {
   int x;
 
   for (x = 0; x < AST_MAX_CONNECTS; ++x) {
-    if ((consoles[x].fd < 0)
-        || consoles[x].mute
-        || consoles[x].levels[level]
-        || ((level == __LOG_VERBOSE) &&
-            (consoles[x].option_verbose < sublevel))) {
+    if ((consoles[x].fd < 0) || consoles[x].mute || consoles[x].levels[level] ||
+        ((level == __LOG_VERBOSE) && (consoles[x].option_verbose < sublevel))) {
       continue;
     }
     fdprint(consoles[x].p[1], string);
@@ -1855,15 +1738,12 @@ static void ast_network_puts_mutable(const char *string, int level, int sublevel
  * \brief log the string to the root console, and all attached
  * network console clients
  */
-void ast_console_puts_mutable(const char *string, int level)
-{
+void ast_console_puts_mutable(const char *string, int level) {
   ast_console_puts_mutable_full(string, level, 0);
 }
 
-void ast_console_puts_mutable_full(const char *message,
-                                   int         level,
-                                   int         sublevel)
-{
+void ast_console_puts_mutable_full(const char *message, int level,
+                                   int sublevel) {
   /* Send to the root console */
   console_print(message);
 
@@ -1876,41 +1756,42 @@ void ast_console_puts_mutable_full(const char *message,
   ast_network_puts_mutable(message, level, sublevel);
 }
 
-static void set_header(char *outbuf, int maxout, char level)
-{
+static void set_header(char *outbuf, int maxout, char level) {
   const char *cmp;
   char date[40];
 
   switch (level) {
-  case 0: cmp = NULL;
-    break;
+    case 0:
+      cmp = NULL;
+      break;
 
-  case 1: cmp = VERBOSE_PREFIX_1;
-    break;
+    case 1:
+      cmp = VERBOSE_PREFIX_1;
+      break;
 
-  case 2: cmp = VERBOSE_PREFIX_2;
-    break;
+    case 2:
+      cmp = VERBOSE_PREFIX_2;
+      break;
 
-  case 3: cmp = VERBOSE_PREFIX_3;
-    break;
+    case 3:
+      cmp = VERBOSE_PREFIX_3;
+      break;
 
-  default: cmp = VERBOSE_PREFIX_4;
-    break;
+    default:
+      cmp = VERBOSE_PREFIX_4;
+      break;
   }
 
   if (ast_opt_timestamp) {
-    struct ast_tm  tm;
+    struct ast_tm tm;
     struct timeval now = ast_tvnow();
     ast_localtime(&now, &tm, NULL);
     ast_strftime(date, sizeof(date), ast_logger_get_dateformat(), &tm);
   }
 
-  snprintf(outbuf, maxout, "%s%s%s%s%s%s",
-           ast_opt_timestamp ? "[" : "",
-           ast_opt_timestamp ? date : "",
-           ast_opt_timestamp ? "] " : "",
-           cmp ? ast_term_color(COLOR_GRAY, 0) : "",
-           cmp ? cmp : "",
+  snprintf(outbuf, maxout, "%s%s%s%s%s%s", ast_opt_timestamp ? "[" : "",
+           ast_opt_timestamp ? date : "", ast_opt_timestamp ? "] " : "",
+           cmp ? ast_term_color(COLOR_GRAY, 0) : "", cmp ? cmp : "",
            cmp ? ast_term_reset() : "");
 }
 
@@ -1918,8 +1799,7 @@ struct console_state_data {
   char verbose_line_level;
 };
 
-static int console_state_init(void *ptr)
-{
+static int console_state_init(void *ptr) {
   struct console_state_data *state = ptr;
 
   state->verbose_line_level = 0;
@@ -1928,11 +1808,9 @@ static int console_state_init(void *ptr)
 
 AST_THREADSTORAGE_CUSTOM(console_state, console_state_init, ast_free_ptr);
 
-
-static int console_print(const char *s)
-{
+static int console_print(const char *s) {
   struct console_state_data *state =
-    ast_threadstorage_get(&console_state, sizeof(*state));
+      ast_threadstorage_get(&console_state, sizeof(*state));
 
   char prefix[80];
   const char *c;
@@ -1959,7 +1837,7 @@ static int console_print(const char *s)
       ++s;
       newline = 1;
     } else {
-      s       = strchr(c, '\0');
+      s = strchr(c, '\0');
       newline = 0;
     }
 
@@ -2000,14 +1878,11 @@ static int console_print(const char *s)
   return res;
 }
 
-static void daemon_run(int                isroot,
-                       const char        *runuser,
-                       const char        *rungroup,
-                       fully_booted_event fully_booted)
-{
+static void daemon_run(int isroot, const char *runuser, const char *rungroup,
+                       fully_booted_event fully_booted) {
   sigset_t sigs;
-  int      num;
-  char    *buf;
+  int num;
+  char *buf;
 
   ast_mainpid = getpid();
 
@@ -2018,19 +1893,17 @@ static void daemon_run(int                isroot,
   printf("%s", ast_insteadof_term_end());
   fflush(stdout);
 
-
   ast_json_init();
   threadstorage_init();
   ast_builtins_init();
 
   check_init(ast_utils_init(), "Utilities");
 
-  check_init(init_logger(),    "Logger");
+  check_init(init_logger(), "Logger");
 
   if (ast_opt_console) {
     console_el_init();
   }
-
 
   if (ast_opt_no_fork) {
     consolethread = pthread_self();
@@ -2048,11 +1921,10 @@ static void daemon_run(int                isroot,
   (void)sigaddset(&sigs, SIGWINCH);
   pthread_sigmask(SIG_BLOCK, &sigs, NULL);
   sigaction(SIGURG, &urg_handler, NULL);
-  signal(SIGINT,  __quit_handler);
+  signal(SIGINT, __quit_handler);
   signal(SIGTERM, __quit_handler);
-  sigaction(SIGHUP,  &hup_handler,        NULL);
+  sigaction(SIGHUP, &hup_handler, NULL);
   sigaction(SIGPIPE, &ignore_sig_handler, NULL);
-
 
   fully_booted();
 
@@ -2069,11 +1941,8 @@ static void daemon_run(int                isroot,
     ast_pthread_create_detached(&mon_sig_flags, NULL, monitor_sig_flags, NULL);
 
     set_icon("LibCutil");
-    snprintf(title,
-             sizeof(title),
-             "LibCutil Console on '%s' (pid %ld)",
-             hostname,
-             (long)ast_mainpid);
+    snprintf(title, sizeof(title), "LibCutil Console on '%s' (pid %ld)",
+             hostname, (long)ast_mainpid);
     set_title(title);
 
     /*el_set(el, EL_GETCFN, ast_el_read_char);*/
@@ -2088,7 +1957,7 @@ static void daemon_run(int                isroot,
       /*buf = (char *) el_gets(el, &num);*/
       buf = console_el_get_buf(&num);
 
-      if (!buf && (write(1, "", 1) < 0)) return;  /* quit */
+      if (!buf && (write(1, "", 1) < 0)) return; /* quit */
 
       if (buf) {
         if (buf[strlen(buf) - 1] == '\n') buf[strlen(buf) - 1] = '\0';
@@ -2102,13 +1971,9 @@ static void daemon_run(int                isroot,
   monitor_sig_flags(NULL);
 }
 
-static void __remote_quit_handler(int num)
-{
-  sig_flags.need_quit = 1;
-}
+static void __remote_quit_handler(int num) { sig_flags.need_quit = 1; }
 
-static int remoteconsolehandler(const char *s)
-{
+static int remoteconsolehandler(const char *s) {
   int ret = 0;
 
   /* Called when readline data is available */
@@ -2120,11 +1985,13 @@ static int remoteconsolehandler(const char *s)
 
   /* The real handler for bang */
   if (s[0] == '!') {
-    if (s[1]) ast_safe_system(s + 1);
-    else ast_safe_system(getenv("SHELL") ? getenv("SHELL") : "/bin/sh");
+    if (s[1])
+      ast_safe_system(s + 1);
+    else
+      ast_safe_system(getenv("SHELL") ? getenv("SHELL") : "/bin/sh");
     ret = 1;
-  } else if (((strncasecmp(s, "quit",
-                           4) == 0) || (strncasecmp(s, "exit", 4) == 0)) &&
+  } else if (((strncasecmp(s, "quit", 4) == 0) ||
+              (strncasecmp(s, "exit", 4) == 0)) &&
              ((s[4] == '\0') || isspace(s[4]))) {
     quit_handler(0, SHUTDOWN_FAST, 0);
     ret = 1;
@@ -2180,29 +2047,26 @@ static int remoteconsolehandler(const char *s)
   return ret;
 }
 
-static void ast_remotecontrol(char *data)
-{
-  char  buf[256] = "";
-  int   res;
+static void ast_remotecontrol(char *data) {
+  char buf[256] = "";
+  int res;
   char *hostname;
   char *cpid;
   char *version;
-  int   pid;
+  int pid;
   char *stringp = NULL;
 
   char *ebuf;
-  int   num = 0;
+  int num = 0;
 
   ast_term_init();
   printf("%s", ast_insteadof_term_end());
   fflush(stdout);
 
-
   memset(&sig_flags, 0, sizeof(sig_flags));
-  signal(SIGINT,  __remote_quit_handler);
+  signal(SIGINT, __remote_quit_handler);
   signal(SIGTERM, __remote_quit_handler);
-  signal(SIGHUP,  __remote_quit_handler);
-
+  signal(SIGHUP, __remote_quit_handler);
 
   if (read(libcutil_get_consock(), buf, sizeof(buf) - 1) < 0) {
     ast_log(LOG_ERROR, "read() failed: %s\n", strerror(errno));
@@ -2210,8 +2074,8 @@ static void ast_remotecontrol(char *data)
   }
 
   if (data) {
-    char  prefix[] = "cli quit after ";
-    char *tmp      = ast_alloca(strlen(data) + strlen(prefix) + 1);
+    char prefix[] = "cli quit after ";
+    char *tmp = ast_alloca(strlen(data) + strlen(prefix) + 1);
     sprintf(tmp, "%s%s", prefix, data);
 
     if (write(libcutil_get_consock(), tmp, strlen(tmp) + 1) < 0) {
@@ -2222,34 +2086,35 @@ static void ast_remotecontrol(char *data)
       }
     }
   }
-  stringp  = buf;
+  stringp = buf;
   hostname = strsep(&stringp, "/");
-  cpid     = strsep(&stringp, "/");
-  version  = strsep(&stringp, "\n");
+  cpid = strsep(&stringp, "/");
+  version = strsep(&stringp, "\n");
 
   if (!version) version = "<Version Unknown>";
   stringp = hostname;
   strsep(&stringp, ".");
 
-  if (cpid) pid = atoi(cpid);
-  else pid = -1;
+  if (cpid)
+    pid = atoi(cpid);
+  else
+    pid = -1;
 
   if (!data) {
     send_rasterisk_connect_commands();
   }
 
-
   if (ast_opt_exec && data) { /* hack to print output then exit if asterisk -rx
                                  is used */
     int linefull = 1, prev_linefull = 1, prev_line_verbose = 0;
     struct pollfd fds;
-    fds.fd      = libcutil_get_consock();
-    fds.events  = POLLIN;
+    fds.fd = libcutil_get_consock();
+    fds.events = POLLIN;
     fds.revents = 0;
 
     while (ast_poll(&fds, 1, 60000) > 0) {
       char buffer[512] = "", *curline = buffer, *nextline;
-      int  not_written = 1;
+      int not_written = 1;
 
       if (sig_flags.need_quit || sig_flags.need_quit_handler) {
         break;
@@ -2285,7 +2150,7 @@ static void ast_remotecontrol(char *data)
         if ((!prev_linefull && !prev_line_verbose) ||
             (prev_linefull && (*curline > 0))) {
           prev_line_verbose = 0;
-          not_written       = 0;
+          not_written = 0;
 
           if (write(STDOUT_FILENO, curline, nextline - curline) < 0) {
             ast_log(LOG_WARNING, "write() failed: %s\n", strerror(errno));
@@ -2304,12 +2169,10 @@ static void ast_remotecontrol(char *data)
     return;
   }
 
-  ast_verbose("Connected to LibCutil CLI %s currently running on %s (pid = %d)\n",
-              version,
-              hostname,
-              pid);
+  ast_verbose(
+      "Connected to LibCutil CLI %s currently running on %s (pid = %d)\n",
+      version, hostname, pid);
   libcutil_set_remotehostname(hostname);
-
 
   ast_el_initialize_wrap(cli_prompt, cli_complete);
   ast_el_read_default_histfile();
@@ -2341,13 +2204,9 @@ static void ast_remotecontrol(char *data)
   printf("\nDisconnected from LibCutil CLI server\n");
 }
 
-static void enable_multi_thread_safe(void)
-{
-  multi_thread_safe = 1;
-}
+static void enable_multi_thread_safe(void) { multi_thread_safe = 1; }
 
-static void print_intro_message(const char *runuser, const char *rungroup)
-{
+static void print_intro_message(const char *runuser, const char *rungroup) {
   if (ast_opt_console || libcutil_get_option_verbose() ||
       (ast_opt_remote && !ast_opt_exec)) {
     WELCOME_MESSAGE;
@@ -2363,13 +2222,11 @@ static void print_intro_message(const char *runuser, const char *rungroup)
 }
 
 /*libcutil_process when lib init done. call this function in your main loop*/
-void libcutil_process(fully_booted_event event_handle)
-{
+void libcutil_process(fully_booted_event event_handle) {
   int isroot = 1, rundir_exists = 0;
   const char *runuser = NULL, *rungroup = NULL;
   char *xarg = NULL;
-  int   x;
-
+  int x;
 
   if (geteuid() != 0) isroot = 0;
 
@@ -2385,7 +2242,8 @@ void libcutil_process(fully_booted_event event_handle)
       rundir_exists = 1;
     } else {
       fprintf(stderr,
-              "Unable to create socket file directory.  Remote consoles will not be able to connect! (%s)\n",
+              "Unable to create socket file directory.  Remote consoles will "
+              "not be able to connect! (%s)\n",
               strerror(x));
       exit(1);
     }
@@ -2394,15 +2252,11 @@ void libcutil_process(fully_booted_event event_handle)
   // set config socket
   libcutil_set_config_socket();
 
-  if ((!rungroup) &&
-      !ast_strlen_zero(libcutil_get_config_run_group())) rungroup =
-      libcutil_get_config_run_group();
+  if ((!rungroup) && !ast_strlen_zero(libcutil_get_config_run_group()))
+    rungroup = libcutil_get_config_run_group();
 
-
-  if ((!runuser) &&
-      !ast_strlen_zero(libcutil_get_config_run_user())) runuser =
-      libcutil_get_config_run_user();
-
+  if ((!runuser) && !ast_strlen_zero(libcutil_get_config_run_user()))
+    runuser = libcutil_get_config_run_user();
 
 #ifndef __CYGWIN__
 
@@ -2419,15 +2273,15 @@ void libcutil_process(fully_booted_event event_handle)
       exit(1);
     }
 
-    if (!rundir_exists && chown(libcutil_get_config_run_dir(), -1, gr->gr_gid)) {
-      fprintf(stderr,
-              "Unable to chgrp run directory to %d (%s)\n",
-              (int)gr->gr_gid,
-              rungroup);
+    if (!rundir_exists &&
+        chown(libcutil_get_config_run_dir(), -1, gr->gr_gid)) {
+      fprintf(stderr, "Unable to chgrp run directory to %d (%s)\n",
+              (int)gr->gr_gid, rungroup);
     }
 
     if (setgid(gr->gr_gid)) {
-      fprintf(stderr, "Unable to setgid to %d (%s)\n", (int)gr->gr_gid, rungroup);
+      fprintf(stderr, "Unable to setgid to %d (%s)\n", (int)gr->gr_gid,
+              rungroup);
       exit(1);
     }
 
@@ -2438,9 +2292,9 @@ void libcutil_process(fully_booted_event event_handle)
   }
 
   if (runuser && !ast_opt_remote) {
-  # ifdef HAVE_CAP
+#ifdef HAVE_CAP
     int has_cap = 1;
-  # endif /* HAVE_CAP */
+#endif /* HAVE_CAP */
     struct passwd *pw;
     pw = getpwnam(runuser);
 
@@ -2450,22 +2304,19 @@ void libcutil_process(fully_booted_event event_handle)
     }
 
     if (chown(libcutil_get_config_run_dir(), pw->pw_uid, -1)) {
-      fprintf(stderr,
-              "Unable to chown run directory to %d (%s)\n",
-              (int)pw->pw_uid,
-              runuser);
+      fprintf(stderr, "Unable to chown run directory to %d (%s)\n",
+              (int)pw->pw_uid, runuser);
     }
-  # ifdef HAVE_CAP
+#ifdef HAVE_CAP
 
     if (prctl(PR_SET_KEEPCAPS, 1, 0, 0, 0)) {
       ast_log(LOG_WARNING, "Unable to keep capabilities.\n");
       has_cap = 0;
     }
-  # endif /* HAVE_CAP */
+#endif /* HAVE_CAP */
 
     if (!isroot && (pw->pw_uid != geteuid())) {
-      fprintf(stderr,
-              "main started as nonroot, but runuser '%s' requested.\n",
+      fprintf(stderr, "main started as nonroot, but runuser '%s' requested.\n",
               runuser);
       exit(1);
     }
@@ -2483,10 +2334,11 @@ void libcutil_process(fully_booted_event event_handle)
     }
 
     if (setuid(pw->pw_uid)) {
-      fprintf(stderr, "Unable to setuid to %d (%s)\n", (int)pw->pw_uid, runuser);
+      fprintf(stderr, "Unable to setuid to %d (%s)\n", (int)pw->pw_uid,
+              runuser);
       exit(1);
     }
-  # ifdef HAVE_CAP
+#ifdef HAVE_CAP
 
     if (has_cap) {
       cap_t cap;
@@ -2501,22 +2353,22 @@ void libcutil_process(fully_booted_event event_handle)
         fprintf(stderr, "Unable to drop capabilities.\n");
       }
     }
-  # endif /* HAVE_CAP */
+#endif /* HAVE_CAP */
   }
 
-  #endif   /* __CYGWIN__ */
+#endif /* __CYGWIN__ */
 
-  #ifdef linux
+#ifdef linux
 
   if (geteuid() && ast_opt_dump_core) {
     if (prctl(PR_SET_DUMPABLE, 1, 0, 0, 0) < 0) {
       fprintf(stderr,
-              "Unable to set the process for core dumps after changing to a non-root user. %s\n",
+              "Unable to set the process for core dumps after changing to a "
+              "non-root user. %s\n",
               strerror(errno));
     }
   }
-  #endif /* ifdef linux */
-
+#endif /* ifdef linux */
 
   if (ast_tryconnect()) {
     /* One is already running */
@@ -2540,8 +2392,7 @@ void libcutil_process(fully_booted_event event_handle)
       shutdown_fast_wrap(0, 0);
       exit(0);
     } else {
-      fprintf(stderr,
-              "already running on %s.  get your help for connect.\n",
+      fprintf(stderr, "already running on %s.  get your help for connect.\n",
               libcutil_get_config_socket());
       printf("%s", term_quit());
       exit(1);
@@ -2553,7 +2404,6 @@ void libcutil_process(fully_booted_event event_handle)
     printf("%s", term_quit());
     exit(1);
   }
-
 
   daemon_run(isroot, runuser, rungroup, event_handle);
 }

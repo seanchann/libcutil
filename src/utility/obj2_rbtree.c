@@ -24,10 +24,10 @@
 #include "libcutil.h"
 
 #include "libcutil/_private.h"
-#include "libcutil/astobj2.h"
+#include "libcutil/obj2.h"
 #include "libcutil/utils.h"
-#include "astobj2_private.h"
-#include "astobj2_container_private.h"
+#include "obj2_private.h"
+#include "obj2_container_private.h"
 
 /*!
  * A structure to hold the object held by the container and
@@ -135,8 +135,8 @@ struct rbtree_traversal_state_check {
    * If we have a division by zero compile error here then there
    * is not enough room for the state.  Increase AO2_TRAVERSAL_STATE_SIZE.
    */
-  char check[1 /
-             (AO2_TRAVERSAL_STATE_SIZE / sizeof(struct rbtree_traversal_state))];
+  char check[1 / (AO2_TRAVERSAL_STATE_SIZE /
+                  sizeof(struct rbtree_traversal_state))];
 };
 
 /*!
@@ -148,8 +148,7 @@ struct rbtree_traversal_state_check {
  *
  * \return Left most node.  Never NULL.
  */
-static struct rbtree_node* rb_node_most_left(struct rbtree_node *node)
-{
+static struct rbtree_node *rb_node_most_left(struct rbtree_node *node) {
   while (node->left) {
     node = node->left;
   }
@@ -166,8 +165,7 @@ static struct rbtree_node* rb_node_most_left(struct rbtree_node *node)
  *
  * \return Right most node.  Never NULL.
  */
-static struct rbtree_node* rb_node_most_right(struct rbtree_node *node)
-{
+static struct rbtree_node *rb_node_most_right(struct rbtree_node *node) {
   while (node->right) {
     node = node->right;
   }
@@ -185,8 +183,7 @@ static struct rbtree_node* rb_node_most_right(struct rbtree_node *node)
  * \retval node on success.
  * \retval NULL if no node.
  */
-static struct rbtree_node* rb_node_next(struct rbtree_node *node)
-{
+static struct rbtree_node *rb_node_next(struct rbtree_node *node) {
   if (node->right) {
     return rb_node_most_left(node->right);
   }
@@ -212,8 +209,7 @@ static struct rbtree_node* rb_node_next(struct rbtree_node *node)
  * \retval node on success.
  * \retval NULL if no node.
  */
-static struct rbtree_node* rb_node_prev(struct rbtree_node *node)
-{
+static struct rbtree_node *rb_node_prev(struct rbtree_node *node) {
   if (node->left) {
     return rb_node_most_right(node->left);
   }
@@ -239,8 +235,7 @@ static struct rbtree_node* rb_node_prev(struct rbtree_node *node)
  * \retval node on success.
  * \retval NULL if no node.
  */
-static struct rbtree_node* rb_node_pre(struct rbtree_node *node)
-{
+static struct rbtree_node *rb_node_pre(struct rbtree_node *node) {
   /* Visit the children if the node has any. */
   if (node->left) {
     return node->left;
@@ -277,8 +272,7 @@ static struct rbtree_node* rb_node_pre(struct rbtree_node *node)
  * \retval node on success.
  * \retval NULL if no node.
  */
-static struct rbtree_node* rb_node_post(struct rbtree_node *node)
-{
+static struct rbtree_node *rb_node_post(struct rbtree_node *node) {
   /* This node's children have already been visited. */
   for (;;) {
     if (!node->parent) {
@@ -323,8 +317,7 @@ static struct rbtree_node* rb_node_post(struct rbtree_node *node)
  * \retval node on success.
  * \retval NULL if no node.
  */
-static struct rbtree_node* rb_node_next_full(struct rbtree_node *node)
-{
+static struct rbtree_node *rb_node_next_full(struct rbtree_node *node) {
   for (;;) {
     node = rb_node_next(node);
 
@@ -344,8 +337,7 @@ static struct rbtree_node* rb_node_next_full(struct rbtree_node *node)
  * \retval node on success.
  * \retval NULL if no node.
  */
-static struct rbtree_node* rb_node_prev_full(struct rbtree_node *node)
-{
+static struct rbtree_node *rb_node_prev_full(struct rbtree_node *node) {
   for (;;) {
     node = rb_node_prev(node);
 
@@ -374,12 +366,8 @@ static struct rbtree_node* rb_node_prev_full(struct rbtree_node *node)
  * \return enum empty_node_direction to proceed.
  */
 static enum empty_node_direction rb_find_empty_direction(
-  struct rbtree_node  *empty,
-  ao2_sort_fn         *sort_fn,
-  void                *obj_right,
-  enum search_flags    flags,
-  enum equal_node_bias bias)
-{
+    struct rbtree_node *empty, ao2_sort_fn *sort_fn, void *obj_right,
+    enum search_flags flags, enum equal_node_bias bias) {
   int cmp;
   struct rbtree_node *cur;
   struct rbtree_node *right_most;
@@ -493,8 +481,7 @@ static enum empty_node_direction rb_find_empty_direction(
  * \return Nothing
  */
 static void rb_rotate_left(struct ao2_container_rbtree *self,
-                           struct rbtree_node          *node)
-{
+                           struct rbtree_node *node) {
   struct rbtree_node *child; /*!< Node's right child. */
 
   child = node->right;
@@ -521,7 +508,7 @@ static void rb_rotate_left(struct ao2_container_rbtree *self,
 
   /* Link the node to the child's left. */
   node->parent = child;
-  child->left  = node;
+  child->left = node;
 }
 
 /*!
@@ -550,8 +537,7 @@ static void rb_rotate_left(struct ao2_container_rbtree *self,
  * \return Nothing
  */
 static void rb_rotate_right(struct ao2_container_rbtree *self,
-                            struct rbtree_node          *node)
-{
+                            struct rbtree_node *node) {
   struct rbtree_node *child; /*!< Node's left child. */
 
   child = node->left;
@@ -595,21 +581,16 @@ static void rb_rotate_right(struct ao2_container_rbtree *self,
  * \retval empty-clone-container on success.
  * \retval NULL on error.
  */
-static struct ao2_container* rb_ao2_alloc_empty_clone(
-  struct ao2_container_rbtree *self,
-  const char                  *tag,
-  const char                  *file,
-  int                          line,
-  const char                  *func)
-{
+static struct ao2_container *rb_ao2_alloc_empty_clone(
+    struct ao2_container_rbtree *self, const char *tag, const char *file,
+    int line, const char *func) {
   if (!__is_ao2_object(self, file, line, func)) {
     return NULL;
   }
 
-  return __ao2_container_alloc_rbtree(ao2_options_get(
-                                        self), self->common.options,
-                                      self->common.sort_fn, self->common.cmp_fn, tag, file, line,
-                                      func);
+  return __ao2_container_alloc_rbtree(
+      ao2_options_get(self), self->common.options, self->common.sort_fn,
+      self->common.cmp_fn, tag, file, line, func);
 }
 
 /*!
@@ -628,8 +609,7 @@ static struct ao2_container* rb_ao2_alloc_empty_clone(
  * \return Nothing
  */
 static void rb_delete_fixup(struct ao2_container_rbtree *self,
-                            struct rbtree_node          *child)
-{
+                            struct rbtree_node *child) {
   struct rbtree_node *sibling;
 
   while (self->root != child && !child->is_red) {
@@ -641,7 +621,7 @@ static void rb_delete_fixup(struct ao2_container_rbtree *self,
       if (sibling->is_red) {
         /* Case 1: The child's sibling is red. */
         AO2_DEVMODE_STAT(++self->stats.fixup_delete_left[0]);
-        sibling->is_red       = 0;
+        sibling->is_red = 0;
         child->parent->is_red = 1;
         rb_rotate_left(self, child->parent);
         sibling = child->parent->right;
@@ -652,8 +632,8 @@ static void rb_delete_fixup(struct ao2_container_rbtree *self,
        * The sibling is black.  A black node must have two children,
        * or one red child, or no children.
        */
-      if ((!sibling->left || !sibling->left->is_red)
-          && (!sibling->right || !sibling->right->is_red)) {
+      if ((!sibling->left || !sibling->left->is_red) &&
+          (!sibling->right || !sibling->right->is_red)) {
         /*
          * Case 2: The sibling is black and both of its children are black.
          *
@@ -662,7 +642,7 @@ static void rb_delete_fixup(struct ao2_container_rbtree *self,
          */
         AO2_DEVMODE_STAT(++self->stats.fixup_delete_left[1]);
         sibling->is_red = 1;
-        child           = child->parent;
+        child = child->parent;
       } else {
         /* At this point the sibling has at least one red child. */
         if (!sibling->right || !sibling->right->is_red) {
@@ -674,7 +654,7 @@ static void rb_delete_fixup(struct ao2_container_rbtree *self,
           ast_assert(sibling->left != NULL);
           ast_assert(sibling->left->is_red);
           sibling->left->is_red = 0;
-          sibling->is_red       = 1;
+          sibling->is_red = 1;
           rb_rotate_right(self, sibling);
           sibling = child->parent->right;
           ast_assert(sibling != NULL);
@@ -682,7 +662,7 @@ static void rb_delete_fixup(struct ao2_container_rbtree *self,
 
         /* Case 4: The sibling is black and its right child is red. */
         AO2_DEVMODE_STAT(++self->stats.fixup_delete_left[3]);
-        sibling->is_red       = child->parent->is_red;
+        sibling->is_red = child->parent->is_red;
         child->parent->is_red = 0;
 
         if (sibling->right) {
@@ -699,7 +679,7 @@ static void rb_delete_fixup(struct ao2_container_rbtree *self,
       if (sibling->is_red) {
         /* Case 1: The child's sibling is red. */
         AO2_DEVMODE_STAT(++self->stats.fixup_delete_right[0]);
-        sibling->is_red       = 0;
+        sibling->is_red = 0;
         child->parent->is_red = 1;
         rb_rotate_right(self, child->parent);
         sibling = child->parent->left;
@@ -710,8 +690,8 @@ static void rb_delete_fixup(struct ao2_container_rbtree *self,
        * The sibling is black.  A black node must have two children,
        * or one red child, or no children.
        */
-      if ((!sibling->right || !sibling->right->is_red)
-          && (!sibling->left || !sibling->left->is_red)) {
+      if ((!sibling->right || !sibling->right->is_red) &&
+          (!sibling->left || !sibling->left->is_red)) {
         /*
          * Case 2: The sibling is black and both of its children are black.
          *
@@ -720,7 +700,7 @@ static void rb_delete_fixup(struct ao2_container_rbtree *self,
          */
         AO2_DEVMODE_STAT(++self->stats.fixup_delete_right[1]);
         sibling->is_red = 1;
-        child           = child->parent;
+        child = child->parent;
       } else {
         /* At this point the sibling has at least one red child. */
         if (!sibling->left || !sibling->left->is_red) {
@@ -732,7 +712,7 @@ static void rb_delete_fixup(struct ao2_container_rbtree *self,
           ast_assert(sibling->right != NULL);
           ast_assert(sibling->right->is_red);
           sibling->right->is_red = 0;
-          sibling->is_red        = 1;
+          sibling->is_red = 1;
           rb_rotate_left(self, sibling);
           sibling = child->parent->left;
           ast_assert(sibling != NULL);
@@ -740,7 +720,7 @@ static void rb_delete_fixup(struct ao2_container_rbtree *self,
 
         /* Case 4: The sibling is black and its left child is red. */
         AO2_DEVMODE_STAT(++self->stats.fixup_delete_right[3]);
-        sibling->is_red       = child->parent->is_red;
+        sibling->is_red = child->parent->is_red;
         child->parent->is_red = 0;
 
         if (sibling->left) {
@@ -773,8 +753,7 @@ static void rb_delete_fixup(struct ao2_container_rbtree *self,
  * \return Nothing
  */
 static void rb_delete_node(struct ao2_container_rbtree *self,
-                           struct rbtree_node          *doomed)
-{
+                           struct rbtree_node *doomed) {
   struct rbtree_node *child;
   int need_fixup;
 
@@ -791,11 +770,11 @@ static void rb_delete_node(struct ao2_container_rbtree *self,
     AO2_DEVMODE_STAT(++self->stats.delete_children[2]);
     next = rb_node_most_left(doomed->right);
     SWAP(doomed->parent, next->parent);
-    SWAP(doomed->left,   next->left);
-    SWAP(doomed->right,  next->right);
-    is_red         = doomed->is_red;
+    SWAP(doomed->left, next->left);
+    SWAP(doomed->right, next->right);
+    is_red = doomed->is_red;
     doomed->is_red = next->is_red;
-    next->is_red   = is_red;
+    next->is_red = is_red;
 
     /* Link back in the next node. */
     if (!next->parent) {
@@ -812,10 +791,10 @@ static void rb_delete_node(struct ao2_container_rbtree *self,
 
     if (next->right == next) {
       /* The next node was the right child of doomed. */
-      next->right    = doomed;
+      next->right = doomed;
       doomed->parent = next;
     } else {
-      next->right->parent  = next;
+      next->right->parent = next;
       doomed->parent->left = doomed;
     }
 
@@ -897,8 +876,7 @@ static void rb_delete_node(struct ao2_container_rbtree *self,
  *
  * \return Nothing
  */
-static void rb_ao2_node_destructor(void *v_doomed)
-{
+static void rb_ao2_node_destructor(void *v_doomed) {
   struct rbtree_node *doomed = v_doomed;
 
   if (doomed->common.is_linked) {
@@ -926,16 +904,16 @@ static void rb_ao2_node_destructor(void *v_doomed)
 
 #if defined(AO2_DEBUG)
 
-    if (!my_container->common.destroying
-        && ao2_container_check(doomed->common.my_container, OBJ_NOLOCK)) {
+    if (!my_container->common.destroying &&
+        ao2_container_check(doomed->common.my_container, OBJ_NOLOCK)) {
       ast_log(LOG_ERROR, "Container integrity failed before node deletion.\n");
     }
 #endif /* defined(AO2_DEBUG) */
     rb_delete_node(my_container, doomed);
 #if defined(AO2_DEBUG)
 
-    if (!my_container->common.destroying
-        && ao2_container_check(doomed->common.my_container, OBJ_NOLOCK)) {
+    if (!my_container->common.destroying &&
+        ao2_container_check(doomed->common.my_container, OBJ_NOLOCK)) {
       ast_log(LOG_ERROR, "Container integrity failed after node deletion.\n");
     }
 #endif /* defined(AO2_DEBUG) */
@@ -965,26 +943,21 @@ static void rb_ao2_node_destructor(void *v_doomed)
  * \retval initialized-node on success.
  * \retval NULL on error.
  */
-static struct rbtree_node* rb_ao2_new_node(struct ao2_container_rbtree *self,
-                                           void                        *obj_new,
-                                           const char                  *tag,
-                                           const char                  *file,
-                                           int                          line,
-                                           const char                  *func)
-{
+static struct rbtree_node *rb_ao2_new_node(struct ao2_container_rbtree *self,
+                                           void *obj_new, const char *tag,
+                                           const char *file, int line,
+                                           const char *func) {
   struct rbtree_node *node;
 
-  node = ao2_t_alloc_options(sizeof(*node),
-                             rb_ao2_node_destructor,
-                             AO2_ALLOC_OPT_LOCK_NOLOCK,
-                             NULL);
+  node = ao2_t_alloc_options(sizeof(*node), rb_ao2_node_destructor,
+                             AO2_ALLOC_OPT_LOCK_NOLOCK, NULL);
 
   if (!node) {
     return NULL;
   }
 
-  __ao2_ref(obj_new, +1, tag ? : "Container node creation", file, line, func);
-  node->common.obj          = obj_new;
+  __ao2_ref(obj_new, +1, tag ?: "Container node creation", file, line, func);
+  node->common.obj = obj_new;
   node->common.my_container = (struct ao2_container *)self;
 
   return node;
@@ -1003,8 +976,7 @@ static struct rbtree_node* rb_ao2_new_node(struct ao2_container_rbtree *self,
  * \return Nothing
  */
 static void rb_insert_fixup(struct ao2_container_rbtree *self,
-                            struct rbtree_node          *node)
-{
+                            struct rbtree_node *node) {
   struct rbtree_node *g_parent; /* Grand parent node. */
 
   while (node->parent && node->parent->is_red) {
@@ -1019,8 +991,8 @@ static void rb_insert_fixup(struct ao2_container_rbtree *self,
         /* Case 1: Push the black down from the grand parent node. */
         AO2_DEVMODE_STAT(++self->stats.fixup_insert_left[0]);
         g_parent->right->is_red = 0;
-        g_parent->left->is_red  = 0;
-        g_parent->is_red        = 1;
+        g_parent->left->is_red = 0;
+        g_parent->is_red = 1;
 
         node = g_parent;
       } else {
@@ -1039,7 +1011,7 @@ static void rb_insert_fixup(struct ao2_container_rbtree *self,
         /* Case 3: The node is a left child. */
         AO2_DEVMODE_STAT(++self->stats.fixup_insert_left[2]);
         node->parent->is_red = 0;
-        g_parent->is_red     = 1;
+        g_parent->is_red = 1;
         rb_rotate_right(self, g_parent);
       }
     } else {
@@ -1047,9 +1019,9 @@ static void rb_insert_fixup(struct ao2_container_rbtree *self,
       if (g_parent->left && g_parent->left->is_red) {
         /* Case 1: Push the black down from the grand parent node. */
         AO2_DEVMODE_STAT(++self->stats.fixup_insert_right[0]);
-        g_parent->left->is_red  = 0;
+        g_parent->left->is_red = 0;
         g_parent->right->is_red = 0;
-        g_parent->is_red        = 1;
+        g_parent->is_red = 1;
 
         node = g_parent;
       } else {
@@ -1068,7 +1040,7 @@ static void rb_insert_fixup(struct ao2_container_rbtree *self,
         /* Case 3: The node is a right child. */
         AO2_DEVMODE_STAT(++self->stats.fixup_insert_right[2]);
         node->parent->is_red = 0;
-        g_parent->is_red     = 1;
+        g_parent->is_red = 1;
         rb_rotate_left(self, g_parent);
       }
     }
@@ -1095,14 +1067,12 @@ static void rb_insert_fixup(struct ao2_container_rbtree *self,
  * \return enum ao2_container_insert value.
  */
 static enum ao2_container_insert rb_ao2_insert_node(
-  struct ao2_container_rbtree *self,
-  struct rbtree_node          *node)
-{
+    struct ao2_container_rbtree *self, struct rbtree_node *node) {
   int cmp;
   struct rbtree_node *cur;
   struct rbtree_node *next;
   ao2_sort_fn *sort_fn;
-  uint32_t     options;
+  uint32_t options;
   enum equal_node_bias bias;
 
   if (!self->root) {
@@ -1115,21 +1085,21 @@ static enum ao2_container_insert rb_ao2_insert_node(
   options = self->common.options;
 
   switch (options & AO2_CONTAINER_ALLOC_OPT_DUPS_MASK) {
-  default:
-  case AO2_CONTAINER_ALLOC_OPT_DUPS_ALLOW:
+    default:
+    case AO2_CONTAINER_ALLOC_OPT_DUPS_ALLOW:
 
-    if (options & AO2_CONTAINER_ALLOC_OPT_INSERT_BEGIN) {
-      bias = BIAS_FIRST;
-    } else {
-      bias = BIAS_LAST;
-    }
-    break;
+      if (options & AO2_CONTAINER_ALLOC_OPT_INSERT_BEGIN) {
+        bias = BIAS_FIRST;
+      } else {
+        bias = BIAS_LAST;
+      }
+      break;
 
-  case AO2_CONTAINER_ALLOC_OPT_DUPS_REJECT:
-  case AO2_CONTAINER_ALLOC_OPT_DUPS_OBJ_REJECT:
-  case AO2_CONTAINER_ALLOC_OPT_DUPS_REPLACE:
-    bias = BIAS_EQUAL;
-    break;
+    case AO2_CONTAINER_ALLOC_OPT_DUPS_REJECT:
+    case AO2_CONTAINER_ALLOC_OPT_DUPS_OBJ_REJECT:
+    case AO2_CONTAINER_ALLOC_OPT_DUPS_REPLACE:
+      bias = BIAS_EQUAL;
+      break;
   }
 
   /*
@@ -1145,15 +1115,14 @@ static enum ao2_container_insert rb_ao2_insert_node(
     if (!cur->common.obj) {
       /* Which direction do we go to insert this node? */
       if (rb_find_empty_direction(cur, sort_fn, node->common.obj,
-                                  OBJ_SEARCH_OBJECT, bias)
-          == GO_LEFT) {
+                                  OBJ_SEARCH_OBJECT, bias) == GO_LEFT) {
         if (cur->left) {
           cur = cur->left;
           continue;
         }
 
         /* Node becomes a left child */
-        cur->left    = node;
+        cur->left = node;
         node->parent = cur;
         rb_insert_fixup(self, node);
         return AO2_CONTAINER_INSERT_NODE_INSERTED;
@@ -1165,7 +1134,7 @@ static enum ao2_container_insert rb_ao2_insert_node(
       }
 
       /* Node becomes a right child */
-      cur->right   = node;
+      cur->right = node;
       node->parent = cur;
       rb_insert_fixup(self, node);
       return AO2_CONTAINER_INSERT_NODE_INSERTED;
@@ -1179,7 +1148,7 @@ static enum ao2_container_insert rb_ao2_insert_node(
       }
 
       /* Node becomes a left child */
-      cur->left    = node;
+      cur->left = node;
       node->parent = cur;
       rb_insert_fixup(self, node);
       return AO2_CONTAINER_INSERT_NODE_INSERTED;
@@ -1190,43 +1159,43 @@ static enum ao2_container_insert rb_ao2_insert_node(
       }
 
       /* Node becomes a right child */
-      cur->right   = node;
+      cur->right = node;
       node->parent = cur;
       rb_insert_fixup(self, node);
       return AO2_CONTAINER_INSERT_NODE_INSERTED;
     }
 
     switch (bias) {
-    case BIAS_FIRST:
+      case BIAS_FIRST:
 
-      /* Duplicate nodes unconditionally accepted. */
-      if (cur->left) {
-        cur = cur->left;
-        continue;
-      }
+        /* Duplicate nodes unconditionally accepted. */
+        if (cur->left) {
+          cur = cur->left;
+          continue;
+        }
 
-      /* Node becomes a left child */
-      cur->left    = node;
-      node->parent = cur;
-      rb_insert_fixup(self, node);
-      return AO2_CONTAINER_INSERT_NODE_INSERTED;
+        /* Node becomes a left child */
+        cur->left = node;
+        node->parent = cur;
+        rb_insert_fixup(self, node);
+        return AO2_CONTAINER_INSERT_NODE_INSERTED;
 
-    case BIAS_EQUAL:
-      break;
+      case BIAS_EQUAL:
+        break;
 
-    case BIAS_LAST:
+      case BIAS_LAST:
 
-      /* Duplicate nodes unconditionally accepted. */
-      if (cur->right) {
-        cur = cur->right;
-        continue;
-      }
+        /* Duplicate nodes unconditionally accepted. */
+        if (cur->right) {
+          cur = cur->right;
+          continue;
+        }
 
-      /* Node becomes a right child */
-      cur->right   = node;
-      node->parent = cur;
-      rb_insert_fixup(self, node);
-      return AO2_CONTAINER_INSERT_NODE_INSERTED;
+        /* Node becomes a right child */
+        cur->right = node;
+        node->parent = cur;
+        rb_insert_fixup(self, node);
+        return AO2_CONTAINER_INSERT_NODE_INSERTED;
     }
 
     break;
@@ -1234,127 +1203,127 @@ static enum ao2_container_insert rb_ao2_insert_node(
 
   /* Node is a dupliate */
   switch (options & AO2_CONTAINER_ALLOC_OPT_DUPS_MASK) {
-  default:
-  case AO2_CONTAINER_ALLOC_OPT_DUPS_ALLOW:
-    ast_assert(0); /* Case already handled by BIAS_FIRST/BIAS_LAST. */
-    return AO2_CONTAINER_INSERT_NODE_REJECTED;
-
-  case AO2_CONTAINER_ALLOC_OPT_DUPS_REJECT:
-
-    /* Reject all objects with the same key. */
-    return AO2_CONTAINER_INSERT_NODE_REJECTED;
-
-  case AO2_CONTAINER_ALLOC_OPT_DUPS_OBJ_REJECT:
-
-    if (cur->common.obj == node->common.obj) {
-      /* Reject inserting the same object */
+    default:
+    case AO2_CONTAINER_ALLOC_OPT_DUPS_ALLOW:
+      ast_assert(0); /* Case already handled by BIAS_FIRST/BIAS_LAST. */
       return AO2_CONTAINER_INSERT_NODE_REJECTED;
-    }
-    next = cur;
 
-    if (options & AO2_CONTAINER_ALLOC_OPT_INSERT_BEGIN) {
-      /* Search to end of duplicates for the same object. */
-      for (;;) {
-        next = rb_node_next_full(next);
+    case AO2_CONTAINER_ALLOC_OPT_DUPS_REJECT:
 
-        if (!next) {
-          break;
-        }
+      /* Reject all objects with the same key. */
+      return AO2_CONTAINER_INSERT_NODE_REJECTED;
 
-        if (next->common.obj == node->common.obj) {
-          /* Reject inserting the same object */
-          return AO2_CONTAINER_INSERT_NODE_REJECTED;
-        }
-        cmp = sort_fn(next->common.obj, node->common.obj, OBJ_SEARCH_OBJECT);
+    case AO2_CONTAINER_ALLOC_OPT_DUPS_OBJ_REJECT:
 
-        if (cmp) {
-          break;
-        }
+      if (cur->common.obj == node->common.obj) {
+        /* Reject inserting the same object */
+        return AO2_CONTAINER_INSERT_NODE_REJECTED;
       }
+      next = cur;
 
-      /* Find first duplicate node. */
-      for (;;) {
-        next = rb_node_prev_full(cur);
+      if (options & AO2_CONTAINER_ALLOC_OPT_INSERT_BEGIN) {
+        /* Search to end of duplicates for the same object. */
+        for (;;) {
+          next = rb_node_next_full(next);
 
-        if (!next) {
-          break;
+          if (!next) {
+            break;
+          }
+
+          if (next->common.obj == node->common.obj) {
+            /* Reject inserting the same object */
+            return AO2_CONTAINER_INSERT_NODE_REJECTED;
+          }
+          cmp = sort_fn(next->common.obj, node->common.obj, OBJ_SEARCH_OBJECT);
+
+          if (cmp) {
+            break;
+          }
         }
 
-        if (next->common.obj == node->common.obj) {
-          /* Reject inserting the same object */
-          return AO2_CONTAINER_INSERT_NODE_REJECTED;
-        }
-        cmp = sort_fn(next->common.obj, node->common.obj, OBJ_SEARCH_OBJECT);
+        /* Find first duplicate node. */
+        for (;;) {
+          next = rb_node_prev_full(cur);
 
-        if (cmp) {
-          break;
-        }
-        cur = next;
-      }
+          if (!next) {
+            break;
+          }
 
-      if (!cur->left) {
-        /* Node becomes a left child */
-        cur->left = node;
+          if (next->common.obj == node->common.obj) {
+            /* Reject inserting the same object */
+            return AO2_CONTAINER_INSERT_NODE_REJECTED;
+          }
+          cmp = sort_fn(next->common.obj, node->common.obj, OBJ_SEARCH_OBJECT);
+
+          if (cmp) {
+            break;
+          }
+          cur = next;
+        }
+
+        if (!cur->left) {
+          /* Node becomes a left child */
+          cur->left = node;
+        } else {
+          /* Node becomes a right child */
+          cur = rb_node_most_right(cur->left);
+          cur->right = node;
+        }
       } else {
-        /* Node becomes a right child */
-        cur        = rb_node_most_right(cur->left);
-        cur->right = node;
+        /* Search to beginning of duplicates for the same object. */
+        for (;;) {
+          next = rb_node_prev_full(next);
+
+          if (!next) {
+            break;
+          }
+
+          if (next->common.obj == node->common.obj) {
+            /* Reject inserting the same object */
+            return AO2_CONTAINER_INSERT_NODE_REJECTED;
+          }
+          cmp = sort_fn(next->common.obj, node->common.obj, OBJ_SEARCH_OBJECT);
+
+          if (cmp) {
+            break;
+          }
+        }
+
+        /* Find last duplicate node. */
+        for (;;) {
+          next = rb_node_next_full(cur);
+
+          if (!next) {
+            break;
+          }
+
+          if (next->common.obj == node->common.obj) {
+            /* Reject inserting the same object */
+            return AO2_CONTAINER_INSERT_NODE_REJECTED;
+          }
+          cmp = sort_fn(next->common.obj, node->common.obj, OBJ_SEARCH_OBJECT);
+
+          if (cmp) {
+            break;
+          }
+          cur = next;
+        }
+
+        if (!cur->right) {
+          /* Node becomes a right child */
+          cur->right = node;
+        } else {
+          /* Node becomes a left child */
+          cur = rb_node_most_left(cur->right);
+          cur->left = node;
+        }
       }
-    } else {
-      /* Search to beginning of duplicates for the same object. */
-      for (;;) {
-        next = rb_node_prev_full(next);
+      break;
 
-        if (!next) {
-          break;
-        }
-
-        if (next->common.obj == node->common.obj) {
-          /* Reject inserting the same object */
-          return AO2_CONTAINER_INSERT_NODE_REJECTED;
-        }
-        cmp = sort_fn(next->common.obj, node->common.obj, OBJ_SEARCH_OBJECT);
-
-        if (cmp) {
-          break;
-        }
-      }
-
-      /* Find last duplicate node. */
-      for (;;) {
-        next = rb_node_next_full(cur);
-
-        if (!next) {
-          break;
-        }
-
-        if (next->common.obj == node->common.obj) {
-          /* Reject inserting the same object */
-          return AO2_CONTAINER_INSERT_NODE_REJECTED;
-        }
-        cmp = sort_fn(next->common.obj, node->common.obj, OBJ_SEARCH_OBJECT);
-
-        if (cmp) {
-          break;
-        }
-        cur = next;
-      }
-
-      if (!cur->right) {
-        /* Node becomes a right child */
-        cur->right = node;
-      } else {
-        /* Node becomes a left child */
-        cur       = rb_node_most_left(cur->right);
-        cur->left = node;
-      }
-    }
-    break;
-
-  case AO2_CONTAINER_ALLOC_OPT_DUPS_REPLACE:
-    SWAP(cur->common.obj, node->common.obj);
-    ao2_t_ref(node, -1, NULL);
-    return AO2_CONTAINER_INSERT_NODE_OBJ_REPLACED;
+    case AO2_CONTAINER_ALLOC_OPT_DUPS_REPLACE:
+      SWAP(cur->common.obj, node->common.obj);
+      ao2_t_ref(node, -1, NULL);
+      return AO2_CONTAINER_INSERT_NODE_OBJ_REPLACED;
   }
 
   /* Complete inserting duplicate node. */
@@ -1376,16 +1345,15 @@ static enum ao2_container_insert rb_ao2_insert_node(
  * \retval node-ptr of found node (Reffed).
  * \retval NULL when no node found.
  */
-static struct rbtree_node* rb_ao2_find_next(struct ao2_container_rbtree   *self,
-                                            struct rbtree_traversal_state *state,
-                                            struct rbtree_node            *prev)
-{
+static struct rbtree_node *rb_ao2_find_next(
+    struct ao2_container_rbtree *self, struct rbtree_traversal_state *state,
+    struct rbtree_node *prev) {
   struct rbtree_node *node;
   void *arg;
   enum search_flags flags;
   int cmp;
 
-  arg   = state->arg;
+  arg = state->arg;
   flags = state->flags;
 
   node = prev;
@@ -1393,22 +1361,22 @@ static struct rbtree_node* rb_ao2_find_next(struct ao2_container_rbtree   *self,
   for (;;) {
     /* Find next node in traversal order. */
     switch (flags & OBJ_ORDER_MASK) {
-    default:
-    case OBJ_ORDER_ASCENDING:
-      node = rb_node_next(node);
-      break;
+      default:
+      case OBJ_ORDER_ASCENDING:
+        node = rb_node_next(node);
+        break;
 
-    case OBJ_ORDER_DESCENDING:
-      node = rb_node_prev(node);
-      break;
+      case OBJ_ORDER_DESCENDING:
+        node = rb_node_prev(node);
+        break;
 
-    case OBJ_ORDER_PRE:
-      node = rb_node_pre(node);
-      break;
+      case OBJ_ORDER_PRE:
+        node = rb_node_pre(node);
+        break;
 
-    case OBJ_ORDER_POST:
-      node = rb_node_post(node);
-      break;
+      case OBJ_ORDER_POST:
+        node = rb_node_post(node);
+        break;
     }
 
     if (!node) {
@@ -1471,19 +1439,18 @@ static struct rbtree_node* rb_ao2_find_next(struct ao2_container_rbtree   *self,
  * \retval node on success.
  * \retval NULL if not found.
  */
-static struct rbtree_node* rb_find_initial(struct ao2_container_rbtree *self,
-                                           void                        *obj_right,
-                                           enum search_flags            flags,
-                                           enum equal_node_bias         bias)
-{
+static struct rbtree_node *rb_find_initial(struct ao2_container_rbtree *self,
+                                           void *obj_right,
+                                           enum search_flags flags,
+                                           enum equal_node_bias bias) {
   int cmp;
-  enum search_flags   sort_flags;
+  enum search_flags sort_flags;
   struct rbtree_node *node;
   struct rbtree_node *next = NULL;
   ao2_sort_fn *sort_fn;
 
   sort_flags = flags & OBJ_SEARCH_MASK;
-  sort_fn    = self->common.sort_fn;
+  sort_fn = self->common.sort_fn;
 
   /* Find node where normal search would find it. */
   node = self->root;
@@ -1495,8 +1462,8 @@ static struct rbtree_node* rb_find_initial(struct ao2_container_rbtree *self,
   for (;;) {
     if (!node->common.obj) {
       /* Which direction do we go to find the node? */
-      if (rb_find_empty_direction(node, sort_fn, obj_right, sort_flags, bias)
-          == GO_LEFT) {
+      if (rb_find_empty_direction(node, sort_fn, obj_right, sort_flags, bias) ==
+          GO_LEFT) {
         next = node->left;
       } else {
         next = node->right;
@@ -1504,20 +1471,20 @@ static struct rbtree_node* rb_find_initial(struct ao2_container_rbtree *self,
 
       if (!next) {
         switch (bias) {
-        case BIAS_FIRST:
+          case BIAS_FIRST:
 
-          /* Check successor node for match. */
-          next = rb_node_next_full(node);
-          break;
+            /* Check successor node for match. */
+            next = rb_node_next_full(node);
+            break;
 
-        case BIAS_EQUAL:
-          break;
+          case BIAS_EQUAL:
+            break;
 
-        case BIAS_LAST:
+          case BIAS_LAST:
 
-          /* Check previous node for match. */
-          next = rb_node_prev_full(node);
-          break;
+            /* Check previous node for match. */
+            next = rb_node_prev_full(node);
+            break;
         }
 
         if (next) {
@@ -1542,16 +1509,16 @@ static struct rbtree_node* rb_find_initial(struct ao2_container_rbtree *self,
         next = node->right;
       } else {
         switch (bias) {
-        case BIAS_FIRST:
-          next = node->left;
-          break;
+          case BIAS_FIRST:
+            next = node->left;
+            break;
 
-        case BIAS_EQUAL:
-          return node;
+          case BIAS_EQUAL:
+            return node;
 
-        case BIAS_LAST:
-          next = node->right;
-          break;
+          case BIAS_LAST:
+            next = node->right;
+            break;
         }
 
         if (!next) {
@@ -1562,24 +1529,24 @@ static struct rbtree_node* rb_find_initial(struct ao2_container_rbtree *self,
 
       if (!next) {
         switch (bias) {
-        case BIAS_FIRST:
+          case BIAS_FIRST:
 
-          if (cmp < 0) {
-            /* Check successor node for match. */
-            next = rb_node_next_full(node);
-          }
-          break;
+            if (cmp < 0) {
+              /* Check successor node for match. */
+              next = rb_node_next_full(node);
+            }
+            break;
 
-        case BIAS_EQUAL:
-          break;
+          case BIAS_EQUAL:
+            break;
 
-        case BIAS_LAST:
+          case BIAS_LAST:
 
-          if (cmp > 0) {
-            /* Check previous node for match. */
-            next = rb_node_prev_full(node);
-          }
-          break;
+            if (cmp > 0) {
+              /* Check previous node for match. */
+              next = rb_node_prev_full(node);
+            }
+            break;
         }
 
         if (next) {
@@ -1612,12 +1579,10 @@ static struct rbtree_node* rb_find_initial(struct ao2_container_rbtree *self,
  * \retval node-ptr of found node (Reffed).
  * \retval NULL when no node found.
  */
-static struct rbtree_node* rb_ao2_find_first(struct ao2_container_rbtree   *self,
-                                             enum search_flags              flags,
-                                             void                          *arg,
-                                             struct rbtree_traversal_state *state)
-{
-  struct rbtree_node  *node;
+static struct rbtree_node *rb_ao2_find_first(
+    struct ao2_container_rbtree *self, enum search_flags flags, void *arg,
+    struct rbtree_traversal_state *state) {
+  struct rbtree_node *node;
   enum equal_node_bias bias;
 
   if (self->common.destroying) {
@@ -1626,23 +1591,23 @@ static struct rbtree_node* rb_ao2_find_first(struct ao2_container_rbtree   *self
   }
 
   memset(state, 0, sizeof(*state));
-  state->arg   = arg;
+  state->arg = arg;
   state->flags = flags;
 
   switch (flags & OBJ_SEARCH_MASK) {
-  case OBJ_SEARCH_OBJECT:
-  case OBJ_SEARCH_KEY:
-  case OBJ_SEARCH_PARTIAL_KEY:
+    case OBJ_SEARCH_OBJECT:
+    case OBJ_SEARCH_KEY:
+    case OBJ_SEARCH_PARTIAL_KEY:
 
-    /* We are asked to do a directed search. */
-    state->sort_fn = self->common.sort_fn;
-    break;
+      /* We are asked to do a directed search. */
+      state->sort_fn = self->common.sort_fn;
+      break;
 
-  default:
+    default:
 
-    /* Don't know, let's visit all nodes */
-    state->sort_fn = NULL;
-    break;
+      /* Don't know, let's visit all nodes */
+      state->sort_fn = NULL;
+      break;
   }
 
   if (!self->root) {
@@ -1652,137 +1617,137 @@ static struct rbtree_node* rb_ao2_find_first(struct ao2_container_rbtree   *self
 
   /* Find first traversal node. */
   switch (flags & OBJ_ORDER_MASK) {
-  default:
-  case OBJ_ORDER_ASCENDING:
+    default:
+    case OBJ_ORDER_ASCENDING:
 
-    if (!state->sort_fn) {
-      /* Find left most child. */
-      node = rb_node_most_left(self->root);
+      if (!state->sort_fn) {
+        /* Find left most child. */
+        node = rb_node_most_left(self->root);
 
-      if (!node->common.obj) {
-        node = rb_node_next_full(node);
+        if (!node->common.obj) {
+          node = rb_node_next_full(node);
+
+          if (!node) {
+            return NULL;
+          }
+        }
+        break;
+      }
+
+      /* Search for initial node. */
+      switch (self->common.options & AO2_CONTAINER_ALLOC_OPT_DUPS_MASK) {
+        case AO2_CONTAINER_ALLOC_OPT_DUPS_REJECT:
+        case AO2_CONTAINER_ALLOC_OPT_DUPS_REPLACE:
+
+          if ((flags & OBJ_SEARCH_MASK) != OBJ_SEARCH_PARTIAL_KEY) {
+            /* There are no duplicates allowed. */
+            bias = BIAS_EQUAL;
+            break;
+          }
+
+        /* Fall through */
+        default:
+        case AO2_CONTAINER_ALLOC_OPT_DUPS_ALLOW:
+        case AO2_CONTAINER_ALLOC_OPT_DUPS_OBJ_REJECT:
+
+          /* Find first duplicate node. */
+          bias = BIAS_FIRST;
+          break;
+      }
+      node = rb_find_initial(self, arg, flags, bias);
+
+      if (!node) {
+        return NULL;
+      }
+      break;
+
+    case OBJ_ORDER_DESCENDING:
+
+      if (!state->sort_fn) {
+        /* Find right most child. */
+        node = rb_node_most_right(self->root);
+
+        if (!node->common.obj) {
+          node = rb_node_prev_full(node);
+
+          if (!node) {
+            return NULL;
+          }
+        }
+        break;
+      }
+
+      /* Search for initial node. */
+      switch (self->common.options & AO2_CONTAINER_ALLOC_OPT_DUPS_MASK) {
+        case AO2_CONTAINER_ALLOC_OPT_DUPS_REJECT:
+        case AO2_CONTAINER_ALLOC_OPT_DUPS_REPLACE:
+
+          if ((flags & OBJ_SEARCH_MASK) != OBJ_SEARCH_PARTIAL_KEY) {
+            /* There are no duplicates allowed. */
+            bias = BIAS_EQUAL;
+            break;
+          }
+
+        /* Fall through */
+        default:
+        case AO2_CONTAINER_ALLOC_OPT_DUPS_ALLOW:
+        case AO2_CONTAINER_ALLOC_OPT_DUPS_OBJ_REJECT:
+
+          /* Find last duplicate node. */
+          bias = BIAS_LAST;
+          break;
+      }
+      node = rb_find_initial(self, arg, flags, bias);
+
+      if (!node) {
+        return NULL;
+      }
+      break;
+
+    case OBJ_ORDER_PRE:
+
+      /* This is a tree structure traversal so we must visit all nodes. */
+      state->sort_fn = NULL;
+
+      node = self->root;
+
+      /* Find a non-empty node. */
+      while (!node->common.obj) {
+        node = rb_node_pre(node);
 
         if (!node) {
           return NULL;
         }
       }
       break;
-    }
 
-    /* Search for initial node. */
-    switch (self->common.options & AO2_CONTAINER_ALLOC_OPT_DUPS_MASK) {
-    case AO2_CONTAINER_ALLOC_OPT_DUPS_REJECT:
-    case AO2_CONTAINER_ALLOC_OPT_DUPS_REPLACE:
+    case OBJ_ORDER_POST:
 
-      if ((flags & OBJ_SEARCH_MASK) != OBJ_SEARCH_PARTIAL_KEY) {
-        /* There are no duplicates allowed. */
-        bias = BIAS_EQUAL;
-        break;
+      /* This is a tree structure traversal so we must visit all nodes. */
+      state->sort_fn = NULL;
+
+      /* Find the left most childless node. */
+      node = self->root;
+
+      for (;;) {
+        node = rb_node_most_left(node);
+
+        if (!node->right) {
+          /* This node has no children. */
+          break;
+        }
+        node = node->right;
       }
 
-    /* Fall through */
-    default:
-    case AO2_CONTAINER_ALLOC_OPT_DUPS_ALLOW:
-    case AO2_CONTAINER_ALLOC_OPT_DUPS_OBJ_REJECT:
-
-      /* Find first duplicate node. */
-      bias = BIAS_FIRST;
-      break;
-    }
-    node = rb_find_initial(self, arg, flags, bias);
-
-    if (!node) {
-      return NULL;
-    }
-    break;
-
-  case OBJ_ORDER_DESCENDING:
-
-    if (!state->sort_fn) {
-      /* Find right most child. */
-      node = rb_node_most_right(self->root);
-
-      if (!node->common.obj) {
-        node = rb_node_prev_full(node);
+      /* Find a non-empty node. */
+      while (!node->common.obj) {
+        node = rb_node_post(node);
 
         if (!node) {
           return NULL;
         }
       }
       break;
-    }
-
-    /* Search for initial node. */
-    switch (self->common.options & AO2_CONTAINER_ALLOC_OPT_DUPS_MASK) {
-    case AO2_CONTAINER_ALLOC_OPT_DUPS_REJECT:
-    case AO2_CONTAINER_ALLOC_OPT_DUPS_REPLACE:
-
-      if ((flags & OBJ_SEARCH_MASK) != OBJ_SEARCH_PARTIAL_KEY) {
-        /* There are no duplicates allowed. */
-        bias = BIAS_EQUAL;
-        break;
-      }
-
-    /* Fall through */
-    default:
-    case AO2_CONTAINER_ALLOC_OPT_DUPS_ALLOW:
-    case AO2_CONTAINER_ALLOC_OPT_DUPS_OBJ_REJECT:
-
-      /* Find last duplicate node. */
-      bias = BIAS_LAST;
-      break;
-    }
-    node = rb_find_initial(self, arg, flags, bias);
-
-    if (!node) {
-      return NULL;
-    }
-    break;
-
-  case OBJ_ORDER_PRE:
-
-    /* This is a tree structure traversal so we must visit all nodes. */
-    state->sort_fn = NULL;
-
-    node = self->root;
-
-    /* Find a non-empty node. */
-    while (!node->common.obj) {
-      node = rb_node_pre(node);
-
-      if (!node) {
-        return NULL;
-      }
-    }
-    break;
-
-  case OBJ_ORDER_POST:
-
-    /* This is a tree structure traversal so we must visit all nodes. */
-    state->sort_fn = NULL;
-
-    /* Find the left most childless node. */
-    node = self->root;
-
-    for (;;) {
-      node = rb_node_most_left(node);
-
-      if (!node->right) {
-        /* This node has no children. */
-        break;
-      }
-      node = node->right;
-    }
-
-    /* Find a non-empty node. */
-    while (!node->common.obj) {
-      node = rb_node_post(node);
-
-      if (!node) {
-        return NULL;
-      }
-    }
-    break;
   }
 
   /* We have the first traversal node */
@@ -1805,10 +1770,9 @@ static struct rbtree_node* rb_ao2_find_first(struct ao2_container_rbtree   *self
  * \retval node on success.
  * \retval NULL on error or no more nodes in the container.
  */
-static struct rbtree_node* rb_ao2_iterator_next(struct ao2_container_rbtree *self,
-                                                struct rbtree_node          *node,
-                                                enum ao2_iterator_flags      flags)
-{
+static struct rbtree_node *rb_ao2_iterator_next(
+    struct ao2_container_rbtree *self, struct rbtree_node *node,
+    enum ao2_iterator_flags flags) {
   if (flags & AO2_ITERATOR_DESCENDING) {
     if (!node) {
       /* Find right most node. */
@@ -1856,8 +1820,7 @@ static struct rbtree_node* rb_ao2_iterator_next(struct ao2_container_rbtree *sel
  *
  * \return Nothing
  */
-static void rb_ao2_destroy(struct ao2_container_rbtree *self)
-{
+static void rb_ao2_destroy(struct ao2_container_rbtree *self) {
   /* Check that the container no longer has any nodes */
   if (self->root) {
     ast_log(LOG_ERROR,
@@ -1881,26 +1844,18 @@ static void rb_ao2_destroy(struct ao2_container_rbtree *self)
  *
  * \return Nothing
  */
-static void rb_ao2_dump(struct ao2_container_rbtree *self,
-                        void                        *where,
-                        ao2_prnt_fn                 *prnt,
-                        ao2_prnt_obj_fn             *prnt_obj)
-{
-# define FORMAT  "%16s, %16s, %16s, %16s, %5s, %16s, %s\n"
-# define FORMAT2 "%16p, %16p, %16p, %16p, %5s, %16p, "
+static void rb_ao2_dump(struct ao2_container_rbtree *self, void *where,
+                        ao2_prnt_fn *prnt, ao2_prnt_obj_fn *prnt_obj) {
+#define FORMAT "%16s, %16s, %16s, %16s, %5s, %16s, %s\n"
+#define FORMAT2 "%16p, %16p, %16p, %16p, %5s, %16p, "
 
   struct rbtree_node *node;
 
   prnt(where, FORMAT, "Node", "Parent", "Left", "Right", "Color", "Obj", "Key");
 
   for (node = self->root; node; node = rb_node_pre(node)) {
-    prnt(where, FORMAT2,
-         node,
-         node->parent,
-         node->left,
-         node->right,
-         node->is_red ? "Red" : "Black",
-         node->common.obj);
+    prnt(where, FORMAT2, node, node->parent, node->left, node->right,
+         node->is_red ? "Red" : "Black", node->common.obj);
 
     if (node->common.obj && prnt_obj) {
       prnt_obj(node->common.obj, where, prnt);
@@ -1908,8 +1863,8 @@ static void rb_ao2_dump(struct ao2_container_rbtree *self,
     prnt(where, "\n");
   }
 
-# undef FORMAT
-# undef FORMAT2
+#undef FORMAT
+#undef FORMAT2
 }
 
 #endif /* defined(AO2_DEBUG) */
@@ -1929,10 +1884,8 @@ static void rb_ao2_dump(struct ao2_container_rbtree *self,
  *
  * \return Nothing
  */
-static void rb_ao2_stats(struct ao2_container_rbtree *self,
-                         void                        *where,
-                         ao2_prnt_fn                 *prnt)
-{
+static void rb_ao2_stats(struct ao2_container_rbtree *self, void *where,
+                         ao2_prnt_fn *prnt) {
   int idx;
 
   for (idx = 0; idx < ARRAY_LEN(self->stats.fixup_insert_left); ++idx) {
@@ -1975,8 +1928,7 @@ static void rb_ao2_stats(struct ao2_container_rbtree *self,
  * \retval black-height of node on success.
  * \retval -1 on error.  Node black height did not balance.
  */
-static int rb_check_black_height(struct rbtree_node *node)
-{
+static int rb_check_black_height(struct rbtree_node *node) {
   int height_left;
   int height_right;
 
@@ -2026,18 +1978,17 @@ static int rb_check_black_height(struct rbtree_node *node)
  * \retval 0 on success.
  * \retval -1 on error.
  */
-static int rb_ao2_integrity(struct ao2_container_rbtree *self)
-{
-  int   res;
-  int   count_node;
-  int   count_obj;
+static int rb_ao2_integrity(struct ao2_container_rbtree *self) {
+  int res;
+  int count_node;
+  int count_obj;
   void *obj_last;
   struct rbtree_node *node;
 
   res = 0;
 
   count_node = 0;
-  count_obj  = 0;
+  count_obj = 0;
 
   /*
    * See the properties listed at struct rbtree_node definition.
@@ -2106,7 +2057,8 @@ static int rb_ao2_integrity(struct ao2_container_rbtree *self)
 
           if (node->right->is_red) {
             /* Violation rbtree property 4. */
-            ast_log(LOG_ERROR, "Tree node is red and its right child is red!\n");
+            ast_log(LOG_ERROR,
+                    "Tree node is red and its right child is red!\n");
             res = -1;
           }
         } else if (node->left || node->right) {
@@ -2138,14 +2090,16 @@ static int rb_ao2_integrity(struct ao2_container_rbtree *self)
             if (!red->left || !red->right) {
               /* Violation rbtree property 5. */
               ast_log(LOG_ERROR,
-                      "Tree node is black and the red child does not have two children!\n");
+                      "Tree node is black and the red child does not have two "
+                      "children!\n");
               res = -1;
             }
           }
-        } else if ((node->left && !node->left->is_red)
-                   || (node->right && !node->right->is_red)) {
+        } else if ((node->left && !node->left->is_red) ||
+                   (node->right && !node->right->is_red)) {
           /* Violation rbtree property 5. */
-          ast_log(LOG_ERROR, "Tree node is black and its only child is black!\n");
+          ast_log(LOG_ERROR,
+                  "Tree node is black and its only child is black!\n");
           res = -1;
         }
       }
@@ -2163,7 +2117,8 @@ static int rb_ao2_integrity(struct ao2_container_rbtree *self)
     /* Check node key sort order. */
     obj_last = NULL;
 
-    for (node = rb_node_most_left(self->root); node; node = rb_node_next(node)) {
+    for (node = rb_node_most_left(self->root); node;
+         node = rb_node_next(node)) {
       if (!node->common.obj) {
         /* Node is empty. */
         continue;
@@ -2207,18 +2162,18 @@ static int rb_ao2_integrity(struct ao2_container_rbtree *self)
 
 /*! rbtree container virtual method table. */
 static const struct ao2_container_methods v_table_rbtree = {
-  .alloc_empty_clone =
-    (ao2_container_alloc_empty_clone_fn)rb_ao2_alloc_empty_clone,
-  .new_node       = (ao2_container_new_node_fn)rb_ao2_new_node,
-  .insert         = (ao2_container_insert_fn)rb_ao2_insert_node,
-  .traverse_first = (ao2_container_find_first_fn)rb_ao2_find_first,
-  .traverse_next  = (ao2_container_find_next_fn)rb_ao2_find_next,
-  .iterator_next  = (ao2_iterator_next_fn)rb_ao2_iterator_next,
-  .destroy        = (ao2_container_destroy_fn)rb_ao2_destroy,
+    .alloc_empty_clone =
+        (ao2_container_alloc_empty_clone_fn)rb_ao2_alloc_empty_clone,
+    .new_node = (ao2_container_new_node_fn)rb_ao2_new_node,
+    .insert = (ao2_container_insert_fn)rb_ao2_insert_node,
+    .traverse_first = (ao2_container_find_first_fn)rb_ao2_find_first,
+    .traverse_next = (ao2_container_find_next_fn)rb_ao2_find_next,
+    .iterator_next = (ao2_iterator_next_fn)rb_ao2_iterator_next,
+    .destroy = (ao2_container_destroy_fn)rb_ao2_destroy,
 #if defined(AO2_DEBUG)
-  .dump      = (ao2_container_display)rb_ao2_dump,
-  .stats     = (ao2_container_statistics)rb_ao2_stats,
-  .integrity = (ao2_container_integrity)rb_ao2_integrity,
+    .dump = (ao2_container_display)rb_ao2_dump,
+    .stats = (ao2_container_statistics)rb_ao2_stats,
+    .integrity = (ao2_container_integrity)rb_ao2_integrity,
 #endif /* defined(AO2_DEBUG) */
 };
 
@@ -2232,19 +2187,16 @@ static const struct ao2_container_methods v_table_rbtree = {
  *
  * \return A pointer to a struct container.
  */
-static struct ao2_container* rb_ao2_container_init(
-  struct ao2_container_rbtree *self,
-  unsigned int                 options,
-  ao2_sort_fn                 *sort_fn,
-  ao2_callback_fn             *cmp_fn)
-{
+static struct ao2_container *rb_ao2_container_init(
+    struct ao2_container_rbtree *self, unsigned int options,
+    ao2_sort_fn *sort_fn, ao2_callback_fn *cmp_fn) {
   if (!self) {
     return NULL;
   }
 
   self->common.v_table = &v_table_rbtree;
   self->common.sort_fn = sort_fn;
-  self->common.cmp_fn  = cmp_fn;
+  self->common.cmp_fn = cmp_fn;
   self->common.options = options;
 
 #ifdef AO2_DEBUG
@@ -2254,15 +2206,10 @@ static struct ao2_container* rb_ao2_container_init(
   return (struct ao2_container *)self;
 }
 
-struct ao2_container* __ao2_container_alloc_rbtree(unsigned int     ao2_options,
-                                                   unsigned int     container_options,
-                                                   ao2_sort_fn     *sort_fn,
-                                                   ao2_callback_fn *cmp_fn,
-                                                   const char      *tag,
-                                                   const char      *file,
-                                                   int              line,
-                                                   const char      *func)
-{
+struct ao2_container *__ao2_container_alloc_rbtree(
+    unsigned int ao2_options, unsigned int container_options,
+    ao2_sort_fn *sort_fn, ao2_callback_fn *cmp_fn, const char *tag,
+    const char *file, int line, const char *func) {
   struct ao2_container_rbtree *self;
 
   if (!sort_fn) {
@@ -2272,6 +2219,6 @@ struct ao2_container* __ao2_container_alloc_rbtree(unsigned int     ao2_options,
   }
 
   self = __ao2_alloc(sizeof(*self), container_destruct, ao2_options,
-                     tag ? : __PRETTY_FUNCTION__, file, line, func);
+                     tag ?: __PRETTY_FUNCTION__, file, line, func);
   return rb_ao2_container_init(self, container_options, sort_fn, cmp_fn);
 }

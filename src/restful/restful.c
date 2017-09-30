@@ -71,22 +71,18 @@
  *    3. Validates and sends response
  */
 
-
 #include "libcutil.h"
-
 
 #include "internal.h"
 #include "libcutil/restful.h"
-#include "libcutil/astobj2.h"
-
+#include "libcutil/obj2.h"
 
 #include <string.h>
 #include <sys/stat.h>
 #include <unistd.h>
 
 /*! \brief Helper function to check if module is enabled. */
-static int is_enabled(void)
-{
+static int is_enabled(void) {
   RAII_VAR(struct ast_ari_conf *, cfg, ast_ari_config_get(), ao2_cleanup);
   return cfg && cfg->general && cfg->general->enabled;
 }
@@ -100,30 +96,25 @@ static struct stasis_rest_handlers *root_handler;
 /*! Pre-defined message for allocation failures. */
 static struct ast_json *oom_json;
 
-static char doc_dir[128] = { 0 };
-const char* cutil_restful_get_doc_dir(void)
-{
-  return doc_dir;
-}
+static char doc_dir[128] = {0};
+const char *cutil_restful_get_doc_dir(void) { return doc_dir; }
 
-void cutil_restful_set_doc_root_dir(const char *dir)
-{
+void cutil_restful_set_doc_root_dir(const char *dir) {
   snprintf(doc_dir, sizeof(doc_dir), dir);
 }
 
-struct ast_json* ast_ari_oom_json(void)
-{
+struct ast_json *ast_ari_oom_json(void) {
   return oom_json;
 }
 
-int ast_ari_add_handler(struct stasis_rest_handlers *handler)
-{
+int ast_ari_add_handler(struct stasis_rest_handlers *handler) {
   RAII_VAR(struct stasis_rest_handlers *, new_handler, NULL, ao2_cleanup);
   size_t old_size, new_size;
 
   SCOPED_MUTEX(lock, &root_handler_lock);
 
-  old_size = sizeof(*new_handler) + root_handler->num_children * sizeof(handler);
+  old_size =
+      sizeof(*new_handler) + root_handler->num_children * sizeof(handler);
   new_size = old_size + sizeof(handler);
 
   new_handler = ao2_alloc(new_size, NULL);
@@ -143,8 +134,7 @@ int ast_ari_add_handler(struct stasis_rest_handlers *handler)
   return 0;
 }
 
-int ast_ari_remove_handler(struct stasis_rest_handlers *handler)
-{
+int ast_ari_remove_handler(struct stasis_rest_handlers *handler) {
   struct stasis_rest_handlers *new_handler;
   size_t size;
   size_t i;
@@ -183,15 +173,13 @@ int ast_ari_remove_handler(struct stasis_rest_handlers *handler)
   return 0;
 }
 
-static struct stasis_rest_handlers* get_root_handler(void)
-{
+static struct stasis_rest_handlers *get_root_handler(void) {
   SCOPED_MUTEX(lock, &root_handler_lock);
   ao2_ref(root_handler, +1);
   return root_handler;
 }
 
-static struct stasis_rest_handlers* root_handler_create(void)
-{
+static struct stasis_rest_handlers *root_handler_create(void) {
   RAII_VAR(struct stasis_rest_handlers *, handler, NULL, ao2_cleanup);
 
   handler = ao2_alloc(sizeof(*handler), NULL);
@@ -206,84 +194,70 @@ static struct stasis_rest_handlers* root_handler_create(void)
 }
 
 void ast_ari_response_error(struct ast_ari_response *response,
-                            int response_code,
-                            const char *response_text,
-                            const char *message_fmt, ...)
-{
+                            int response_code, const char *response_text,
+                            const char *message_fmt, ...) {
   RAII_VAR(struct ast_json *, message, NULL, ast_json_unref);
   va_list ap;
 
   va_start(ap, message_fmt);
   message = ast_json_vstringf(message_fmt, ap);
   va_end(ap);
-  response->message = ast_json_pack("{s: o}",
-                                    "message", ast_json_ref(message));
+  response->message = ast_json_pack("{s: o}", "message", ast_json_ref(message));
   response->response_code = response_code;
   response->response_text = response_text;
 }
 
 void ast_ari_response_ok(struct ast_ari_response *response,
-                         struct ast_json         *message)
-{
-  response->message       = message;
+                         struct ast_json *message) {
+  response->message = message;
   response->response_code = 200;
   response->response_text = "OK";
 }
 
-void ast_ari_response_no_content(struct ast_ari_response *response)
-{
-  response->message       = ast_json_null();
+void ast_ari_response_no_content(struct ast_ari_response *response) {
+  response->message = ast_json_null();
   response->response_code = 204;
   response->response_text = "No Content";
 }
 
-void ast_ari_response_accepted(struct ast_ari_response *response)
-{
-  response->message       = ast_json_null();
+void ast_ari_response_accepted(struct ast_ari_response *response) {
+  response->message = ast_json_null();
   response->response_code = 202;
   response->response_text = "Accepted";
 }
 
-void ast_ari_response_alloc_failed(struct ast_ari_response *response)
-{
-  response->message       = ast_json_ref(oom_json);
+void ast_ari_response_alloc_failed(struct ast_ari_response *response) {
+  response->message = ast_json_ref(oom_json);
   response->response_code = 500;
   response->response_text = "Internal Server Error";
 }
 
 void ast_ari_response_created(struct ast_ari_response *response,
-                              const char *url, struct ast_json *message)
-{
-  RAII_VAR(struct stasis_rest_handlers *, root, get_root_handler(), ao2_cleanup);
-  response->message       = message;
+                              const char *url, struct ast_json *message) {
+  RAII_VAR(struct stasis_rest_handlers *, root, get_root_handler(),
+           ao2_cleanup);
+  response->message = message;
   response->response_code = 201;
   response->response_text = "Created";
-  ast_str_append(&response->headers,
-                 0,
-                 "Location: /%s%s\r\n",
-                 root->path_segment,
-                 url);
+  ast_str_append(&response->headers, 0, "Location: /%s%s\r\n",
+                 root->path_segment, url);
 }
 
 static void add_allow_header(struct stasis_rest_handlers *handler,
-                             struct ast_ari_response     *response)
-{
+                             struct ast_ari_response *response) {
   enum ast_http_method m;
 
-  ast_str_append(&response->headers, 0,
-                 "Allow: OPTIONS");
+  ast_str_append(&response->headers, 0, "Allow: OPTIONS");
 
   for (m = 0; m < AST_HTTP_MAX_METHOD; ++m) {
     if (handler->callbacks[m] != NULL) {
-      ast_str_append(&response->headers, 0,
-                     ",%s", ast_get_http_method(m));
+      ast_str_append(&response->headers, 0, ",%s", ast_get_http_method(m));
     }
   }
   ast_str_append(&response->headers, 0, "\r\n");
 }
 
-static int origin_allowed(const char *origin)
-{
+static int origin_allowed(const char *origin) {
   RAII_VAR(struct ast_ari_conf *, cfg, ast_ari_config_get(), ao2_cleanup);
 
   char *allowed = ast_strdupa(cfg->general->allowed_origins);
@@ -314,13 +288,12 @@ static int origin_allowed(const char *origin)
  * See http://www.w3.org/TR/cors/ for the spec. Especially section 6.2.
  */
 static void handle_options(struct stasis_rest_handlers *handler,
-                           struct ast_variable         *headers,
-                           struct ast_ari_response     *response)
-{
+                           struct ast_variable *headers,
+                           struct ast_ari_response *response) {
   struct ast_variable *header;
-  char const *acr_method  = NULL;
+  char const *acr_method = NULL;
   char const *acr_headers = NULL;
-  char const *origin      = NULL;
+  char const *origin = NULL;
 
   RAII_VAR(struct ast_str *, allow, NULL, ast_free);
   enum ast_http_method m;
@@ -360,8 +333,7 @@ static void handle_options(struct stasis_rest_handlers *handler,
    */
   if (!origin_allowed(origin)) {
     ast_log(LOG_NOTICE,
-            "Origin header '%s' does not match an allowed origin.\n",
-            origin);
+            "Origin header '%s' does not match an allowed origin.\n", origin);
     return;
   }
 
@@ -430,9 +402,8 @@ static void handle_options(struct stasis_rest_handlers *handler,
   /* CORS 6.2 #9 - "Add one or more Access-Control-Allow-Methods headers
    * consisting of (a subset of) the list of methods."
    */
-  ast_str_append(&response->headers, 0, "%s: OPTIONS%s\r\n",
-                 ACA_METHODS, ast_str_buffer(allow));
-
+  ast_str_append(&response->headers, 0, "%s: OPTIONS%s\r\n", ACA_METHODS,
+                 ast_str_buffer(allow));
 
   /* CORS 6.2, #10 - "Add one or more Access-Control-Allow-Headers headers
    * consisting of (a subset of) the list of headers.
@@ -441,19 +412,19 @@ static void handle_options(struct stasis_rest_handlers *handler,
    * can be enough."
    */
   if (!ast_strlen_zero(acr_headers)) {
-    ast_str_append(&response->headers, 0, "%s: %s\r\n",
-                   ACA_HEADERS, acr_headers);
+    ast_str_append(&response->headers, 0, "%s: %s\r\n", ACA_HEADERS,
+                   acr_headers);
   }
 }
 
-void ast_ari_invoke(struct ast_tcptls_session_instance *ser,
-                    const char *uri, enum ast_http_method method,
-                    struct ast_variable *get_params, struct ast_variable *headers,
-                    struct ast_json *body, struct ast_ari_response *response)
-{
-  RAII_VAR(struct stasis_rest_handlers *, root,      NULL, ao2_cleanup);
+void ast_ari_invoke(struct ast_tcptls_session_instance *ser, const char *uri,
+                    enum ast_http_method method,
+                    struct ast_variable *get_params,
+                    struct ast_variable *headers, struct ast_json *body,
+                    struct ast_ari_response *response) {
+  RAII_VAR(struct stasis_rest_handlers *, root, NULL, ao2_cleanup);
   struct stasis_rest_handlers *handler;
-  RAII_VAR(struct ast_variable *,         path_vars, NULL, ast_variables_destroy);
+  RAII_VAR(struct ast_variable *, path_vars, NULL, ast_variables_destroy);
   char *path = ast_strdupa(uri);
   char *path_segment;
   stasis_rest_callback callback;
@@ -475,12 +446,11 @@ void ast_ari_invoke(struct ast_tcptls_session_instance *ser,
 
       if (child->is_wildcard) {
         /* Record the path variable */
-        struct ast_variable *path_var = ast_variable_new(child->path_segment,
-                                                         path_segment,
-                                                         __FILE__);
+        struct ast_variable *path_var =
+            ast_variable_new(child->path_segment, path_segment, __FILE__);
         path_var->next = path_vars;
-        path_vars      = path_var;
-        found_handler  = child;
+        path_vars = path_var;
+        found_handler = child;
       } else if (strcmp(child->path_segment, path_segment) == 0) {
         found_handler = child;
       }
@@ -489,9 +459,7 @@ void ast_ari_invoke(struct ast_tcptls_session_instance *ser,
     if (found_handler == NULL) {
       /* resource not found */
       ast_debug(3, "  Handler not found\n");
-      ast_ari_response_error(
-        response, 404, "Not Found",
-        "Resource not found");
+      ast_ari_response_error(response, 404, "Not Found", "Resource not found");
       return;
     } else {
       ast_debug(3, "  Got it!\n");
@@ -508,16 +476,15 @@ void ast_ari_invoke(struct ast_tcptls_session_instance *ser,
 
   if ((method < 0) || (method >= AST_HTTP_MAX_METHOD)) {
     add_allow_header(handler, response);
-    ast_ari_response_error(
-      response, 405, "Method Not Allowed",
-      "Invalid method");
+    ast_ari_response_error(response, 405, "Method Not Allowed",
+                           "Invalid method");
     return;
   }
 
   if (handler->ws_server && (method == AST_HTTP_GET)) {
     /* WebSocket! */
-    ari_handle_websocket(handler->ws_server, ser, uri, method,
-                         get_params, headers);
+    ari_handle_websocket(handler->ws_server, ser, uri, method, get_params,
+                         headers);
 
     /* Since the WebSocket code handles the connection, we shouldn't
      * do anything else; setting no_response */
@@ -529,9 +496,8 @@ void ast_ari_invoke(struct ast_tcptls_session_instance *ser,
 
   if (callback == NULL) {
     add_allow_header(handler, response);
-    ast_ari_response_error(
-      response, 405, "Method Not Allowed",
-      "Invalid method");
+    ast_ari_response_error(response, 405, "Method Not Allowed",
+                           "Invalid method");
     return;
   }
 
@@ -541,22 +507,19 @@ void ast_ari_invoke(struct ast_tcptls_session_instance *ser,
     /* Really should not happen */
     ast_log(LOG_ERROR, "ARI %s %s not implemented\n",
             ast_get_http_method(method), uri);
-    ast_ari_response_error(
-      response, 501, "Not Implemented",
-      "Method not implemented");
+    ast_ari_response_error(response, 501, "Not Implemented",
+                           "Method not implemented");
   }
 }
 
-void ast_ari_get_docs(const char              *uri,
-                      const char              *prefix,
-                      struct ast_variable     *headers,
-                      struct ast_ari_response *response)
-{
+void ast_ari_get_docs(const char *uri, const char *prefix,
+                      struct ast_variable *headers,
+                      struct ast_ari_response *response) {
   RAII_VAR(struct ast_str *, absolute_path_builder, NULL, ast_free);
-  RAII_VAR(char *,           absolute_api_dirname,  NULL, ast_std_free);
-  RAII_VAR(char *,           absolute_filename,     NULL, ast_std_free);
-  struct ast_json *obj        = NULL;
-  struct ast_variable  *host  = NULL;
+  RAII_VAR(char *, absolute_api_dirname, NULL, ast_std_free);
+  RAII_VAR(char *, absolute_filename, NULL, ast_std_free);
+  struct ast_json *obj = NULL;
+  struct ast_variable *host = NULL;
   struct ast_json_error error = {};
   struct stat file_stat;
 
@@ -576,9 +539,8 @@ void ast_ari_get_docs(const char              *uri,
 
   if (absolute_api_dirname == NULL) {
     ast_log(LOG_ERROR, "Error determining real directory for rest-api\n");
-    ast_ari_response_error(
-      response, 500, "Internal Server Error",
-      "Cannot find rest-api directory");
+    ast_ari_response_error(response, 500, "Internal Server Error",
+                           "Cannot find rest-api directory");
     return;
   }
 
@@ -588,56 +550,44 @@ void ast_ari_get_docs(const char              *uri,
 
   if (absolute_filename == NULL) {
     switch (errno) {
-    case ENAMETOOLONG:
-    case ENOENT:
-    case ENOTDIR:
-      ast_ari_response_error(
-        response, 404, "Not Found",
-        "Resource not found");
-      break;
+      case ENAMETOOLONG:
+      case ENOENT:
+      case ENOTDIR:
+        ast_ari_response_error(response, 404, "Not Found",
+                               "Resource not found");
+        break;
 
-    case EACCES:
-      ast_ari_response_error(
-        response, 403, "Forbidden",
-        "Permission denied");
-      break;
+      case EACCES:
+        ast_ari_response_error(response, 403, "Forbidden", "Permission denied");
+        break;
 
-    default:
-      ast_log(LOG_ERROR,
-              "Error determining real path for uri '%s': %s\n",
-              uri, strerror(errno));
-      ast_ari_response_error(
-        response, 500, "Internal Server Error",
-        "Cannot find file");
-      break;
+      default:
+        ast_log(LOG_ERROR, "Error determining real path for uri '%s': %s\n",
+                uri, strerror(errno));
+        ast_ari_response_error(response, 500, "Internal Server Error",
+                               "Cannot find file");
+        break;
     }
     return;
   }
 
   if (!ast_begins_with(absolute_filename, absolute_api_dirname)) {
     /* HACKERZ! */
-    ast_log(LOG_ERROR,
-            "Invalid attempt to access '%s' (not in %s)\n",
+    ast_log(LOG_ERROR, "Invalid attempt to access '%s' (not in %s)\n",
             absolute_filename, absolute_api_dirname);
-    ast_ari_response_error(
-      response, 404, "Not Found",
-      "Resource not found");
+    ast_ari_response_error(response, 404, "Not Found", "Resource not found");
     return;
   }
 
   if (stat(absolute_filename, &file_stat) == 0) {
     if (!(file_stat.st_mode & S_IFREG)) {
       /* Not a file */
-      ast_ari_response_error(
-        response, 403, "Forbidden",
-        "Invalid access");
+      ast_ari_response_error(response, 403, "Forbidden", "Invalid access");
       return;
     }
   } else {
     /* Does not exist */
-    ast_ari_response_error(
-      response, 404, "Not Found",
-      "Resource not found");
+    ast_ari_response_error(response, 404, "Not Found", "Resource not found");
     return;
   }
 
@@ -647,9 +597,8 @@ void ast_ari_get_docs(const char              *uri,
   if (obj == NULL) {
     ast_log(LOG_ERROR, "Error parsing resource file: %s:%d(%d) %s\n",
             error.source, error.line, error.column, error.text);
-    ast_ari_response_error(
-      response, 500, "Internal Server Error",
-      "Yikes! Cannot parse resource");
+    ast_ari_response_error(response, 500, "Internal Server Error",
+                           "Yikes! Cannot parse resource");
     return;
   }
 
@@ -664,12 +613,11 @@ void ast_ari_get_docs(const char              *uri,
     if (host != NULL) {
       if ((prefix != NULL) && (strlen(prefix) > 0)) {
         ast_json_object_set(
-          obj, "basePath",
-          ast_json_stringf("http://%s%s/ari", host->value, prefix));
+            obj, "basePath",
+            ast_json_stringf("http://%s%s/ari", host->value, prefix));
       } else {
-        ast_json_object_set(
-          obj, "basePath",
-          ast_json_stringf("http://%s/ari", host->value));
+        ast_json_object_set(obj, "basePath",
+                            ast_json_stringf("http://%s/ari", host->value));
       }
     } else {
       /* Without the host, we don't have the basePath */
@@ -680,9 +628,8 @@ void ast_ari_get_docs(const char              *uri,
   ast_ari_response_ok(response, obj);
 }
 
-static void remove_trailing_slash(const char              *uri,
-                                  struct ast_ari_response *response)
-{
+static void remove_trailing_slash(const char *uri,
+                                  struct ast_ari_response *response) {
   char *slashless = ast_strdupa(uri);
 
   slashless[strlen(slashless) - 1] = '\0';
@@ -703,9 +650,7 @@ static void remove_trailing_slash(const char              *uri,
    * Given all of that, a 404 with a nice message telling them what to do
    * is probably our best bet.
    */
-  ast_ari_response_error(response,
-                         404,
-                         "Not Found",
+  ast_ari_response_error(response, 404, "Not Found",
                          "ARI URLs do not end with a slash. Try /ari/%s",
                          slashless);
 }
@@ -715,9 +660,8 @@ static void remove_trailing_slash(const char              *uri,
  *
  * See http://www.w3.org/TR/cors/ for the spec. Especially section 6.1.
  */
-static void process_cors_request(struct ast_variable     *headers,
-                                 struct ast_ari_response *response)
-{
+static void process_cors_request(struct ast_variable *headers,
+                                 struct ast_ari_response *response) {
   char const *origin = NULL;
   struct ast_variable *header;
 
@@ -744,8 +688,7 @@ static void process_cors_request(struct ast_variable     *headers,
    */
   if (!origin_allowed(origin)) {
     ast_log(LOG_NOTICE,
-            "Origin header '%s' does not match an allowed origin.\n",
-            origin);
+            "Origin header '%s' does not match an allowed origin.\n", origin);
     return;
   }
 
@@ -757,8 +700,8 @@ static void process_cors_request(struct ast_variable     *headers,
    * Otherwise, add a single Access-Control-Allow-Origin header, with
    * either the value of the Origin header or the string "*" as value."
    */
-  ast_str_append(&response->headers, 0,
-                 "Access-Control-Allow-Origin: %s\r\n", origin);
+  ast_str_append(&response->headers, 0, "Access-Control-Allow-Origin: %s\r\n",
+                 origin);
   ast_str_append(&response->headers, 0,
                  "Access-Control-Allow-Credentials: true\r\n");
 
@@ -770,8 +713,7 @@ static void process_cors_request(struct ast_variable     *headers,
    */
 }
 
-enum ast_json_encoding_format ast_ari_json_format(void)
-{
+enum ast_json_encoding_format ast_ari_json_format(void) {
   RAII_VAR(struct ast_ari_conf *, cfg, NULL, ao2_cleanup);
   cfg = ast_ari_config_get();
   return cfg->general->format;
@@ -784,8 +726,7 @@ enum ast_json_encoding_format ast_ari_json_format(void)
  * \return User object for the authenticated user.
  * \return \c NULL if authentication failed.
  */
-static struct ast_ari_conf_user* authenticate_api_key(const char *api_key)
-{
+static struct ast_ari_conf_user *authenticate_api_key(const char *api_key) {
   RAII_VAR(char *, copy, NULL, ast_free);
   char *username;
   char *password;
@@ -814,10 +755,8 @@ static struct ast_ari_conf_user* authenticate_api_key(const char *api_key)
  * \return User object for the authenticated user.
  * \return \c NULL if authentication failed.
  */
-static struct ast_ari_conf_user* authenticate_user(
-  struct ast_variable *get_params,
-  struct ast_variable *headers)
-{
+static struct ast_ari_conf_user *authenticate_user(
+    struct ast_variable *get_params, struct ast_variable *headers) {
   RAII_VAR(struct ast_http_auth *, http_auth, NULL, ao2_cleanup);
   struct ast_variable *v;
 
@@ -825,8 +764,7 @@ static struct ast_ari_conf_user* authenticate_user(
   http_auth = ast_http_get_auth(headers);
 
   if (http_auth) {
-    return ast_ari_config_validate_user(http_auth->userid,
-                                        http_auth->password);
+    return ast_ari_config_validate_user(http_auth->userid, http_auth->password);
   }
 
   /* ?api_key authentication */
@@ -854,32 +792,19 @@ static struct ast_ari_conf_user* authenticate_user(
  * \param headers HTTP headers.
  */
 static int ast_ari_callback(struct ast_tcptls_session_instance *ser,
-                            const struct ast_http_uri          *urih,
-                            const char                         *uri,
-                            enum ast_http_method                method,
-                            struct ast_variable                *get_params,
-                            struct ast_variable                *headers)
-{
-  RAII_VAR(struct ast_ari_conf *,
-           conf,
-           NULL,
-           ao2_cleanup);
-  RAII_VAR(struct ast_str *, response_body, ast_str_create(
-             256),          ast_free);
-  RAII_VAR(struct ast_ari_conf_user *,
-           user,
-           NULL,
-           ao2_cleanup);
+                            const struct ast_http_uri *urih, const char *uri,
+                            enum ast_http_method method,
+                            struct ast_variable *get_params,
+                            struct ast_variable *headers) {
+  RAII_VAR(struct ast_ari_conf *, conf, NULL, ao2_cleanup);
+  RAII_VAR(struct ast_str *, response_body, ast_str_create(256), ast_free);
+  RAII_VAR(struct ast_ari_conf_user *, user, NULL, ao2_cleanup);
   struct ast_ari_response response = {};
-  RAII_VAR(struct ast_variable *,
-           post_vars,
-           NULL,
-           ast_variables_destroy);
+  RAII_VAR(struct ast_variable *, post_vars, NULL, ast_variables_destroy);
   struct ast_variable *var;
   const char *app_name = NULL;
-  RAII_VAR(struct ast_json *, body,
-           ast_json_null(), ast_json_free);
-  int   debug_app     = 0;
+  RAII_VAR(struct ast_json *, body, ast_json_null(), ast_json_free);
+  int debug_app = 0;
   char *resource_path = ast_strdupa(uri);
   char *resource_path_segment;
 
@@ -916,23 +841,21 @@ static int ast_ari_callback(struct ast_tcptls_session_instance *ser,
 
   if (!post_vars) {
     switch (errno) {
-    case EFBIG:
-      ast_ari_response_error(&response, 413,
-                             "Request Entity Too Large",
-                             "Request body too large");
-      goto request_failed;
+      case EFBIG:
+        ast_ari_response_error(&response, 413, "Request Entity Too Large",
+                               "Request body too large");
+        goto request_failed;
 
-    case ENOMEM:
-      ast_http_request_close_on_completion(ser);
-      ast_ari_response_error(&response, 500,
-                             "Internal Server Error",
-                             "Out of memory");
-      goto request_failed;
+      case ENOMEM:
+        ast_http_request_close_on_completion(ser);
+        ast_ari_response_error(&response, 500, "Internal Server Error",
+                               "Out of memory");
+        goto request_failed;
 
-    case EIO:
-      ast_ari_response_error(&response, 400,
-                             "Bad Request", "Error parsing request body");
-      goto request_failed;
+      case EIO:
+        ast_ari_response_error(&response, 400, "Bad Request",
+                               "Error parsing request body");
+        goto request_failed;
     }
 
     /* Look for a JSON request entity only if there were no post_vars.
@@ -943,26 +866,20 @@ static int ast_ari_callback(struct ast_tcptls_session_instance *ser,
 
     if (!body) {
       switch (errno) {
-      case EFBIG:
-        ast_ari_response_error(&response,
-                               413,
-                               "Request Entity Too Large",
-                               "Request body too large");
-        goto request_failed;
+        case EFBIG:
+          ast_ari_response_error(&response, 413, "Request Entity Too Large",
+                                 "Request body too large");
+          goto request_failed;
 
-      case ENOMEM:
-        ast_ari_response_error(&response,
-                               500,
-                               "Internal Server Error",
-                               "Error processing request");
-        goto request_failed;
+        case ENOMEM:
+          ast_ari_response_error(&response, 500, "Internal Server Error",
+                                 "Error processing request");
+          goto request_failed;
 
-      case EIO:
-        ast_ari_response_error(&response,
-                               400,
-                               "Bad Request",
-                               "Error parsing request body");
-        goto request_failed;
+        case EIO:
+          ast_ari_response_error(&response, 400, "Bad Request",
+                                 "Error parsing request body");
+          goto request_failed;
       }
     }
   }
@@ -981,9 +898,8 @@ static int ast_ari_callback(struct ast_tcptls_session_instance *ser,
      * ast_variables_destroyed.
      */
     last_var->next = ast_variables_dup(get_params);
-    get_params     = post_vars;
+    get_params = post_vars;
   }
-
 
   user = authenticate_user(get_params, headers);
 
@@ -996,9 +912,7 @@ static int ast_ari_callback(struct ast_tcptls_session_instance *ser,
      * WWW-Authenticate header field containing at least one
      * challenge applicable to the requested resource.
      */
-    ast_ari_response_error(&response,
-                           401,
-                           "Unauthorized",
+    ast_ari_response_error(&response, 401, "Unauthorized",
                            "Authentication required");
 
     /* Section 1.2:
@@ -1014,21 +928,18 @@ static int ast_ari_callback(struct ast_tcptls_session_instance *ser,
              !((resource_path_segment = strsep(&resource_path, "/")) &&
                (strlen(resource_path_segment) > 0) &&
                (strstr(user->resources, resource_path_segment)))) {
-    ast_ari_response_error(&response,
-                           401,
-                           "Unauthorized",
-                           "Access is denied due to an ACL set on the requested resource.");
-  }  else if (user->read_only && (method != AST_HTTP_GET) &&
-              (method != AST_HTTP_OPTIONS)) {
+    ast_ari_response_error(
+        &response, 401, "Unauthorized",
+        "Access is denied due to an ACL set on the requested resource.");
+  } else if (user->read_only && (method != AST_HTTP_GET) &&
+             (method != AST_HTTP_OPTIONS)) {
     ast_ari_response_error(&response, 403, "Forbidden", "Write access denied");
   } else if (ast_ends_with(uri, "/")) {
     remove_trailing_slash(uri, &response);
   } else if (ast_begins_with(uri, "api-docs/")) {
     /* Serving up API docs */
     if (method != AST_HTTP_GET) {
-      ast_ari_response_error(&response,
-                             405,
-                             "Method Not Allowed",
+      ast_ari_response_error(&response, 405, "Method Not Allowed",
                              "Unsupported method");
     } else {
       /* Skip the api-docs prefix */
@@ -1036,8 +947,7 @@ static int ast_ari_callback(struct ast_tcptls_session_instance *ser,
     }
   } else {
     /* Other RESTful resources */
-    ast_ari_invoke(ser, uri, method, get_params, headers, body,
-                   &response);
+    ast_ari_invoke(ser, uri, method, get_params, headers, body, &response);
   }
 
   if (response.no_response) {
@@ -1059,30 +969,28 @@ request_failed:
    * is correct
    */
   if (response.message && !ast_json_is_null(response.message)) {
-    ast_str_append(&response.headers, 0,
-                   "Content-type: application/json\r\n");
+    ast_str_append(&response.headers, 0, "Content-type: application/json\r\n");
 
     if (ast_json_dump_str_format(response.message, &response_body,
                                  conf->general->format) != 0) {
       /* Error encoding response */
       response.response_code = 500;
       response.response_text = "Internal Server Error";
-      ast_str_set(&response_body,    0, "%s", "");
+      ast_str_set(&response_body, 0, "%s", "");
       ast_str_set(&response.headers, 0, "%s", "");
     }
   }
 
   if (debug_app) {
     ast_verbose("<--- Sending ARI response to %s --->\n%d %s\n%s%s\n\n",
-                ast_sockaddr_stringify(
-                  &ser->remote_address), response.response_code,
-                response.response_text, ast_str_buffer(response.headers),
+                ast_sockaddr_stringify(&ser->remote_address),
+                response.response_code, response.response_text,
+                ast_str_buffer(response.headers),
                 ast_str_buffer(response_body));
   }
 
-  ast_http_send(ser, method, response.response_code,
-                response.response_text, response.headers, response_body,
-                0, 0);
+  ast_http_send(ser, method, response.response_code, response.response_text,
+                response.headers, response_body, 0, 0);
 
   /* ast_http_send takes ownership, so we don't have to free them */
   response_body = NULL;
@@ -1092,20 +1000,19 @@ request_failed:
 }
 
 static struct ast_http_uri http_uri = {
-  .callback    = ast_ari_callback,
-  .description = "RESTful API",
-  .uri         = "api",
+    .callback = ast_ari_callback,
+    .description = "RESTful API",
+    .uri = "api",
 
-  .has_subtree   =                      1,
-  .data          = NULL,
-  .key           = __FILE__,
-  .no_decode_uri =                      1,
+    .has_subtree = 1,
+    .data = NULL,
+    .key = __FILE__,
+    .no_decode_uri = 1,
 };
 
 int cutil_restful_init(struct ast_ari_conf_general *general,
-                       struct ast_ari_conf_user    *user_list,
-                       size_t                       user_list_len)
-{
+                       struct ast_ari_conf_user *user_list,
+                       size_t user_list_len) {
   ast_mutex_init(&root_handler_lock);
 
   /* root_handler may have been built during a declined load */
@@ -1119,8 +1026,7 @@ int cutil_restful_init(struct ast_ari_conf_general *general,
 
   /* oom_json may have been built during a declined load */
   if (!oom_json) {
-    oom_json = ast_json_pack(
-      "{s: s}", "error", "Allocation failed");
+    oom_json = ast_json_pack("{s: s}", "error", "Allocation failed");
   }
 
   if (!oom_json) {
@@ -1147,8 +1053,7 @@ int cutil_restful_init(struct ast_ari_conf_general *general,
   return 0;
 }
 
-int cutil_restful_destory(void)
-{
+int cutil_restful_destory(void) {
   ast_ari_cli_unregister();
 
   if (is_enabled()) {

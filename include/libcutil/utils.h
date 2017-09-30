@@ -1,27 +1,16 @@
 /*
- * Asterisk -- An open source telephony toolkit.
- *
- * Copyright (C) 1999 - 2006, Digium, Inc.
- *
- * Mark Spencer <markster@digium.com>
- *
- * See http://www.asterisk.org for more information about
- * the Asterisk project. Please do not directly contact
- * any of the maintainers of this project for assistance;
- * the project provides a web site, mailing lists and IRC
- * channels for your use.
- *
- * This program is free software, distributed under the terms of
- * the GNU General Public License Version 2. See the LICENSE file
- * at the top of the source tree.
- */
+* Copyright (C) 2016 - 2017, JYD, Inc.
+*
+* seanchann <xqzhou@bj-jyd.cn>
+*
+* See docs/ for more information about
+* the  project.
+*
+* This program belongs to JYD, Inc. JYD, Inc reserves all rights
+*/
 
-/*! \file
- * \brief Utility functions
- */
-
-#ifndef _ASTERISK_UTILS_H
-#define _ASTERISK_UTILS_H
+#ifndef _CUTIL_UTILS_H
+#define _CUTIL_UTILS_H
 
 #include "libcutil/network.h"
 
@@ -64,58 +53,60 @@ extern "C" {
 
 extern unsigned int __unsigned_int_flags_dummy;
 
-#define ast_test_flag(p, flag) ({              \
-    typeof((p)->flags)__p = (p)->flags;        \
-    typeof(__unsigned_int_flags_dummy)__x = 0; \
-    (void)(&__p == &__x);                      \
-    ((p)->flags & (flag));                     \
+#define ast_test_flag(p, flag)                  \
+  ({                                            \
+    typeof((p)->flags) __p = (p)->flags;        \
+    typeof(__unsigned_int_flags_dummy) __x = 0; \
+    (void)(&__p == &__x);                       \
+    ((p)->flags & (flag));                      \
   })
 
-#define ast_set_flag(p, flag)                           \
-  do {                                                  \
-    typeof((p)->flags)__p                 = (p)->flags; \
-    typeof(__unsigned_int_flags_dummy)__x = 0;          \
-    (void)(&__p == &__x);                               \
-    ((p)->flags |= (flag));                             \
+#define ast_set_flag(p, flag)                   \
+  do {                                          \
+    typeof((p)->flags) __p = (p)->flags;        \
+    typeof(__unsigned_int_flags_dummy) __x = 0; \
+    (void)(&__p == &__x);                       \
+    ((p)->flags |= (flag));                     \
   } while (0)
 
-#define ast_clear_flag(p, flag)                         \
-  do {                                                  \
-    typeof((p)->flags)__p                 = (p)->flags; \
-    typeof(__unsigned_int_flags_dummy)__x = 0;          \
-    (void)(&__p == &__x);                               \
-    ((p)->flags &= ~(flag));                            \
+#define ast_clear_flag(p, flag)                 \
+  do {                                          \
+    typeof((p)->flags) __p = (p)->flags;        \
+    typeof(__unsigned_int_flags_dummy) __x = 0; \
+    (void)(&__p == &__x);                       \
+    ((p)->flags &= ~(flag));                    \
   } while (0)
 
-#define ast_copy_flags(dest, src, flagz)                   \
-  do {                                                     \
-    typeof((dest)->flags)__d              = (dest)->flags; \
-    typeof((src)->flags)__s               = (src)->flags;  \
-    typeof(__unsigned_int_flags_dummy)__x = 0;             \
-    (void)(&__d == &__x);                                  \
-    (void)(&__s == &__x);                                  \
-    (dest)->flags &= ~(flagz);                             \
-    (dest)->flags |= ((src)->flags & (flagz));             \
+#define ast_copy_flags(dest, src, flagz)        \
+  do {                                          \
+    typeof((dest)->flags) __d = (dest)->flags;  \
+    typeof((src)->flags) __s = (src)->flags;    \
+    typeof(__unsigned_int_flags_dummy) __x = 0; \
+    (void)(&__d == &__x);                       \
+    (void)(&__s == &__x);                       \
+    (dest)->flags &= ~(flagz);                  \
+    (dest)->flags |= ((src)->flags & (flagz));  \
   } while (0)
 
-#define ast_set2_flag(p, value, flag)                   \
-  do {                                                  \
-    typeof((p)->flags)__p                 = (p)->flags; \
-    typeof(__unsigned_int_flags_dummy)__x = 0;          \
-    (void)(&__p == &__x);                               \
-    if (value) (p)->flags |= (flag);                    \
-    else (p)->flags &= ~(flag);                         \
+#define ast_set2_flag(p, value, flag)           \
+  do {                                          \
+    typeof((p)->flags) __p = (p)->flags;        \
+    typeof(__unsigned_int_flags_dummy) __x = 0; \
+    (void)(&__p == &__x);                       \
+    if (value)                                  \
+      (p)->flags |= (flag);                     \
+    else                                        \
+      (p)->flags &= ~(flag);                    \
   } while (0)
 
-#define ast_set_flags_to(p, flag, value)                \
-  do {                                                  \
-    typeof((p)->flags)__p                 = (p)->flags; \
-    typeof(__unsigned_int_flags_dummy)__x = 0;          \
-    (void)(&__p == &__x);                               \
-    (p)->flags &= ~(flag);                              \
-    (p)->flags |= (value);                              \
+#define ast_set_flags_to(p, flag, value)        \
+  do {                                          \
+    typeof((p)->flags) __p = (p)->flags;        \
+    typeof(__unsigned_int_flags_dummy) __x = 0; \
+    (void)(&__p == &__x);                       \
+    (p)->flags &= ~(flag);                      \
+    (p)->flags |= (value);                      \
   } while (0)
-
 
 /* The following 64-bit flag code can most likely be erased after app_dial
    is reorganized to either reduce the large number of options, or handle
@@ -124,64 +115,65 @@ extern unsigned int __unsigned_int_flags_dummy;
 
 extern uint64_t __unsigned_int_flags_dummy64;
 
-#define ast_test_flag64(p, flag) ({              \
-    typeof((p)->flags)__p = (p)->flags;          \
-    typeof(__unsigned_int_flags_dummy64)__x = 0; \
-    (void)(&__p == &__x);                        \
-    ((p)->flags & (flag));                       \
+#define ast_test_flag64(p, flag)                  \
+  ({                                              \
+    typeof((p)->flags) __p = (p)->flags;          \
+    typeof(__unsigned_int_flags_dummy64) __x = 0; \
+    (void)(&__p == &__x);                         \
+    ((p)->flags & (flag));                        \
   })
 
-#define ast_set_flag64(p, flag)                           \
-  do {                                                    \
-    typeof((p)->flags)__p                   = (p)->flags; \
-    typeof(__unsigned_int_flags_dummy64)__x = 0;          \
-    (void)(&__p == &__x);                                 \
-    ((p)->flags |= (flag));                               \
+#define ast_set_flag64(p, flag)                   \
+  do {                                            \
+    typeof((p)->flags) __p = (p)->flags;          \
+    typeof(__unsigned_int_flags_dummy64) __x = 0; \
+    (void)(&__p == &__x);                         \
+    ((p)->flags |= (flag));                       \
   } while (0)
 
-#define ast_clear_flag64(p, flag)                         \
-  do {                                                    \
-    typeof((p)->flags)__p                   = (p)->flags; \
-    typeof(__unsigned_int_flags_dummy64)__x = 0;          \
-    (void)(&__p == &__x);                                 \
-    ((p)->flags &= ~(flag));                              \
+#define ast_clear_flag64(p, flag)                 \
+  do {                                            \
+    typeof((p)->flags) __p = (p)->flags;          \
+    typeof(__unsigned_int_flags_dummy64) __x = 0; \
+    (void)(&__p == &__x);                         \
+    ((p)->flags &= ~(flag));                      \
   } while (0)
 
-#define ast_copy_flags64(dest, src, flagz)                   \
-  do {                                                       \
-    typeof((dest)->flags)__d                = (dest)->flags; \
-    typeof((src)->flags)__s                 = (src)->flags;  \
-    typeof(__unsigned_int_flags_dummy64)__x = 0;             \
-    (void)(&__d == &__x);                                    \
-    (void)(&__s == &__x);                                    \
-    (dest)->flags &= ~(flagz);                               \
-    (dest)->flags |= ((src)->flags & (flagz));               \
+#define ast_copy_flags64(dest, src, flagz)        \
+  do {                                            \
+    typeof((dest)->flags) __d = (dest)->flags;    \
+    typeof((src)->flags) __s = (src)->flags;      \
+    typeof(__unsigned_int_flags_dummy64) __x = 0; \
+    (void)(&__d == &__x);                         \
+    (void)(&__s == &__x);                         \
+    (dest)->flags &= ~(flagz);                    \
+    (dest)->flags |= ((src)->flags & (flagz));    \
   } while (0)
 
-#define ast_set2_flag64(p, value, flag)                   \
-  do {                                                    \
-    typeof((p)->flags)__p                   = (p)->flags; \
-    typeof(__unsigned_int_flags_dummy64)__x = 0;          \
-    (void)(&__p == &__x);                                 \
-    if (value) (p)->flags |= (flag);                      \
-    else (p)->flags &= ~(flag);                           \
+#define ast_set2_flag64(p, value, flag)           \
+  do {                                            \
+    typeof((p)->flags) __p = (p)->flags;          \
+    typeof(__unsigned_int_flags_dummy64) __x = 0; \
+    (void)(&__p == &__x);                         \
+    if (value)                                    \
+      (p)->flags |= (flag);                       \
+    else                                          \
+      (p)->flags &= ~(flag);                      \
   } while (0)
 
-#define ast_set_flags_to64(p, flag, value)                \
-  do {                                                    \
-    typeof((p)->flags)__p                   = (p)->flags; \
-    typeof(__unsigned_int_flags_dummy64)__x = 0;          \
-    (void)(&__p == &__x);                                 \
-    (p)->flags &= ~(flag);                                \
-    (p)->flags |= (value);                                \
+#define ast_set_flags_to64(p, flag, value)        \
+  do {                                            \
+    typeof((p)->flags) __p = (p)->flags;          \
+    typeof(__unsigned_int_flags_dummy64) __x = 0; \
+    (void)(&__p == &__x);                         \
+    (p)->flags &= ~(flag);                        \
+    (p)->flags |= (value);                        \
   } while (0)
-
 
 /* Non-type checking variations for non-unsigned int flags.  You
    should only use non-unsigned int flags where required by
    protocol etc and if you know what you're doing :)  */
-#define ast_test_flag_nonstd(p, flag) \
-  ((p)->flags & (flag))
+#define ast_test_flag_nonstd(p, flag) ((p)->flags & (flag))
 
 #define ast_set_flag_nonstd(p, flag) \
   do {                               \
@@ -201,8 +193,10 @@ extern uint64_t __unsigned_int_flags_dummy64;
 
 #define ast_set2_flag_nonstd(p, value, flag) \
   do {                                       \
-    if (value) (p)->flags |= (flag);         \
-    else (p)->flags &= ~(flag);              \
+    if (value)                               \
+      (p)->flags |= (flag);                  \
+    else                                     \
+      (p)->flags &= ~(flag);                 \
   } while (0)
 
 #define AST_FLAGS_ALL UINT_MAX
@@ -220,38 +214,45 @@ struct ast_flags64 {
 
 struct ast_hostent {
   struct hostent hp;
-  char           buf[1024];
+  char buf[1024];
 };
 
 /*! \brief Thread-safe gethostbyname function to use in Asterisk */
-struct hostent* ast_gethostbyname(const char         *host,
-                                  struct ast_hostent *hp);
+struct hostent *ast_gethostbyname(const char *host, struct ast_hostent *hp);
 
 /*! \brief Produces MD5 hash based on input string */
-void ast_md5_hash(char       *output,
-                  const char *input);
+void ast_md5_hash(char *output, const char *input);
 
 /*! \brief Produces SHA1 hash based on input string */
-void ast_sha1_hash(char       *output,
-                   const char *input);
+void ast_sha1_hash(char *output, const char *input);
 
 /*! \brief Produces SHA1 hash based on input string, stored in uint8_t array */
-void ast_sha1_hash_uint(uint8_t    *digest,
-                        const char *input);
+void ast_sha1_hash_uint(uint8_t *digest, const char *input);
 
-int  ast_base64encode_full(char                *dst,
-                           const unsigned char *src,
-                           int                  srclen,
-                           int                  max,
-                           int                  linebreaks);
+int ast_base64encode_full(char *dst, const unsigned char *src, int srclen,
+                          int max, int linebreaks);
 
 #undef MIN
-#define MIN(a, b) ({ typeof(a)__a = (a); typeof(b)__b = (b); ((__a > __b) ? __b : __a); })
+#define MIN(a, b)              \
+  ({                           \
+    typeof(a) __a = (a);       \
+    typeof(b) __b = (b);       \
+    ((__a > __b) ? __b : __a); \
+  })
 #undef MAX
-#define MAX(a, b) ({ typeof(a)__a = (a); typeof(b)__b = (b); ((__a < __b) ? __b : __a); })
+#define MAX(a, b)              \
+  ({                           \
+    typeof(a) __a = (a);       \
+    typeof(b) __b = (b);       \
+    ((__a < __b) ? __b : __a); \
+  })
 
-#define SWAP(a, b) \
-  do { typeof(a)__tmp = (a); (a) = (b); (b) = __tmp; } while (0)
+#define SWAP(a, b)         \
+  do {                     \
+    typeof(a) __tmp = (a); \
+    (a) = (b);             \
+    (b) = __tmp;           \
+  } while (0)
 
 /*!
  * \brief Encode data in base64
@@ -261,10 +262,7 @@ int  ast_base64encode_full(char                *dst,
  * \param max the maximum number of bytes to write into the destination
  *        buffer, *including* the terminating NULL character.
  */
-int ast_base64encode(char                *dst,
-                     const unsigned char *src,
-                     int                  srclen,
-                     int                  max);
+int ast_base64encode(char *dst, const unsigned char *src, int srclen, int max);
 
 /*!
  * \brief Decode data from base64
@@ -275,13 +273,11 @@ int ast_base64encode(char                *dst,
  *            destination buffer is NULL terminated.  So, in general,
  *            this parameter should be sizeof(dst) - 1.
  */
-int ast_base64decode(unsigned char *dst,
-                     const char    *src,
-                     int            max);
+int ast_base64decode(unsigned char *dst, const char *src, int max);
 
-#define AST_URI_ALPHANUM     (1 << 0)
-#define AST_URI_MARK         (1 << 1)
-#define AST_URI_UNRESERVED   (AST_URI_ALPHANUM | AST_URI_MARK)
+#define AST_URI_ALPHANUM (1 << 0)
+#define AST_URI_MARK (1 << 1)
+#define AST_URI_UNRESERVED (AST_URI_ALPHANUM | AST_URI_MARK)
 #define AST_URI_LEGACY_SPACE (1 << 2)
 
 #define AST_URI_SIP_USER_UNRESERVED (1 << 20)
@@ -306,9 +302,7 @@ extern const struct ast_flags ast_uri_sip_user;
  * \param spec flags describing how the encoding should be performed
  * \return a pointer to the uri encoded string
  */
-char* ast_uri_encode(const char      *string,
-                     char            *outbuf,
-                     int              buflen,
+char *ast_uri_encode(const char *string, char *outbuf, int buflen,
                      struct ast_flags spec);
 
 /*!
@@ -320,8 +314,7 @@ char* ast_uri_encode(const char      *string,
  * \param s string to be decoded
  * \param spec flags describing how the decoding should be performed
  */
-void ast_uri_decode(char            *s,
-                    struct ast_flags spec);
+void ast_uri_decode(char *s, struct ast_flags spec);
 
 /*! ast_xml_escape
         \brief Escape reserved characters for use in XML.
@@ -335,9 +328,7 @@ void ast_uri_decode(char            *s,
         \return 0 for success
         \return -1 if buflen is too short.
  */
-int ast_xml_escape(const char *string,
-                   char       *outbuf,
-                   size_t      buflen);
+int ast_xml_escape(const char *string, char *outbuf, size_t buflen);
 
 /*!
  * \brief Escape characters found in a quoted string.
@@ -350,9 +341,7 @@ int ast_xml_escape(const char *string,
  * \param buflen size of output buffer
  * \return a pointer to the escaped string
  */
-char* ast_escape_quoted(const char *string,
-                        char       *outbuf,
-                        int         buflen);
+char *ast_escape_quoted(const char *string, char *outbuf, int buflen);
 
 /*!
  * \brief Escape semicolons found in a string.
@@ -362,9 +351,7 @@ char* ast_escape_quoted(const char *string,
  * \param buflen size of output buffer
  * \return a pointer to the escaped string
  */
-char* ast_escape_semicolons(const char *string,
-                            char       *outbuf,
-                            int         buflen);
+char *ast_escape_semicolons(const char *string, char *outbuf, int buflen);
 
 /*!
  * \brief Unescape quotes in a string
@@ -373,56 +360,62 @@ char* ast_escape_semicolons(const char *string,
  *
  * \note This function mutates the passed-in string.
  */
-void                     ast_unescape_quoted(char *quote_str);
+void ast_unescape_quoted(char *quote_str);
 
-static force_inline void ast_slinear_saturated_add(short *input, short *value)
-{
+static force_inline void ast_slinear_saturated_add(short *input, short *value) {
   int res;
 
   res = (int)*input + *value;
 
-  if (res > 32767) *input = 32767;
-  else if (res < -32768) *input = -32768;
-  else *input = (short)res;
+  if (res > 32767)
+    *input = 32767;
+  else if (res < -32768)
+    *input = -32768;
+  else
+    *input = (short)res;
 }
 
-static force_inline void ast_slinear_saturated_subtract(short *input, short *value)
-{
+static force_inline void ast_slinear_saturated_subtract(short *input,
+                                                        short *value) {
   int res;
 
   res = (int)*input - *value;
 
-  if (res > 32767) *input = 32767;
-  else if (res < -32768) *input = -32768;
-  else *input = (short)res;
+  if (res > 32767)
+    *input = 32767;
+  else if (res < -32768)
+    *input = -32768;
+  else
+    *input = (short)res;
 }
 
-static force_inline void ast_slinear_saturated_multiply(short *input, short *value)
-{
+static force_inline void ast_slinear_saturated_multiply(short *input,
+                                                        short *value) {
   int res;
 
-  res = (int)*input **value;
+  res = (int)*input * *value;
 
-  if (res > 32767) *input = 32767;
-  else if (res < -32768) *input = -32768;
-  else *input = (short)res;
+  if (res > 32767)
+    *input = 32767;
+  else if (res < -32768)
+    *input = -32768;
+  else
+    *input = (short)res;
 }
 
-static force_inline void ast_slinear_saturated_divide(short *input, short *value)
-{
+static force_inline void ast_slinear_saturated_divide(short *input,
+                                                      short *value) {
   *input /= *value;
 }
 
 #ifdef localtime_r
-# undef localtime_r
-#endif // ifdef localtime_r
+#undef localtime_r
+#endif  // ifdef localtime_r
 #define localtime_r __dont_use_localtime_r_use_ast_localtime_instead__
 
 int ast_utils_init(void);
-int ast_wait_for_input(int fd,
-                       int ms);
-int ast_wait_for_output(int fd,
-                        int ms);
+int ast_wait_for_input(int fd, int ms);
+int ast_wait_for_output(int fd, int ms);
 
 /*!
  * \brief Try to write string, but wait no more than ms milliseconds
@@ -433,10 +426,7 @@ int ast_wait_for_output(int fd,
  * there is only one system call made to do a write, unless we actually
  * have a need to wait.  This way, we get better performance.
  */
-int ast_carefulwrite(int   fd,
-                     char *s,
-                     int   len,
-                     int   timeoutms);
+int ast_carefulwrite(int fd, char *s, int len, int timeoutms);
 
 /*!
  * \brief Write data to a file stream with a timeout
@@ -455,17 +445,14 @@ int ast_carefulwrite(int   fd,
  * \retval 0 success
  * \retval -1 error
  */
-int ast_careful_fwrite(FILE       *f,
-                       int         fd,
-                       const char *s,
-                       size_t      len,
-                       int         timeoutms);
+int ast_careful_fwrite(FILE *f, int fd, const char *s, size_t len,
+                       int timeoutms);
 
 /*
  * Thread management support (should be moved to lock.h or a different header)
  */
 
-#define AST_STACKSIZE     (((sizeof(void *) * 8 * 8) - 16) * 1024)
+#define AST_STACKSIZE (((sizeof(void *) * 8 * 8) - 16) * 1024)
 #define AST_STACKSIZE_LOW (((sizeof(void *) * 8 * 2) - 16) * 1024)
 
 int ast_background_stacksize(void);
@@ -475,43 +462,32 @@ int ast_background_stacksize(void);
 void ast_register_thread(char *name);
 void ast_unregister_thread(void *id);
 
-int  ast_pthread_create_stack(pthread_t      *thread,
-                              pthread_attr_t *attr,
-                              void *(*start_routine)(void *),
-                              void           *data,
-                              size_t          stacksize,
-                              const char     *file,
-                              const char     *caller,
-                              int             line,
-                              const char     *start_fn);
+int ast_pthread_create_stack(pthread_t *thread, pthread_attr_t *attr,
+                             void *(*start_routine)(void *), void *data,
+                             size_t stacksize, const char *file,
+                             const char *caller, int line,
+                             const char *start_fn);
 
-int ast_pthread_create_detached_stack(pthread_t      *thread,
-                                      pthread_attr_t *attr,
+int ast_pthread_create_detached_stack(pthread_t *thread, pthread_attr_t *attr,
                                       void *(*start_routine)(void *),
-                                      void           *data,
-                                      size_t          stacksize,
-                                      const char     *file,
-                                      const char     *caller,
-                                      int             line,
-                                      const char     *start_fn);
+                                      void *data, size_t stacksize,
+                                      const char *file, const char *caller,
+                                      int line, const char *start_fn);
 
 #define ast_pthread_create(a, b, c, d) \
-  ast_pthread_create_stack(a, b, c, d, \
-                           0, __FILE__, __FUNCTION__, __LINE__, # c)
+  ast_pthread_create_stack(a, b, c, d, 0, __FILE__, __FUNCTION__, __LINE__, #c)
 
-#define ast_pthread_create_detached(a, b, c, d) \
-  ast_pthread_create_detached_stack(a, b, c, d, \
-                                    0, __FILE__, __FUNCTION__, __LINE__, # c)
+#define ast_pthread_create_detached(a, b, c, d)                            \
+  ast_pthread_create_detached_stack(a, b, c, d, 0, __FILE__, __FUNCTION__, \
+                                    __LINE__, #c)
 
-#define ast_pthread_create_background(a, b, c, d)    \
-  ast_pthread_create_stack(a, b, c, d,               \
-                           AST_BACKGROUND_STACKSIZE, \
-                           __FILE__, __FUNCTION__, __LINE__, # c)
+#define ast_pthread_create_background(a, b, c, d)                          \
+  ast_pthread_create_stack(a, b, c, d, AST_BACKGROUND_STACKSIZE, __FILE__, \
+                           __FUNCTION__, __LINE__, #c)
 
-#define ast_pthread_create_detached_background(a, b, c, d)    \
-  ast_pthread_create_detached_stack(a, b, c, d,               \
-                                    AST_BACKGROUND_STACKSIZE, \
-                                    __FILE__, __FUNCTION__, __LINE__, # c)
+#define ast_pthread_create_detached_background(a, b, c, d)                \
+  ast_pthread_create_detached_stack(a, b, c, d, AST_BACKGROUND_STACKSIZE, \
+                                    __FILE__, __FUNCTION__, __LINE__, #c)
 
 /* End of thread management support */
 
@@ -519,7 +495,7 @@ int ast_pthread_create_detached_stack(pthread_t      *thread,
  * \brief Replace '^' in a string with ','
  * \param s String within which to replace characters
  */
-void  ast_replace_subargument_delimiter(char *s);
+void ast_replace_subargument_delimiter(char *s);
 
 /*!
  * \brief Process a string to find and replace characters
@@ -528,9 +504,7 @@ void  ast_replace_subargument_delimiter(char *s);
  * \param replace_with The character that will replace the one we are looking
  * for
  */
-char* ast_process_quotes_and_slashes(char *start,
-                                     char  find,
-                                     char  replace_with);
+char *ast_process_quotes_and_slashes(char *start, char find, char replace_with);
 
 long int ast_random(void);
 
@@ -548,30 +522,29 @@ long int ast_random(void);
  * for the purposes of testing failure handling.
  */
 #ifdef DEBUG_CHAOS
-# ifndef DEBUG_CHAOS_ALLOC_CHANCE
-#  define DEBUG_CHAOS_ALLOC_CHANCE 100000
-# endif // ifndef DEBUG_CHAOS_ALLOC_CHANCE
+#ifndef DEBUG_CHAOS_ALLOC_CHANCE
+#define DEBUG_CHAOS_ALLOC_CHANCE 100000
+#endif  // ifndef DEBUG_CHAOS_ALLOC_CHANCE
 
 /* Could #define DEBUG_CHAOS_ENABLE ast_fully_booted */
-# ifndef DEBUG_CHAOS_ENABLE
-#  define DEBUG_CHAOS_ENABLE 1
-# endif // ifndef DEBUG_CHAOS_ENABLE
-# define DEBUG_CHAOS_RETURN(CHANCE, FAILURE)                    \
+#ifndef DEBUG_CHAOS_ENABLE
+#define DEBUG_CHAOS_ENABLE 1
+#endif  // ifndef DEBUG_CHAOS_ENABLE
+#define DEBUG_CHAOS_RETURN(CHANCE, FAILURE)                     \
   do {                                                          \
     if ((DEBUG_CHAOS_ENABLE) && (ast_random() % CHANCE == 0)) { \
       return FAILURE;                                           \
     }                                                           \
   } while (0)
-#else // ifdef DEBUG_CHAOS
-# define DEBUG_CHAOS_RETURN(c, f)
-#endif // ifdef DEBUG_CHAOS
-
+#else  // ifdef DEBUG_CHAOS
+#define DEBUG_CHAOS_RETURN(c, f)
+#endif  // ifdef DEBUG_CHAOS
 
 #ifndef __AST_DEBUG_MALLOC
-# define ast_std_malloc malloc
-# define ast_std_calloc calloc
-# define ast_std_realloc realloc
-# define ast_std_free free
+#define ast_std_malloc malloc
+#define ast_std_calloc calloc
+#define ast_std_realloc realloc
+#define ast_std_free free
 
 /*!
  * \brief free() wrapper
@@ -580,125 +553,132 @@ long int ast_random(void);
  * passed
  * as the argument to a function. Otherwise, astmm will cause seg faults.
  */
-# define ast_free free
-# define ast_free_ptr ast_free
+#define ast_free free
+#define ast_free_ptr ast_free
 
-# if defined(AST_IN_CORE)
-#  define MALLOC_FAILURE_MSG \
-  ast_log_safe(LOG_ERROR, "Memory Allocation Failure in function %s at line %d of %s\n", func, lineno, file)
-# else // if defined(AST_IN_CORE)
-#  define MALLOC_FAILURE_MSG \
-  ast_log(LOG_ERROR, "Memory Allocation Failure in function %s at line %d of %s\n", func, lineno, file)
-# endif // if defined(AST_IN_CORE)
+#if defined(AST_IN_CORE)
+#define MALLOC_FAILURE_MSG                                                    \
+  ast_log_safe(LOG_ERROR,                                                     \
+               "Memory Allocation Failure in function %s at line %d of %s\n", \
+               func, lineno, file)
+#else  // if defined(AST_IN_CORE)
+#define MALLOC_FAILURE_MSG                                                     \
+  ast_log(LOG_ERROR,                                                           \
+          "Memory Allocation Failure in function %s at line %d of %s\n", func, \
+          lineno, file)
+#endif  // if defined(AST_IN_CORE)
 
-AST_INLINE_API(
-  void * attribute_malloc __ast_malloc(size_t len, const char *file, int lineno, const char *func),
-{
-  void *p;
+AST_INLINE_API(void *attribute_malloc __ast_malloc(size_t len, const char *file,
+                                                   int lineno,
+                                                   const char *func),
+               {
+                 void *p;
 
-  DEBUG_CHAOS_RETURN(DEBUG_CHAOS_ALLOC_CHANCE, NULL);
+                 DEBUG_CHAOS_RETURN(DEBUG_CHAOS_ALLOC_CHANCE, NULL);
 
-  if (!(p = malloc(len))) {
-    MALLOC_FAILURE_MSG;
-  }
+                 if (!(p = malloc(len))) {
+                   MALLOC_FAILURE_MSG;
+                 }
 
-  return p;
-}
+                 return p;
+               }
 
-  )
+               )
 
-AST_INLINE_API(
-  void * attribute_malloc __ast_calloc(size_t num, size_t len, const char *file, int lineno, const char *func),
-{
-  void *p;
+AST_INLINE_API(void *attribute_malloc __ast_calloc(size_t num, size_t len,
+                                                   const char *file, int lineno,
+                                                   const char *func),
+               {
+                 void *p;
 
-  DEBUG_CHAOS_RETURN(DEBUG_CHAOS_ALLOC_CHANCE, NULL);
+                 DEBUG_CHAOS_RETURN(DEBUG_CHAOS_ALLOC_CHANCE, NULL);
 
-  if (!(p = calloc(num, len))) {
-    MALLOC_FAILURE_MSG;
-  }
+                 if (!(p = calloc(num, len))) {
+                   MALLOC_FAILURE_MSG;
+                 }
 
-  return p;
-}
+                 return p;
+               }
 
-  )
+               )
 
-AST_INLINE_API(
-  void * attribute_malloc __ast_realloc(void *p, size_t len, const char *file, int lineno, const char *func),
-{
-  void *newp;
+AST_INLINE_API(void *attribute_malloc __ast_realloc(void *p, size_t len,
+                                                    const char *file,
+                                                    int lineno,
+                                                    const char *func),
+               {
+                 void *newp;
 
-  DEBUG_CHAOS_RETURN(DEBUG_CHAOS_ALLOC_CHANCE, NULL);
+                 DEBUG_CHAOS_RETURN(DEBUG_CHAOS_ALLOC_CHANCE, NULL);
 
-  if (!(newp = realloc(p, len))) {
-    MALLOC_FAILURE_MSG;
-  }
+                 if (!(newp = realloc(p, len))) {
+                   MALLOC_FAILURE_MSG;
+                 }
 
-  return newp;
-}
+                 return newp;
+               }
 
-  )
+               )
 
-AST_INLINE_API(
-  char * attribute_malloc __ast_strdup(const char *str, const char *file, int lineno, const char *func),
-{
-  char *newstr = NULL;
+AST_INLINE_API(char *attribute_malloc __ast_strdup(const char *str,
+                                                   const char *file, int lineno,
+                                                   const char *func),
+               {
+                 char *newstr = NULL;
 
-  DEBUG_CHAOS_RETURN(DEBUG_CHAOS_ALLOC_CHANCE, NULL);
+                 DEBUG_CHAOS_RETURN(DEBUG_CHAOS_ALLOC_CHANCE, NULL);
 
-  if (str) {
-    if (!(newstr = strdup(str))) {
-      MALLOC_FAILURE_MSG;
-    }
-  }
+                 if (str) {
+                   if (!(newstr = strdup(str))) {
+                     MALLOC_FAILURE_MSG;
+                   }
+                 }
 
-  return newstr;
-}
+                 return newstr;
+               }
 
-  )
+               )
 
-AST_INLINE_API(
-  char * attribute_malloc __ast_strndup(const char *str, size_t len, const char *file, int lineno, const char *func),
-{
-  char *newstr = NULL;
+AST_INLINE_API(char *attribute_malloc __ast_strndup(const char *str, size_t len,
+                                                    const char *file,
+                                                    int lineno,
+                                                    const char *func),
+               {
+                 char *newstr = NULL;
 
-  DEBUG_CHAOS_RETURN(DEBUG_CHAOS_ALLOC_CHANCE, NULL);
+                 DEBUG_CHAOS_RETURN(DEBUG_CHAOS_ALLOC_CHANCE, NULL);
 
-  if (str) {
-    if (!(newstr = strndup(str, len))) {
-      MALLOC_FAILURE_MSG;
-    }
-  }
+                 if (str) {
+                   if (!(newstr = strndup(str, len))) {
+                     MALLOC_FAILURE_MSG;
+                   }
+                 }
 
-  return newstr;
-}
+                 return newstr;
+               }
 
-  )
+               )
 
 int __attribute__((format(printf, 5, 6)))
-__ast_asprintf(const char *file,
-               int         lineno,
-               const char *func,
-               char      **ret,
-               const char *fmt,
-               ...);
+__ast_asprintf(const char *file, int lineno, const char *func, char **ret,
+               const char *fmt, ...);
 
-AST_INLINE_API(
-  __attribute__((format(printf, 2, 0)))
-  int __ast_vasprintf(char **ret, const char *fmt, va_list ap, const char *file, int lineno, const char *func),
-{
-  int res;
+AST_INLINE_API(__attribute__((format(printf, 2, 0))) int __ast_vasprintf(
+                   char **ret, const char *fmt, va_list ap, const char *file,
+                   int lineno, const char *func),
+               {
+                 int res;
 
-  DEBUG_CHAOS_RETURN(DEBUG_CHAOS_ALLOC_CHANCE, -1);
+                 DEBUG_CHAOS_RETURN(DEBUG_CHAOS_ALLOC_CHANCE, -1);
 
-  if ((res = vasprintf(ret, fmt, ap)) == -1) {
-    MALLOC_FAILURE_MSG;
-  }
+                 if ((res = vasprintf(ret, fmt, ap)) == -1) {
+                   MALLOC_FAILURE_MSG;
+                 }
 
-  return res;
-}
+                 return res;
+               }
 
-  )
+               )
 
 #endif /* AST_DEBUG_MALLOC */
 
@@ -788,8 +768,9 @@ AST_INLINE_API(
  *
  * The arguments and return value are the same as asprintf()
  */
-#define ast_asprintf(ret, fmt, ...) \
-  __ast_asprintf(__FILE__, __LINE__, __PRETTY_FUNCTION__, (ret), (fmt), __VA_ARGS__)
+#define ast_asprintf(ret, fmt, ...)                                     \
+  __ast_asprintf(__FILE__, __LINE__, __PRETTY_FUNCTION__, (ret), (fmt), \
+                 __VA_ARGS__)
 
 /*!
  * \brief A wrapper for vasprintf()
@@ -822,16 +803,15 @@ AST_INLINE_API(
  * stack
  * allocatted memory for the new string.
  */
-# define ast_strdupa(s)                    \
-  (__extension__                           \
-     ({                                    \
+#define ast_strdupa(s)                     \
+  (__extension__({                         \
     const char *__old = (s);               \
     size_t __len = strlen(__old) + 1;      \
     char *__new = __builtin_alloca(__len); \
     memcpy(__new, __old, __len);           \
     __new;                                 \
   }))
-#endif // if !defined(ast_strdupa) && defined(__GNUC__)
+#endif  // if !defined(ast_strdupa) && defined(__GNUC__)
 
 /*!
  * \brief Disable PMTU discovery on a socket
@@ -856,8 +836,7 @@ void ast_enable_packet_fragmentation(int sock);
  *
  * Creates a directory path, creating parent directories as needed.
  */
-int  ast_mkdir(const char *path,
-               int         mode);
+int ast_mkdir(const char *path, int mode);
 
 /*!
  * \brief Recursively create directory path, but only if it resolves within
@@ -870,11 +849,9 @@ int  ast_mkdir(const char *path,
  * \param mode The permissions with which to try to create the directory
  * \return 0 on success or an error code otherwise
  */
-int ast_safe_mkdir(const char *base_path,
-                   const char *path,
-                   int         mode);
+int ast_safe_mkdir(const char *base_path, const char *path, int mode);
 
-#define ARRAY_LEN(a) (size_t)(sizeof(a) / sizeof(0[a]))
+#define ARRAY_LEN(a) (size_t)(sizeof(a) / sizeof(0 [a]))
 
 /*!
  * \brief Checks to see if value is within the given bounds
@@ -897,17 +874,12 @@ int ast_safe_mkdir(const char *base_path,
 
 /* Definition for Digest authorization */
 struct ast_http_digest {
-  AST_DECLARE_STRING_FIELDS(
-    AST_STRING_FIELD(username);
-    AST_STRING_FIELD(nonce);
-    AST_STRING_FIELD(uri);
-    AST_STRING_FIELD(realm);
-    AST_STRING_FIELD(domain);
-    AST_STRING_FIELD(response);
-    AST_STRING_FIELD(cnonce);
-    AST_STRING_FIELD(opaque);
-    AST_STRING_FIELD(nc);
-    );
+  AST_DECLARE_STRING_FIELDS(AST_STRING_FIELD(username); AST_STRING_FIELD(nonce);
+                            AST_STRING_FIELD(uri); AST_STRING_FIELD(realm);
+                            AST_STRING_FIELD(domain);
+                            AST_STRING_FIELD(response);
+                            AST_STRING_FIELD(cnonce); AST_STRING_FIELD(opaque);
+                            AST_STRING_FIELD(nc););
   int qop; /* Flag set to 1, if we send/recv qop="quth" */
 };
 
@@ -918,35 +890,34 @@ struct ast_http_digest {
  * request arg is set to nonzero, if we parse Digest Request.
  * pedantic arg can be set to nonzero if we need to do addition Digest check.
  */
-int ast_parse_digest(const char             *digest,
-                     struct ast_http_digest *d,
-                     int                     request,
-                     int                     pedantic);
+int ast_parse_digest(const char *digest, struct ast_http_digest *d, int request,
+                     int pedantic);
 
 #ifdef DO_CRASH
-# define DO_CRASH_NORETURN attribute_noreturn
-#else // ifdef DO_CRASH
-# define DO_CRASH_NORETURN
-#endif // ifdef DO_CRASH
+#define DO_CRASH_NORETURN attribute_noreturn
+#else  // ifdef DO_CRASH
+#define DO_CRASH_NORETURN
+#endif  // ifdef DO_CRASH
 
-void DO_CRASH_NORETURN __ast_assert_failed(int         condition,
+void DO_CRASH_NORETURN __ast_assert_failed(int condition,
                                            const char *condition_str,
-                                           const char *file,
-                                           int         line,
+                                           const char *file, int line,
                                            const char *function);
 
 #ifdef AST_DEVMODE
-# define ast_assert(a) _ast_assert(a, # a, __FILE__, __LINE__, __PRETTY_FUNCTION__)
-static void force_inline _ast_assert(int condition, const char *condition_str, const char *file, int line, const char *function)
-{
+#define ast_assert(a) \
+  _ast_assert(a, #a, __FILE__, __LINE__, __PRETTY_FUNCTION__)
+static void force_inline _ast_assert(int condition, const char *condition_str,
+                                     const char *file, int line,
+                                     const char *function) {
   if (__builtin_expect(!condition, 1)) {
     __ast_assert_failed(condition, condition_str, file, line, function);
   }
 }
 
-#else // ifdef AST_DEVMODE
-# define ast_assert(a)
-#endif // ifdef AST_DEVMODE
+#else  // ifdef AST_DEVMODE
+#define ast_assert(a)
+#endif  // ifdef AST_DEVMODE
 
 /*!
  * \brief Force a crash if DO_CRASH is defined.
@@ -988,7 +959,8 @@ void DO_CRASH_NORETURN ast_do_crash(void);
  *
  * Don't mind the ugliness, the compiler will optimize it.
  */
-#define ast_align_for(offset, type) (((offset + __alignof__(type) - 1) / __alignof__(type)) * __alignof__(type))
+#define ast_align_for(offset, type) \
+  (((offset + __alignof__(type) - 1) / __alignof__(type)) * __alignof__(type))
 
 /*!
  * \brief Increase offset by the required alignment of type and make sure it is
@@ -1011,7 +983,9 @@ void DO_CRASH_NORETURN ast_do_crash(void);
  *
  * Don't mind the ugliness, the compiler will optimize it.
  */
-#define ast_make_room_for(offset, type) (((offset + (2 * __alignof__(type) - 1)) / __alignof__(type)) * __alignof__(type))
+#define ast_make_room_for(offset, type)                           \
+  (((offset + (2 * __alignof__(type) - 1)) / __alignof__(type)) * \
+   __alignof__(type))
 
 /*!
  * \brief An Entity ID is essentially a MAC address, brief and unique
@@ -1032,15 +1006,13 @@ extern struct ast_eid ast_eid_default;
  * \brief Fill in an ast_eid with the default eid of this machine
  * \since 1.6.1
  */
-void  ast_set_default_eid(struct ast_eid *eid);
+void ast_set_default_eid(struct ast_eid *eid);
 
 /*!
  * \brief Convert an EID to a string
  * \since 1.6.1
  */
-char* ast_eid_to_str(char           *s,
-                     int             maxlen,
-                     struct ast_eid *eid);
+char *ast_eid_to_str(char *s, int maxlen, struct ast_eid *eid);
 
 /*!
  * \brief Convert a string into an EID
@@ -1051,8 +1023,7 @@ char* ast_eid_to_str(char           *s,
  * \return 0 success, non-zero failure
  * \since 1.6.1
  */
-int ast_str_to_eid(struct ast_eid *eid,
-                   const char     *s);
+int ast_str_to_eid(struct ast_eid *eid, const char *s);
 
 /*!
  * \brief Compare two EIDs
@@ -1060,8 +1031,7 @@ int ast_str_to_eid(struct ast_eid *eid,
  * \return 0 if the two are the same, non-zero otherwise
  * \since 1.6.1
  */
-int ast_eid_cmp(const struct ast_eid *eid1,
-                const struct ast_eid *eid2);
+int ast_eid_cmp(const struct ast_eid *eid1, const struct ast_eid *eid2);
 
 /*!
  * \brief Check if EID is empty
@@ -1069,13 +1039,13 @@ int ast_eid_cmp(const struct ast_eid *eid1,
  * \return 1 if the EID is empty, zero otherwise
  * \since 13.12.0
  */
-int   ast_eid_is_empty(const struct ast_eid *eid);
+int ast_eid_is_empty(const struct ast_eid *eid);
 
 /*!
  * \brief Get current thread ID
  * \return the ID if platform is supported, else -1
  */
-int   ast_get_tid(void);
+int ast_get_tid(void);
 
 /*!
  * \brief Resolve a binary to a full pathname
@@ -1086,9 +1056,7 @@ int   ast_get_tid(void);
  * set
  * \return \a fullpath
  */
-char* ast_utils_which(const char *binary,
-                      char       *fullpath,
-                      size_t      fullpath_size);
+char *ast_utils_which(const char *binary, char *fullpath, size_t fullpath_size);
 
 /*!
  * \brief Declare a variable that will call a destructor function when it goes
@@ -1144,26 +1112,25 @@ char* ast_utils_which(const char *binary,
 
 #if defined(__clang__)
 typedef void (^_raii_cleanup_block_t)(void);
-static inline void _raii_cleanup_block(_raii_cleanup_block_t *b) {
-  (*b)();
-}
+static inline void _raii_cleanup_block(_raii_cleanup_block_t *b) { (*b)(); }
 
-# define RAII_VAR(vartype, varname, initval, dtor)                                                                 \
-  _raii_cleanup_block_t _raii_cleanup_ ## varname __attribute__((cleanup(_raii_cleanup_block), unused)) = NULL;    \
-  __block vartype varname                                                                               = initval; \
-  _raii_cleanup_ ## varname                                                                             = ^{ { (void)dtor(varname); } }
+#define RAII_VAR(vartype, varname, initval, dtor)                   \
+  _raii_cleanup_block_t _raii_cleanup_##varname                     \
+      __attribute__((cleanup(_raii_cleanup_block), unused)) = NULL; \
+  __block vartype varname = initval;                                \
+  _raii_cleanup_##varname = ^{                                      \
+    { (void)dtor(varname); }                                        \
+  }
 
 #elif defined(__GNUC__)
 
-# define RAII_VAR(vartype, varname, initval, dtor) \
-  auto void _dtor_ ## varname(vartype *v);         \
-  void _dtor_ ## varname(vartype *v) {             \
-    dtor(*v);                                      \
-  }                                                \
-  vartype varname __attribute__((cleanup(_dtor_ ## varname))) = (initval)
+#define RAII_VAR(vartype, varname, initval, dtor) \
+  auto void _dtor_##varname(vartype *v);          \
+  void _dtor_##varname(vartype *v) { dtor(*v); }  \
+  vartype varname __attribute__((cleanup(_dtor_##varname))) = (initval)
 
-#else // if defined(__clang__)
-    # error "Cannot compile Asterisk: unknown and unsupported compiler."
+#else  // if defined(__clang__)
+#error "Cannot compile Asterisk: unknown and unsupported compiler."
 #endif /* #if __GNUC__ */
 
 /*!
@@ -1180,8 +1147,7 @@ static inline void _raii_cleanup_block(_raii_cleanup_block_t *b) {
  * \return Crypted password.
  * \return \c NULL on error.
  */
-char* ast_crypt(const char *key,
-                const char *salt);
+char *ast_crypt(const char *key, const char *salt);
 
 /*
  * \brief Asterisk wrapper around crypt(3) for encrypting passwords.
@@ -1194,7 +1160,7 @@ char* ast_crypt(const char *key,
  * \return Crypted password.
  * \return \c NULL on error.
  */
-char* ast_crypt_encrypt(const char *key);
+char *ast_crypt_encrypt(const char *key);
 
 /*
  * \brief Asterisk wrapper around crypt(3) for validating passwords.
@@ -1204,8 +1170,7 @@ char* ast_crypt_encrypt(const char *key);
  * \return True (non-zero) if \a key matches \a expected.
  * \return False (zero) if \a key doesn't match.
  */
-int   ast_crypt_validate(const char *key,
-                         const char *expected);
+int ast_crypt_validate(const char *key, const char *expected);
 
 /*
  * \brief Test that a file exists and is readable by the effective user.
@@ -1228,8 +1193,7 @@ int ast_file_is_readable(const char *filename);
  * \return =0 if version 1 = version 2.
  * \return >0 if version 1 > version 2.
  */
-int ast_compare_versions(const char *version1,
-                         const char *version2);
+int ast_compare_versions(const char *version1, const char *version2);
 
 /*
  * \brief Test that an OS supports IPv6 Networking.
@@ -1239,7 +1203,6 @@ int ast_compare_versions(const char *version1,
  * \return False (zero) if the OS doesn't support IPv6.
  */
 int ast_check_ipv6(void);
-
 
 /*
  * \brief execute shell command by fork process
@@ -1257,4 +1220,4 @@ char *ast_read_textfile(const char *filename);
 }
 #endif
 
-#endif /* _ASTERISK_UTILS_H */
+#endif /* _CUTIL_UTILS_H */

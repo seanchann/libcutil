@@ -28,9 +28,9 @@
 #include "libcutil.h"
 
 #include "libcutil/_private.h"
-#include "libcutil/astobj2.h"
-#include "astobj2_private.h"
-#include "astobj2_container_private.h"
+#include "libcutil/obj2.h"
+#include "obj2_private.h"
+#include "obj2_container_private.h"
 #include "libcutil/cli.h"
 
 /* Use ast_log_safe in place of ast_log. */
@@ -47,7 +47,7 @@ static FILE *ref_log;
  * The magic number is used for consistency check.
  */
 struct __priv_data {
-  int               ref_counter;
+  int ref_counter;
   ao2_destructor_fn destructor_fn;
 
   /*! This field is used for astobj2 and ao2_weakproxy objects to reference each
@@ -67,8 +67,8 @@ struct __priv_data {
   uint32_t magic;
 };
 
-#define AO2_MAGIC       0xa570b123
-#define AO2_WEAK        0xa570b122
+#define AO2_MAGIC 0xa570b123
+#define AO2_WEAK 0xa570b122
 #define IS_AO2_MAGIC_BAD(p) (AO2_MAGIC != (p->priv_data.magic | 1))
 
 /*!
@@ -77,12 +77,12 @@ struct __priv_data {
  */
 struct astobj2 {
   struct __priv_data priv_data;
-  void              *user_data[0];
+  void *user_data[0];
 };
 
 struct ao2_weakproxy_notification {
   ao2_weakproxy_notification_cb cb;
-  void                         *data;
+  void *data;
   AST_LIST_ENTRY(ao2_weakproxy_notification) list;
 };
 
@@ -95,8 +95,8 @@ struct ao2_lock_priv {
 /* AstObj2 with recursive lock. */
 struct astobj2_lock {
   struct ao2_lock_priv mutex;
-  struct __priv_data   priv_data;
-  void                *user_data[0];
+  struct __priv_data priv_data;
+  void *user_data[0];
 };
 
 struct ao2_rwlock_priv {
@@ -110,8 +110,8 @@ struct ao2_rwlock_priv {
 /* AstObj2 with RW lock. */
 struct astobj2_rwlock {
   struct ao2_rwlock_priv rwlock;
-  struct __priv_data     priv_data;
-  void                  *user_data[0];
+  struct __priv_data priv_data;
+  void *user_data[0];
 };
 
 struct ao2_lockobj_priv {
@@ -121,8 +121,8 @@ struct ao2_lockobj_priv {
 /* AstObj2 with locking provided by a separate object. */
 struct astobj2_lockobj {
   struct ao2_lockobj_priv lockobj;
-  struct __priv_data      priv_data;
-  void                   *user_data[0];
+  struct __priv_data priv_data;
+  void *user_data[0];
 };
 
 #ifdef AO2_DEBUG
@@ -148,16 +148,15 @@ struct ao2_stats ao2;
  *
  * \return the pointer to the astobj2 structure
  */
-#define __INTERNAL_OBJ_CHECK(user_data, file, line, func) \
-  ({                                                      \
-    struct astobj2 *p ## __LINE__;                        \
-    if (!user_data                                        \
-        || !(p ## __LINE__ = INTERNAL_OBJ(user_data))     \
-        || IS_AO2_MAGIC_BAD(p ## __LINE__)) {             \
-      log_bad_ao2(user_data, file, line, func);           \
-      p ## __LINE__ = NULL;                               \
-    }                                                     \
-    (p ## __LINE__);                                      \
+#define __INTERNAL_OBJ_CHECK(user_data, file, line, func)         \
+  ({                                                              \
+    struct astobj2 *p##__LINE__;                                  \
+    if (!user_data || !(p##__LINE__ = INTERNAL_OBJ(user_data)) || \
+        IS_AO2_MAGIC_BAD(p##__LINE__)) {                          \
+      log_bad_ao2(user_data, file, line, func);                   \
+      p##__LINE__ = NULL;                                         \
+    }                                                             \
+    (p##__LINE__);                                                \
   })
 
 #define INTERNAL_OBJ_CHECK(user_data) \
@@ -170,8 +169,7 @@ struct ao2_stats ao2;
  */
 #define EXTERNAL_OBJ(_p) ((_p) == NULL ? NULL : (_p)->user_data)
 
-int internal_is_ao2_object(void *user_data)
-{
+int internal_is_ao2_object(void *user_data) {
   struct astobj2 *p;
 
   if (!user_data) {
@@ -183,8 +181,8 @@ int internal_is_ao2_object(void *user_data)
   return !p || IS_AO2_MAGIC_BAD(p) ? 0 : 1;
 }
 
-void log_bad_ao2(void *user_data, const char *file, int line, const char *func)
-{
+void log_bad_ao2(void *user_data, const char *file, int line,
+                 const char *func) {
   struct astobj2 *p;
   char bad_magic[100];
 
@@ -199,16 +197,11 @@ void log_bad_ao2(void *user_data, const char *file, int line, const char *func)
   __ast_assert_failed(0, bad_magic, file, line, func);
 }
 
-int __ao2_lock(void             *user_data,
-               enum ao2_lock_req lock_how,
-               const char       *file,
-               const char       *func,
-               int               line,
-               const char       *var)
-{
+int __ao2_lock(void *user_data, enum ao2_lock_req lock_how, const char *file,
+               const char *func, int line, const char *var) {
   struct astobj2 *obj = __INTERNAL_OBJ_CHECK(user_data, file, line, func);
   struct astobj2_lock *obj_mutex;
-  struct astobj2_rwlock  *obj_rwlock;
+  struct astobj2_rwlock *obj_rwlock;
   struct astobj2_lockobj *obj_lockobj;
   int res = 0;
 
@@ -217,87 +210,74 @@ int __ao2_lock(void             *user_data,
   }
 
   switch (obj->priv_data.options & AO2_ALLOC_OPT_LOCK_MASK) {
-  case AO2_ALLOC_OPT_LOCK_MUTEX:
-    obj_mutex = INTERNAL_OBJ_MUTEX(user_data);
-    res       = __ast_pthread_mutex_lock(file,
-                                         line,
-                                         func,
-                                         var,
-                                         &obj_mutex->mutex.lock);
+    case AO2_ALLOC_OPT_LOCK_MUTEX:
+      obj_mutex = INTERNAL_OBJ_MUTEX(user_data);
+      res = __ast_pthread_mutex_lock(file, line, func, var,
+                                     &obj_mutex->mutex.lock);
 #ifdef AO2_DEBUG
-
-    if (!res) {
-      ast_atomic_fetchadd_int(&ao2.total_locked, 1);
-    }
-#endif /* ifdef AO2_DEBUG */
-    break;
-
-  case AO2_ALLOC_OPT_LOCK_RWLOCK:
-    obj_rwlock = INTERNAL_OBJ_RWLOCK(user_data);
-
-    switch (lock_how) {
-    case AO2_LOCK_REQ_MUTEX:
-    case AO2_LOCK_REQ_WRLOCK:
-      res = __ast_rwlock_wrlock(file, line, func, &obj_rwlock->rwlock.lock, var);
 
       if (!res) {
-        ast_atomic_fetchadd_int(&obj_rwlock->rwlock.num_lockers, -1);
-#ifdef AO2_DEBUG
-        ast_atomic_fetchadd_int(&ao2.total_locked,               1);
+        ast_atomic_fetchadd_int(&ao2.total_locked, 1);
+      }
 #endif /* ifdef AO2_DEBUG */
+      break;
+
+    case AO2_ALLOC_OPT_LOCK_RWLOCK:
+      obj_rwlock = INTERNAL_OBJ_RWLOCK(user_data);
+
+      switch (lock_how) {
+        case AO2_LOCK_REQ_MUTEX:
+        case AO2_LOCK_REQ_WRLOCK:
+          res = __ast_rwlock_wrlock(file, line, func, &obj_rwlock->rwlock.lock,
+                                    var);
+
+          if (!res) {
+            ast_atomic_fetchadd_int(&obj_rwlock->rwlock.num_lockers, -1);
+#ifdef AO2_DEBUG
+            ast_atomic_fetchadd_int(&ao2.total_locked, 1);
+#endif /* ifdef AO2_DEBUG */
+          }
+          break;
+
+        case AO2_LOCK_REQ_RDLOCK:
+          res = __ast_rwlock_rdlock(file, line, func, &obj_rwlock->rwlock.lock,
+                                    var);
+
+          if (!res) {
+            ast_atomic_fetchadd_int(&obj_rwlock->rwlock.num_lockers, +1);
+#ifdef AO2_DEBUG
+            ast_atomic_fetchadd_int(&ao2.total_locked, 1);
+#endif /* ifdef AO2_DEBUG */
+          }
+          break;
       }
       break;
 
-    case AO2_LOCK_REQ_RDLOCK:
-      res = __ast_rwlock_rdlock(file, line, func, &obj_rwlock->rwlock.lock, var);
+    case AO2_ALLOC_OPT_LOCK_NOLOCK:
 
-      if (!res) {
-        ast_atomic_fetchadd_int(&obj_rwlock->rwlock.num_lockers, +1);
-#ifdef AO2_DEBUG
-        ast_atomic_fetchadd_int(&ao2.total_locked,               1);
-#endif /* ifdef AO2_DEBUG */
-      }
+      /* The ao2 object has no lock. */
       break;
-    }
-    break;
 
-  case AO2_ALLOC_OPT_LOCK_NOLOCK:
+    case AO2_ALLOC_OPT_LOCK_OBJ:
+      obj_lockobj = INTERNAL_OBJ_LOCKOBJ(user_data);
+      res = __ao2_lock(obj_lockobj->lockobj.lock, lock_how, file, func, line,
+                       var);
+      break;
 
-    /* The ao2 object has no lock. */
-    break;
-
-  case AO2_ALLOC_OPT_LOCK_OBJ:
-    obj_lockobj = INTERNAL_OBJ_LOCKOBJ(user_data);
-    res         = __ao2_lock(obj_lockobj->lockobj.lock,
-                             lock_how,
-                             file,
-                             func,
-                             line,
-                             var);
-    break;
-
-  default:
-    ast_log(__LOG_ERROR,
-            file,
-            line,
-            func,
-            "Invalid lock option on ao2 object %p\n",
-            user_data);
-    return -1;
+    default:
+      ast_log(__LOG_ERROR, file, line, func,
+              "Invalid lock option on ao2 object %p\n", user_data);
+      return -1;
   }
 
   return res;
 }
 
-int __ao2_unlock(void       *user_data,
-                 const char *file,
-                 const char *func,
-                 int         line,
-                 const char *var)
-{
+int __ao2_unlock(void *user_data, const char *file, const char *func, int line,
+                 const char *var) {
   struct astobj2 *obj = __INTERNAL_OBJ_CHECK(user_data, file, line, func);
   struct astobj2_lock *obj_mutex;
-  struct astobj2_rwlock  *obj_rwlock;
+  struct astobj2_rwlock *obj_rwlock;
   struct astobj2_lockobj *obj_lockobj;
   int res = 0;
   int current_value;
@@ -307,73 +287,63 @@ int __ao2_unlock(void       *user_data,
   }
 
   switch (obj->priv_data.options & AO2_ALLOC_OPT_LOCK_MASK) {
-  case AO2_ALLOC_OPT_LOCK_MUTEX:
-    obj_mutex = INTERNAL_OBJ_MUTEX(user_data);
-    res       = __ast_pthread_mutex_unlock(file,
-                                           line,
-                                           func,
-                                           var,
-                                           &obj_mutex->mutex.lock);
+    case AO2_ALLOC_OPT_LOCK_MUTEX:
+      obj_mutex = INTERNAL_OBJ_MUTEX(user_data);
+      res = __ast_pthread_mutex_unlock(file, line, func, var,
+                                       &obj_mutex->mutex.lock);
 #ifdef AO2_DEBUG
 
-    if (!res) {
-      ast_atomic_fetchadd_int(&ao2.total_locked, -1);
-    }
+      if (!res) {
+        ast_atomic_fetchadd_int(&ao2.total_locked, -1);
+      }
 #endif /* ifdef AO2_DEBUG */
-    break;
+      break;
 
-  case AO2_ALLOC_OPT_LOCK_RWLOCK:
-    obj_rwlock = INTERNAL_OBJ_RWLOCK(user_data);
+    case AO2_ALLOC_OPT_LOCK_RWLOCK:
+      obj_rwlock = INTERNAL_OBJ_RWLOCK(user_data);
 
-    current_value =
-      ast_atomic_fetchadd_int(&obj_rwlock->rwlock.num_lockers, -1) - 1;
+      current_value =
+          ast_atomic_fetchadd_int(&obj_rwlock->rwlock.num_lockers, -1) - 1;
 
-    if (current_value < 0) {
-      /* It was a WRLOCK that we are unlocking.  Fix the count. */
-      ast_atomic_fetchadd_int(&obj_rwlock->rwlock.num_lockers, -current_value);
-    }
-    res = __ast_rwlock_unlock(file, line, func, &obj_rwlock->rwlock.lock, var);
+      if (current_value < 0) {
+        /* It was a WRLOCK that we are unlocking.  Fix the count. */
+        ast_atomic_fetchadd_int(&obj_rwlock->rwlock.num_lockers,
+                                -current_value);
+      }
+      res =
+          __ast_rwlock_unlock(file, line, func, &obj_rwlock->rwlock.lock, var);
 #ifdef AO2_DEBUG
 
-    if (!res) {
-      ast_atomic_fetchadd_int(&ao2.total_locked, -1);
-    }
+      if (!res) {
+        ast_atomic_fetchadd_int(&ao2.total_locked, -1);
+      }
 #endif /* ifdef AO2_DEBUG */
-    break;
+      break;
 
-  case AO2_ALLOC_OPT_LOCK_NOLOCK:
+    case AO2_ALLOC_OPT_LOCK_NOLOCK:
 
-    /* The ao2 object has no lock. */
-    break;
+      /* The ao2 object has no lock. */
+      break;
 
-  case AO2_ALLOC_OPT_LOCK_OBJ:
-    obj_lockobj = INTERNAL_OBJ_LOCKOBJ(user_data);
-    res         = __ao2_unlock(obj_lockobj->lockobj.lock, file, func, line, var);
-    break;
+    case AO2_ALLOC_OPT_LOCK_OBJ:
+      obj_lockobj = INTERNAL_OBJ_LOCKOBJ(user_data);
+      res = __ao2_unlock(obj_lockobj->lockobj.lock, file, func, line, var);
+      break;
 
-  default:
-    ast_log(__LOG_ERROR,
-            file,
-            line,
-            func,
-            "Invalid lock option on ao2 object %p\n",
-            user_data);
-    res = -1;
-    break;
+    default:
+      ast_log(__LOG_ERROR, file, line, func,
+              "Invalid lock option on ao2 object %p\n", user_data);
+      res = -1;
+      break;
   }
   return res;
 }
 
-int __ao2_trylock(void             *user_data,
-                  enum ao2_lock_req lock_how,
-                  const char       *file,
-                  const char       *func,
-                  int               line,
-                  const char       *var)
-{
+int __ao2_trylock(void *user_data, enum ao2_lock_req lock_how, const char *file,
+                  const char *func, int line, const char *var) {
   struct astobj2 *obj = __INTERNAL_OBJ_CHECK(user_data, file, line, func);
   struct astobj2_lock *obj_mutex;
-  struct astobj2_rwlock  *obj_rwlock;
+  struct astobj2_rwlock *obj_rwlock;
   struct astobj2_lockobj *obj_lockobj;
   int res = 0;
 
@@ -382,77 +352,65 @@ int __ao2_trylock(void             *user_data,
   }
 
   switch (obj->priv_data.options & AO2_ALLOC_OPT_LOCK_MASK) {
-  case AO2_ALLOC_OPT_LOCK_MUTEX:
-    obj_mutex = INTERNAL_OBJ_MUTEX(user_data);
-    res       = __ast_pthread_mutex_trylock(file,
-                                            line,
-                                            func,
-                                            var,
-                                            &obj_mutex->mutex.lock);
+    case AO2_ALLOC_OPT_LOCK_MUTEX:
+      obj_mutex = INTERNAL_OBJ_MUTEX(user_data);
+      res = __ast_pthread_mutex_trylock(file, line, func, var,
+                                        &obj_mutex->mutex.lock);
 #ifdef AO2_DEBUG
-
-    if (!res) {
-      ast_atomic_fetchadd_int(&ao2.total_locked, 1);
-    }
-#endif /* ifdef AO2_DEBUG */
-    break;
-
-  case AO2_ALLOC_OPT_LOCK_RWLOCK:
-    obj_rwlock = INTERNAL_OBJ_RWLOCK(user_data);
-
-    switch (lock_how) {
-    case AO2_LOCK_REQ_MUTEX:
-    case AO2_LOCK_REQ_WRLOCK:
-      res =
-        __ast_rwlock_trywrlock(file, line, func, &obj_rwlock->rwlock.lock, var);
 
       if (!res) {
-        ast_atomic_fetchadd_int(&obj_rwlock->rwlock.num_lockers, -1);
-#ifdef AO2_DEBUG
-        ast_atomic_fetchadd_int(&ao2.total_locked,               1);
+        ast_atomic_fetchadd_int(&ao2.total_locked, 1);
+      }
 #endif /* ifdef AO2_DEBUG */
+      break;
+
+    case AO2_ALLOC_OPT_LOCK_RWLOCK:
+      obj_rwlock = INTERNAL_OBJ_RWLOCK(user_data);
+
+      switch (lock_how) {
+        case AO2_LOCK_REQ_MUTEX:
+        case AO2_LOCK_REQ_WRLOCK:
+          res = __ast_rwlock_trywrlock(file, line, func,
+                                       &obj_rwlock->rwlock.lock, var);
+
+          if (!res) {
+            ast_atomic_fetchadd_int(&obj_rwlock->rwlock.num_lockers, -1);
+#ifdef AO2_DEBUG
+            ast_atomic_fetchadd_int(&ao2.total_locked, 1);
+#endif /* ifdef AO2_DEBUG */
+          }
+          break;
+
+        case AO2_LOCK_REQ_RDLOCK:
+          res = __ast_rwlock_tryrdlock(file, line, func,
+                                       &obj_rwlock->rwlock.lock, var);
+
+          if (!res) {
+            ast_atomic_fetchadd_int(&obj_rwlock->rwlock.num_lockers, +1);
+#ifdef AO2_DEBUG
+            ast_atomic_fetchadd_int(&ao2.total_locked, 1);
+#endif /* ifdef AO2_DEBUG */
+          }
+          break;
       }
       break;
 
-    case AO2_LOCK_REQ_RDLOCK:
-      res =
-        __ast_rwlock_tryrdlock(file, line, func, &obj_rwlock->rwlock.lock, var);
+    case AO2_ALLOC_OPT_LOCK_NOLOCK:
 
-      if (!res) {
-        ast_atomic_fetchadd_int(&obj_rwlock->rwlock.num_lockers, +1);
-#ifdef AO2_DEBUG
-        ast_atomic_fetchadd_int(&ao2.total_locked,               1);
-#endif /* ifdef AO2_DEBUG */
-      }
+      /* The ao2 object has no lock. */
+      return 0;
+
+    case AO2_ALLOC_OPT_LOCK_OBJ:
+      obj_lockobj = INTERNAL_OBJ_LOCKOBJ(user_data);
+      res = __ao2_trylock(obj_lockobj->lockobj.lock, lock_how, file, func, line,
+                          var);
       break;
-    }
-    break;
 
-  case AO2_ALLOC_OPT_LOCK_NOLOCK:
-
-    /* The ao2 object has no lock. */
-    return 0;
-
-  case AO2_ALLOC_OPT_LOCK_OBJ:
-    obj_lockobj = INTERNAL_OBJ_LOCKOBJ(user_data);
-    res         = __ao2_trylock(obj_lockobj->lockobj.lock,
-                                lock_how,
-                                file,
-                                func,
-                                line,
-                                var);
-    break;
-
-  default:
-    ast_log(__LOG_ERROR,
-            file,
-            line,
-            func,
-            "Invalid lock option on ao2 object %p\n",
-            user_data);
-    return -1;
+    default:
+      ast_log(__LOG_ERROR, file, line, func,
+              "Invalid lock option on ao2 object %p\n", user_data);
+      return -1;
   }
-
 
   return res;
 }
@@ -474,71 +432,68 @@ int __ao2_trylock(void             *user_data,
  *
  * \return Original lock level.
  */
-enum ao2_lock_req __adjust_lock(void             *user_data,
-                                enum ao2_lock_req lock_how,
-                                int               keep_stronger)
-{
+enum ao2_lock_req __adjust_lock(void *user_data, enum ao2_lock_req lock_how,
+                                int keep_stronger) {
   struct astobj2 *obj = INTERNAL_OBJ(user_data);
-  struct astobj2_rwlock  *obj_rwlock;
+  struct astobj2_rwlock *obj_rwlock;
   struct astobj2_lockobj *obj_lockobj;
   enum ao2_lock_req orig_lock;
 
   switch (obj->priv_data.options & AO2_ALLOC_OPT_LOCK_MASK) {
-  case AO2_ALLOC_OPT_LOCK_RWLOCK:
-    obj_rwlock = INTERNAL_OBJ_RWLOCK(user_data);
+    case AO2_ALLOC_OPT_LOCK_RWLOCK:
+      obj_rwlock = INTERNAL_OBJ_RWLOCK(user_data);
 
-    if (obj_rwlock->rwlock.num_lockers < 0) {
-      orig_lock = AO2_LOCK_REQ_WRLOCK;
-    } else {
-      orig_lock = AO2_LOCK_REQ_RDLOCK;
-    }
+      if (obj_rwlock->rwlock.num_lockers < 0) {
+        orig_lock = AO2_LOCK_REQ_WRLOCK;
+      } else {
+        orig_lock = AO2_LOCK_REQ_RDLOCK;
+      }
 
-    switch (lock_how) {
-    case AO2_LOCK_REQ_MUTEX:
-      lock_how = AO2_LOCK_REQ_WRLOCK;
+      switch (lock_how) {
+        case AO2_LOCK_REQ_MUTEX:
+          lock_how = AO2_LOCK_REQ_WRLOCK;
+
+        /* Fall through */
+        case AO2_LOCK_REQ_WRLOCK:
+
+          if (lock_how != orig_lock) {
+            /* Switch from read lock to write lock. */
+            ao2_unlock(user_data);
+            ao2_wrlock(user_data);
+          }
+          break;
+
+        case AO2_LOCK_REQ_RDLOCK:
+
+          if (!keep_stronger && (lock_how != orig_lock)) {
+            /* Switch from write lock to read lock. */
+            ao2_unlock(user_data);
+            ao2_rdlock(user_data);
+          }
+          break;
+      }
+      break;
+
+    case AO2_ALLOC_OPT_LOCK_OBJ:
+      obj_lockobj = INTERNAL_OBJ_LOCKOBJ(user_data);
+      orig_lock =
+          __adjust_lock(obj_lockobj->lockobj.lock, lock_how, keep_stronger);
+      break;
+
+    default:
+      ast_log(LOG_ERROR, "Invalid lock option on ao2 object %p\n", user_data);
 
     /* Fall through */
-    case AO2_LOCK_REQ_WRLOCK:
-
-      if (lock_how != orig_lock) {
-        /* Switch from read lock to write lock. */
-        ao2_unlock(user_data);
-        ao2_wrlock(user_data);
-      }
+    case AO2_ALLOC_OPT_LOCK_NOLOCK:
+    case AO2_ALLOC_OPT_LOCK_MUTEX:
+      orig_lock = AO2_LOCK_REQ_MUTEX;
       break;
-
-    case AO2_LOCK_REQ_RDLOCK:
-
-      if (!keep_stronger && (lock_how != orig_lock)) {
-        /* Switch from write lock to read lock. */
-        ao2_unlock(user_data);
-        ao2_rdlock(user_data);
-      }
-      break;
-    }
-    break;
-
-  case AO2_ALLOC_OPT_LOCK_OBJ:
-    obj_lockobj = INTERNAL_OBJ_LOCKOBJ(user_data);
-    orig_lock   =
-      __adjust_lock(obj_lockobj->lockobj.lock, lock_how, keep_stronger);
-    break;
-
-  default:
-    ast_log(LOG_ERROR, "Invalid lock option on ao2 object %p\n", user_data);
-
-  /* Fall through */
-  case AO2_ALLOC_OPT_LOCK_NOLOCK:
-  case AO2_ALLOC_OPT_LOCK_MUTEX:
-    orig_lock = AO2_LOCK_REQ_MUTEX;
-    break;
   }
 
   return orig_lock;
 }
 
-void* ao2_object_get_lockaddr(void *user_data)
-{
+void *ao2_object_get_lockaddr(void *user_data) {
   struct astobj2 *obj;
   struct astobj2_lock *obj_mutex;
 
@@ -549,32 +504,31 @@ void* ao2_object_get_lockaddr(void *user_data)
   }
 
   switch (obj->priv_data.options & AO2_ALLOC_OPT_LOCK_MASK) {
-  case AO2_ALLOC_OPT_LOCK_MUTEX:
-    obj_mutex = INTERNAL_OBJ_MUTEX(user_data);
-    return &obj_mutex->mutex.lock;
+    case AO2_ALLOC_OPT_LOCK_MUTEX:
+      obj_mutex = INTERNAL_OBJ_MUTEX(user_data);
+      return &obj_mutex->mutex.lock;
 
-  default:
-    break;
+    default:
+      break;
   }
 
   return NULL;
 }
 
-int __ao2_ref(void *user_data, int delta,
-              const char *tag, const char *file, int line, const char *func)
-{
+int __ao2_ref(void *user_data, int delta, const char *tag, const char *file,
+              int line, const char *func) {
   struct astobj2 *obj = __INTERNAL_OBJ_CHECK(user_data, file, line, func);
   struct astobj2_lock *obj_mutex;
-  struct astobj2_rwlock  *obj_rwlock;
+  struct astobj2_rwlock *obj_rwlock;
   struct astobj2_lockobj *obj_lockobj;
-  int   current_value;
-  int   ret;
+  int current_value;
+  int ret;
   void *weakproxy = NULL;
 
   if (obj == NULL) {
     if (ref_log && user_data) {
-      fprintf(ref_log, "%p,%d,%d,%s,%d,%s,**invalid**,%s\n",
-              user_data, delta, ast_get_tid(), file, line, func, tag ? : "");
+      fprintf(ref_log, "%p,%d,%d,%s,%d,%s,**invalid**,%s\n", user_data, delta,
+              ast_get_tid(), file, line, func, tag ?: "");
       fflush(ref_log);
     }
     return -1;
@@ -591,7 +545,7 @@ int __ao2_ref(void *user_data, int delta,
   }
 
   /* we modify with an atomic operation the reference counter */
-  ret           = ast_atomic_fetchadd_int(&obj->priv_data.ref_counter, delta);
+  ret = ast_atomic_fetchadd_int(&obj->priv_data.ref_counter, delta);
   current_value = ret + delta;
 
 #ifdef AO2_DEBUG
@@ -607,7 +561,7 @@ int __ao2_ref(void *user_data, int delta,
 
       /* Unlink the obj from the weak proxy */
       internal_weakproxy->priv_data.weakptr = NULL;
-      obj->priv_data.weakptr                = NULL;
+      obj->priv_data.weakptr = NULL;
 
       /* Notify the subscribers that weakproxy now points to NULL. */
       weakproxy_run_callbacks(weakproxy);
@@ -627,8 +581,8 @@ int __ao2_ref(void *user_data, int delta,
     /* The object still lives. */
     if (ref_log && tag) {
       fprintf(ref_log, "%p,%s%d,%d,%s,%d,%s,%d,%s\n", user_data,
-              (delta < 0 ? "" : "+"), delta, ast_get_tid(),
-              file, line, func, ret, tag);
+              (delta < 0 ? "" : "+"), delta, ast_get_tid(), file, line, func,
+              ret, tag);
       fflush(ref_log);
     }
     return ret;
@@ -641,8 +595,8 @@ int __ao2_ref(void *user_data, int delta,
 
     if (ref_log) {
       /* Log to ref_log invalid even if (tag == NULL) */
-      fprintf(ref_log, "%p,%d,%d,%s,%d,%s,**invalid**,%s\n",
-              user_data, delta, ast_get_tid(), file, line, func, tag ? : "");
+      fprintf(ref_log, "%p,%d,%d,%s,%d,%s,**invalid**,%s\n", user_data, delta,
+              ast_get_tid(), file, line, func, tag ?: "");
       fflush(ref_log);
     }
     ast_assert(0);
@@ -657,7 +611,7 @@ int __ao2_ref(void *user_data, int delta,
   }
 
 #ifdef AO2_DEBUG
-  ast_atomic_fetchadd_int(&ao2.total_mem,     -obj->priv_data.data_size);
+  ast_atomic_fetchadd_int(&ao2.total_mem, -obj->priv_data.data_size);
   ast_atomic_fetchadd_int(&ao2.total_objects, -1);
 #endif /* ifdef AO2_DEBUG */
 
@@ -665,156 +619,142 @@ int __ao2_ref(void *user_data, int delta,
   obj->priv_data.magic = 0;
 
   switch (obj->priv_data.options & AO2_ALLOC_OPT_LOCK_MASK) {
-  case AO2_ALLOC_OPT_LOCK_MUTEX:
-    obj_mutex = INTERNAL_OBJ_MUTEX(user_data);
-    ast_mutex_destroy(&obj_mutex->mutex.lock);
+    case AO2_ALLOC_OPT_LOCK_MUTEX:
+      obj_mutex = INTERNAL_OBJ_MUTEX(user_data);
+      ast_mutex_destroy(&obj_mutex->mutex.lock);
 
-    ast_free(obj_mutex);
-    break;
+      ast_free(obj_mutex);
+      break;
 
-  case AO2_ALLOC_OPT_LOCK_RWLOCK:
-    obj_rwlock = INTERNAL_OBJ_RWLOCK(user_data);
-    ast_rwlock_destroy(&obj_rwlock->rwlock.lock);
+    case AO2_ALLOC_OPT_LOCK_RWLOCK:
+      obj_rwlock = INTERNAL_OBJ_RWLOCK(user_data);
+      ast_rwlock_destroy(&obj_rwlock->rwlock.lock);
 
-    ast_free(obj_rwlock);
-    break;
+      ast_free(obj_rwlock);
+      break;
 
-  case AO2_ALLOC_OPT_LOCK_NOLOCK:
-    ast_free(obj);
-    break;
+    case AO2_ALLOC_OPT_LOCK_NOLOCK:
+      ast_free(obj);
+      break;
 
-  case AO2_ALLOC_OPT_LOCK_OBJ:
-    obj_lockobj = INTERNAL_OBJ_LOCKOBJ(user_data);
-    ao2_t_ref(obj_lockobj->lockobj.lock, -1, "release lockobj");
+    case AO2_ALLOC_OPT_LOCK_OBJ:
+      obj_lockobj = INTERNAL_OBJ_LOCKOBJ(user_data);
+      ao2_t_ref(obj_lockobj->lockobj.lock, -1, "release lockobj");
 
-    ast_free(obj_lockobj);
-    break;
+      ast_free(obj_lockobj);
+      break;
 
-  default:
-    ast_log(__LOG_ERROR, file, line, func,
-            "Invalid lock option on ao2 object %p\n", user_data);
-    break;
+    default:
+      ast_log(__LOG_ERROR, file, line, func,
+              "Invalid lock option on ao2 object %p\n", user_data);
+      break;
   }
 
   if (ref_log && tag) {
-    fprintf(ref_log, "%p,%d,%d,%s,%d,%s,**destructor**,%s\n",
-            user_data, delta, ast_get_tid(), file, line, func, tag);
+    fprintf(ref_log, "%p,%d,%d,%s,%d,%s,**destructor**,%s\n", user_data, delta,
+            ast_get_tid(), file, line, func, tag);
     fflush(ref_log);
   }
 
   return ret;
 }
 
-void __ao2_cleanup_debug(void       *obj,
-                         const char *tag,
-                         const char *file,
-                         int         line,
-                         const char *function)
-{
+void __ao2_cleanup_debug(void *obj, const char *tag, const char *file, int line,
+                         const char *function) {
   if (obj) {
     __ao2_ref(obj, -1, tag, file, line, function);
   }
 }
 
-void __ao2_cleanup(void *obj)
-{
+void __ao2_cleanup(void *obj) {
   if (obj) {
     ao2_ref(obj, -1);
   }
 }
 
-static void* internal_ao2_alloc(size_t            data_size,
+static void *internal_ao2_alloc(size_t data_size,
                                 ao2_destructor_fn destructor_fn,
-                                unsigned int      options,
-                                void             *lockobj,
-                                const char       *tag,
-                                const char       *file,
-                                int               line,
-                                const char       *func)
-{
+                                unsigned int options, void *lockobj,
+                                const char *tag, const char *file, int line,
+                                const char *func) {
   /* allocation */
   struct astobj2 *obj;
   struct astobj2_lock *obj_mutex;
-  struct astobj2_rwlock  *obj_rwlock;
+  struct astobj2_rwlock *obj_rwlock;
   struct astobj2_lockobj *obj_lockobj;
 
   switch (options & AO2_ALLOC_OPT_LOCK_MASK) {
-  case AO2_ALLOC_OPT_LOCK_MUTEX:
-    obj_mutex = __ast_calloc(1, sizeof(*obj_mutex) + data_size, file, line, func);
+    case AO2_ALLOC_OPT_LOCK_MUTEX:
+      obj_mutex =
+          __ast_calloc(1, sizeof(*obj_mutex) + data_size, file, line, func);
 
-    if (obj_mutex == NULL) {
+      if (obj_mutex == NULL) {
+        return NULL;
+      }
+
+      ast_mutex_init(&obj_mutex->mutex.lock);
+      obj = (struct astobj2 *)&obj_mutex->priv_data;
+      break;
+
+    case AO2_ALLOC_OPT_LOCK_RWLOCK:
+      obj_rwlock =
+          __ast_calloc(1, sizeof(*obj_rwlock) + data_size, file, line, func);
+
+      if (obj_rwlock == NULL) {
+        return NULL;
+      }
+
+      ast_rwlock_init(&obj_rwlock->rwlock.lock);
+      obj = (struct astobj2 *)&obj_rwlock->priv_data;
+      break;
+
+    case AO2_ALLOC_OPT_LOCK_NOLOCK:
+      obj = __ast_calloc(1, sizeof(*obj) + data_size, file, line, func);
+
+      if (obj == NULL) {
+        return NULL;
+      }
+      break;
+
+    case AO2_ALLOC_OPT_LOCK_OBJ:
+      lockobj = ao2_t_bump(lockobj, "set lockobj");
+
+      if (!lockobj) {
+        ast_log(__LOG_ERROR, file, line, func,
+                "AO2_ALLOC_OPT_LOCK_OBJ requires a non-NULL lockobj.\n");
+        return NULL;
+      }
+
+      obj_lockobj =
+          __ast_calloc(1, sizeof(*obj_lockobj) + data_size, file, line, func);
+
+      if (obj_lockobj == NULL) {
+        ao2_t_ref(lockobj, -1, "release lockobj for failed alloc");
+        return NULL;
+      }
+
+      obj_lockobj->lockobj.lock = lockobj;
+      obj = (struct astobj2 *)&obj_lockobj->priv_data;
+      break;
+
+    default:
+
+      /* Invalid option value. */
+      ast_log(__LOG_DEBUG, file, line, func, "Invalid lock option requested\n");
       return NULL;
-    }
-
-    ast_mutex_init(&obj_mutex->mutex.lock);
-    obj = (struct astobj2 *)&obj_mutex->priv_data;
-    break;
-
-  case AO2_ALLOC_OPT_LOCK_RWLOCK:
-    obj_rwlock =
-      __ast_calloc(1, sizeof(*obj_rwlock) + data_size, file, line, func);
-
-    if (obj_rwlock == NULL) {
-      return NULL;
-    }
-
-    ast_rwlock_init(&obj_rwlock->rwlock.lock);
-    obj = (struct astobj2 *)&obj_rwlock->priv_data;
-    break;
-
-  case AO2_ALLOC_OPT_LOCK_NOLOCK:
-    obj = __ast_calloc(1, sizeof(*obj) + data_size, file, line, func);
-
-    if (obj == NULL) {
-      return NULL;
-    }
-    break;
-
-  case AO2_ALLOC_OPT_LOCK_OBJ:
-    lockobj = ao2_t_bump(lockobj, "set lockobj");
-
-    if (!lockobj) {
-      ast_log(__LOG_ERROR,
-              file,
-              line,
-              func,
-              "AO2_ALLOC_OPT_LOCK_OBJ requires a non-NULL lockobj.\n");
-      return NULL;
-    }
-
-    obj_lockobj = __ast_calloc(1,
-                               sizeof(*obj_lockobj) + data_size,
-                               file,
-                               line,
-                               func);
-
-    if (obj_lockobj == NULL) {
-      ao2_t_ref(lockobj, -1, "release lockobj for failed alloc");
-      return NULL;
-    }
-
-    obj_lockobj->lockobj.lock = lockobj;
-    obj                       = (struct astobj2 *)&obj_lockobj->priv_data;
-    break;
-
-  default:
-
-    /* Invalid option value. */
-    ast_log(__LOG_DEBUG, file, line, func, "Invalid lock option requested\n");
-    return NULL;
   }
 
   /* Initialize common ao2 values. */
-  obj->priv_data.ref_counter   = 1;
+  obj->priv_data.ref_counter = 1;
   obj->priv_data.destructor_fn = destructor_fn; /* can be NULL */
-  obj->priv_data.options       = options;
-  obj->priv_data.magic         = AO2_MAGIC;
+  obj->priv_data.options = options;
+  obj->priv_data.magic = AO2_MAGIC;
 
 #ifdef AO2_DEBUG
   obj->priv_data.data_size = data_size;
   ast_atomic_fetchadd_int(&ao2.total_objects, 1);
-  ast_atomic_fetchadd_int(&ao2.total_mem,     data_size);
-  ast_atomic_fetchadd_int(&ao2.total_refs,    1);
+  ast_atomic_fetchadd_int(&ao2.total_mem, data_size);
+  ast_atomic_fetchadd_int(&ao2.total_refs, 1);
 #endif /* ifdef AO2_DEBUG */
 
   if (ref_log && tag) {
@@ -827,44 +767,22 @@ static void* internal_ao2_alloc(size_t            data_size,
   return EXTERNAL_OBJ(obj);
 }
 
-void* __ao2_alloc(size_t            data_size,
-                  ao2_destructor_fn destructor_fn,
-                  unsigned int      options,
-                  const char       *tag,
-                  const char       *file,
-                  int               line,
-                  const char       *func)
-{
-  return internal_ao2_alloc(data_size,
-                            destructor_fn,
-                            options,
-                            NULL,
-                            tag,
-                            file,
-                            line,
-                            func);
+void *__ao2_alloc(size_t data_size, ao2_destructor_fn destructor_fn,
+                  unsigned int options, const char *tag, const char *file,
+                  int line, const char *func) {
+  return internal_ao2_alloc(data_size, destructor_fn, options, NULL, tag, file,
+                            line, func);
 }
 
-void* __ao2_alloc_with_lockobj(size_t            data_size,
-                               ao2_destructor_fn destructor_fn,
-                               void             *lockobj,
-                               const char       *tag,
-                               const char       *file,
-                               int               line,
-                               const char       *func)
-{
-  return internal_ao2_alloc(data_size,
-                            destructor_fn,
-                            AO2_ALLOC_OPT_LOCK_OBJ,
-                            lockobj,
-                            tag,
-                            file,
-                            line,
-                            func);
+void *__ao2_alloc_with_lockobj(size_t data_size,
+                               ao2_destructor_fn destructor_fn, void *lockobj,
+                               const char *tag, const char *file, int line,
+                               const char *func) {
+  return internal_ao2_alloc(data_size, destructor_fn, AO2_ALLOC_OPT_LOCK_OBJ,
+                            lockobj, tag, file, line, func);
 }
 
-unsigned int ao2_options_get(void *obj)
-{
+unsigned int ao2_options_get(void *obj) {
   struct astobj2 *orig_obj;
 
   orig_obj = INTERNAL_OBJ_CHECK(obj);
@@ -875,13 +793,9 @@ unsigned int ao2_options_get(void *obj)
   return orig_obj->priv_data.options;
 }
 
-void __ao2_global_obj_release(struct ao2_global_obj *holder,
-                              const char            *tag,
-                              const char            *file,
-                              int                    line,
-                              const char            *func,
-                              const char            *name)
-{
+void __ao2_global_obj_release(struct ao2_global_obj *holder, const char *tag,
+                              const char *file, int line, const char *func,
+                              const char *name) {
   if (!holder) {
     /* For sanity */
     ast_log(LOG_ERROR, "Must be called with a global object!\n");
@@ -904,14 +818,9 @@ void __ao2_global_obj_release(struct ao2_global_obj *holder,
   __ast_rwlock_unlock(file, line, func, &holder->lock, name);
 }
 
-void* __ao2_global_obj_replace(struct ao2_global_obj *holder,
-                               void                  *obj,
-                               const char            *tag,
-                               const char            *file,
-                               int                    line,
-                               const char            *func,
-                               const char            *name)
-{
+void *__ao2_global_obj_replace(struct ao2_global_obj *holder, void *obj,
+                               const char *tag, const char *file, int line,
+                               const char *func, const char *name) {
   void *obj_old;
 
   if (!holder) {
@@ -930,7 +839,7 @@ void* __ao2_global_obj_replace(struct ao2_global_obj *holder,
   if (obj) {
     __ao2_ref(obj, +1, tag, file, line, func);
   }
-  obj_old     = holder->obj;
+  obj_old = holder->obj;
   holder->obj = obj;
 
   __ast_rwlock_unlock(file, line, func, &holder->lock, name);
@@ -938,14 +847,9 @@ void* __ao2_global_obj_replace(struct ao2_global_obj *holder,
   return obj_old;
 }
 
-int __ao2_global_obj_replace_unref(struct ao2_global_obj *holder,
-                                   void                  *obj,
-                                   const char            *tag,
-                                   const char            *file,
-                                   int                    line,
-                                   const char            *func,
-                                   const char            *name)
-{
+int __ao2_global_obj_replace_unref(struct ao2_global_obj *holder, void *obj,
+                                   const char *tag, const char *file, int line,
+                                   const char *func, const char *name) {
   void *obj_old;
 
   obj_old = __ao2_global_obj_replace(holder, obj, tag, file, line, func, name);
@@ -957,13 +861,9 @@ int __ao2_global_obj_replace_unref(struct ao2_global_obj *holder,
   return 0;
 }
 
-void* __ao2_global_obj_ref(struct ao2_global_obj *holder,
-                           const char            *tag,
-                           const char            *file,
-                           int                    line,
-                           const char            *func,
-                           const char            *name)
-{
+void *__ao2_global_obj_ref(struct ao2_global_obj *holder, const char *tag,
+                           const char *file, int line, const char *func,
+                           const char *name) {
   void *obj;
 
   if (!holder) {
@@ -990,23 +890,19 @@ void* __ao2_global_obj_ref(struct ao2_global_obj *holder,
   return obj;
 }
 
-static void weakproxy_run_callbacks(struct ao2_weakproxy *weakproxy)
-{
+static void weakproxy_run_callbacks(struct ao2_weakproxy *weakproxy) {
   struct ao2_weakproxy_notification *destroyed_cb;
 
-  while ((destroyed_cb = AST_LIST_REMOVE_HEAD(&weakproxy->destroyed_cb, list))) {
+  while (
+      (destroyed_cb = AST_LIST_REMOVE_HEAD(&weakproxy->destroyed_cb, list))) {
     destroyed_cb->cb(weakproxy, destroyed_cb->data);
     ast_free(destroyed_cb);
   }
 }
 
-void* __ao2_weakproxy_alloc(size_t            data_size,
-                            ao2_destructor_fn destructor_fn,
-                            const char       *tag,
-                            const char       *file,
-                            int               line,
-                            const char       *func)
-{
+void *__ao2_weakproxy_alloc(size_t data_size, ao2_destructor_fn destructor_fn,
+                            const char *tag, const char *file, int line,
+                            const char *func) {
   struct ao2_weakproxy *weakproxy;
 
   if (data_size < sizeof(*weakproxy)) {
@@ -1022,37 +918,28 @@ void* __ao2_weakproxy_alloc(size_t            data_size,
     struct astobj2 *weakproxy_internal;
 
     /* Just created weakproxy, no need to check if it's valid. */
-    weakproxy_internal                  = INTERNAL_OBJ(weakproxy);
+    weakproxy_internal = INTERNAL_OBJ(weakproxy);
     weakproxy_internal->priv_data.magic = AO2_WEAK;
   }
 
   return weakproxy;
 }
 
-int __ao2_weakproxy_set_object(void       *weakproxy,
-                               void       *obj,
-                               int         flags,
-                               const char *tag,
-                               const char *file,
-                               int         line,
-                               const char *func)
-{
-  struct astobj2 *weakproxy_internal = __INTERNAL_OBJ_CHECK(weakproxy,
-                                                            file,
-                                                            line,
-                                                            func);
-  struct astobj2 *obj_internal =
-    __INTERNAL_OBJ_CHECK(obj, file, line, func);
+int __ao2_weakproxy_set_object(void *weakproxy, void *obj, int flags,
+                               const char *tag, const char *file, int line,
+                               const char *func) {
+  struct astobj2 *weakproxy_internal =
+      __INTERNAL_OBJ_CHECK(weakproxy, file, line, func);
+  struct astobj2 *obj_internal = __INTERNAL_OBJ_CHECK(obj, file, line, func);
   int ret = -1;
 
-  if (!weakproxy_internal
-      || (weakproxy_internal->priv_data.magic != AO2_WEAK)) {
+  if (!weakproxy_internal ||
+      (weakproxy_internal->priv_data.magic != AO2_WEAK)) {
     return -1;
   }
 
-  if (!obj_internal
-      || obj_internal->priv_data.weakptr
-      || (obj_internal->priv_data.magic != AO2_MAGIC)) {
+  if (!obj_internal || obj_internal->priv_data.weakptr ||
+      (obj_internal->priv_data.magic != AO2_MAGIC)) {
     return -1;
   }
 
@@ -1061,11 +948,11 @@ int __ao2_weakproxy_set_object(void       *weakproxy,
   }
 
   if (!weakproxy_internal->priv_data.weakptr) {
-    __ao2_ref(obj,       +1, tag, file, line, func);
+    __ao2_ref(obj, +1, tag, file, line, func);
     __ao2_ref(weakproxy, +1, tag, file, line, func);
 
     weakproxy_internal->priv_data.weakptr = obj;
-    obj_internal->priv_data.weakptr       = weakproxy;
+    obj_internal->priv_data.weakptr = weakproxy;
 
     ret = 0;
   }
@@ -1083,16 +970,11 @@ int __ao2_weakproxy_set_object(void       *weakproxy,
   return ret;
 }
 
-int __ao2_weakproxy_ref_object(void       *weakproxy,
-                               int         delta,
-                               int         flags,
-                               const char *tag,
-                               const char *file,
-                               int         line,
-                               const char *func)
-{
+int __ao2_weakproxy_ref_object(void *weakproxy, int delta, int flags,
+                               const char *tag, const char *file, int line,
+                               const char *func) {
   struct astobj2 *internal = __INTERNAL_OBJ_CHECK(weakproxy, file, line, func);
-  int ret                  = -1;
+  int ret = -1;
 
   if (!internal || (internal->priv_data.magic != AO2_WEAK)) {
     /* This method is meant to be run on weakproxy objects! */
@@ -1115,13 +997,8 @@ int __ao2_weakproxy_ref_object(void       *weakproxy,
   return ret;
 }
 
-void* __ao2_weakproxy_get_object(void       *weakproxy,
-                                 int         flags,
-                                 const char *tag,
-                                 const char *file,
-                                 int         line,
-                                 const char *func)
-{
+void *__ao2_weakproxy_get_object(void *weakproxy, int flags, const char *tag,
+                                 const char *file, int line, const char *func) {
   struct astobj2 *internal = __INTERNAL_OBJ_CHECK(weakproxy, file, line, func);
   void *obj;
 
@@ -1148,12 +1025,8 @@ void* __ao2_weakproxy_get_object(void       *weakproxy,
   return obj;
 }
 
-void* __ao2_get_weakproxy(void       *obj,
-                          const char *tag,
-                          const char *file,
-                          int         line,
-                          const char *func)
-{
+void *__ao2_get_weakproxy(void *obj, const char *tag, const char *file,
+                          int line, const char *func) {
   struct astobj2 *obj_internal = __INTERNAL_OBJ_CHECK(obj, file, line, func);
 
   if (!obj_internal || (obj_internal->priv_data.magic != AO2_MAGIC)) {
@@ -1169,15 +1042,13 @@ void* __ao2_get_weakproxy(void       *obj,
   return obj_internal->priv_data.weakptr;
 }
 
-int ao2_weakproxy_subscribe(void                         *weakproxy,
-                            ao2_weakproxy_notification_cb cb,
-                            void                         *data,
-                            int                           flags)
-{
+int ao2_weakproxy_subscribe(void *weakproxy, ao2_weakproxy_notification_cb cb,
+                            void *data, int flags) {
   struct astobj2 *weakproxy_internal = INTERNAL_OBJ_CHECK(weakproxy);
-  int ret                            = -1;
+  int ret = -1;
 
-  if (!weakproxy_internal || (weakproxy_internal->priv_data.magic != AO2_WEAK)) {
+  if (!weakproxy_internal ||
+      (weakproxy_internal->priv_data.magic != AO2_WEAK)) {
     return -1;
   }
 
@@ -1186,11 +1057,11 @@ int ao2_weakproxy_subscribe(void                         *weakproxy,
   }
 
   if (weakproxy_internal->priv_data.weakptr) {
-    struct ao2_weakproxy *weak             = weakproxy;
+    struct ao2_weakproxy *weak = weakproxy;
     struct ao2_weakproxy_notification *sub = ast_calloc(1, sizeof(*sub));
 
     if (sub) {
-      sub->cb   = cb;
+      sub->cb = cb;
       sub->data = data;
       AST_LIST_INSERT_HEAD(&weak->destroyed_cb, sub, list);
       ret = 0;
@@ -1207,18 +1078,16 @@ int ao2_weakproxy_subscribe(void                         *weakproxy,
   return ret;
 }
 
-int ao2_weakproxy_unsubscribe(void                         *weakproxy,
+int ao2_weakproxy_unsubscribe(void *weakproxy,
                               ao2_weakproxy_notification_cb destroyed_cb,
-                              void                         *data,
-                              int                           flags)
-{
+                              void *data, int flags) {
   struct astobj2 *internal_weakproxy = INTERNAL_OBJ_CHECK(weakproxy);
   struct ao2_weakproxy *weak;
   struct ao2_weakproxy_notification *sub;
   int ret = 0;
 
-  if (!internal_weakproxy || (internal_weakproxy->priv_data.magic != AO2_WEAK) ||
-      !destroyed_cb) {
+  if (!internal_weakproxy ||
+      (internal_weakproxy->priv_data.magic != AO2_WEAK) || !destroyed_cb) {
     return -1;
   }
 
@@ -1248,10 +1117,9 @@ int ao2_weakproxy_unsubscribe(void                         *weakproxy,
 }
 
 #ifdef AO2_DEBUG
-static int print_cb(void *obj, void *arg, int flag)
-{
+static int print_cb(void *obj, void *arg, int flag) {
   struct ast_cli_args *a = (struct ast_cli_args *)arg;
-  char *s                = (char *)obj;
+  char *s = (char *)obj;
 
   ast_cli(a->fd, "string <%s>\n", s);
   return 0;
@@ -1260,19 +1128,18 @@ static int print_cb(void *obj, void *arg, int flag)
 /*
  * Print stats
  */
-static char* handle_astobj2_stats(struct ast_cli_entry *e,
-                                  int                   cmd,
-                                  struct ast_cli_args  *a)
-{
+static char *handle_astobj2_stats(struct ast_cli_entry *e, int cmd,
+                                  struct ast_cli_args *a) {
   switch (cmd) {
-  case CLI_INIT:
-    e->command = "astobj2 show stats";
-    e->usage   = "Usage: astobj2 show stats\n"
-                 "       Show astobj2 show stats\n";
-    return NULL;
+    case CLI_INIT:
+      e->command = "astobj2 show stats";
+      e->usage =
+          "Usage: astobj2 show stats\n"
+          "       Show astobj2 show stats\n";
+      return NULL;
 
-  case CLI_GENERATE:
-    return NULL;
+    case CLI_GENERATE:
+      return NULL;
   }
   ast_cli(a->fd, "Objects    : %d\n", ao2.total_objects);
   ast_cli(a->fd, "Containers : %d\n", ao2.total_containers);
@@ -1285,27 +1152,26 @@ static char* handle_astobj2_stats(struct ast_cli_entry *e,
 /*
  * This is testing code for astobj
  */
-static char* handle_astobj2_test(struct ast_cli_entry *e,
-                                 int                   cmd,
-                                 struct ast_cli_args  *a)
-{
+static char *handle_astobj2_test(struct ast_cli_entry *e, int cmd,
+                                 struct ast_cli_args *a) {
   struct ao2_container *c1;
   struct ao2_container *c2;
-  int   i, lim;
+  int i, lim;
   char *obj;
-  static int prof_id            = -1;
-  struct ast_cli_args fake_args = { a->fd, 0, NULL };
+  static int prof_id = -1;
+  struct ast_cli_args fake_args = {a->fd, 0, NULL};
 
   switch (cmd) {
-  case CLI_INIT:
-    e->command = "astobj2 test";
-    e->usage   = "Usage: astobj2 test <num>\n"
-                 "       Runs astobj2 test. Creates 'num' objects,\n"
-                 "       and test iterators, callbacks and maybe other stuff\n";
-    return NULL;
+    case CLI_INIT:
+      e->command = "astobj2 test";
+      e->usage =
+          "Usage: astobj2 test <num>\n"
+          "       Runs astobj2 test. Creates 'num' objects,\n"
+          "       and test iterators, callbacks and maybe other stuff\n";
+      return NULL;
 
-  case CLI_GENERATE:
-    return NULL;
+    case CLI_GENERATE:
+      return NULL;
   }
 
   if (a->argc != 3) {
@@ -1316,11 +1182,7 @@ static char* handle_astobj2_test(struct ast_cli_entry *e,
     prof_id = ast_add_profile("ao2_alloc", 0);
   }
 
-  ast_cli(a->fd,
-          "argc %d argv %s %s %s\n",
-          a->argc,
-          a->argv[0],
-          a->argv[1],
+  ast_cli(a->fd, "argc %d argv %s %s %s\n", a->argc, a->argv[0], a->argv[1],
           a->argv[2]);
   lim = atoi(a->argv[2]);
   ast_cli(a->fd, "called astobj_test\n");
@@ -1397,7 +1259,7 @@ static char* handle_astobj2_test(struct ast_cli_entry *e,
   ao2_t_callback(c1, 0, print_cb, a, "test callback");
 
   ast_verbose(
-    "now you should see an error and possible assertion failure messages:\n");
+      "now you should see an error and possible assertion failure messages:\n");
   ao2_t_ref(&i, -1, ""); /* i is not a valid object so we print an error here */
 
   ast_cli(a->fd, "destroy container\n");
@@ -1411,13 +1273,12 @@ static char* handle_astobj2_test(struct ast_cli_entry *e,
 
 #if defined(AO2_DEBUG)
 static struct ast_cli_entry cli_astobj2[] = {
-  AST_CLI_DEFINE(handle_astobj2_stats, "Print astobj2 statistics"),
-  AST_CLI_DEFINE(handle_astobj2_test,  "Test astobj2"),
+    AST_CLI_DEFINE(handle_astobj2_stats, "Print astobj2 statistics"),
+    AST_CLI_DEFINE(handle_astobj2_test, "Test astobj2"),
 };
 #endif /* AO2_DEBUG */
 
-static void astobj2_cleanup(void)
-{
+static void astobj2_cleanup(void) {
 #if defined(AO2_DEBUG)
   ast_cli_unregister_multiple(cli_astobj2, ARRAY_LEN(cli_astobj2));
 #endif /* if defined(AO2_DEBUG) */
@@ -1428,8 +1289,7 @@ static void astobj2_cleanup(void)
   }
 }
 
-int astobj2_init(void)
-{
+int astobj2_init(void) {
   char ref_filename[1024];
 
   if (ast_opt_ref_debug) {
@@ -1438,7 +1298,8 @@ int astobj2_init(void)
     ref_log = fopen(ref_filename, "w");
 
     if (!ref_log) {
-      ast_log(LOG_ERROR, "Could not open ref debug log file: %s\n", ref_filename);
+      ast_log(LOG_ERROR, "Could not open ref debug log file: %s\n",
+              ref_filename);
     }
   }
 

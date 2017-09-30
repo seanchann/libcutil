@@ -29,7 +29,7 @@
 
 #include "libcutil/utils.h"
 #include "libcutil/threadstorage.h"
-#include "libcutil/astobj2.h"
+#include "libcutil/obj2.h"
 
 #if defined(__cplusplus) || defined(c_plusplus)
 extern "C" {
