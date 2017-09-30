@@ -1204,7 +1204,7 @@ struct ast_str *ast_dump_locks(void) {
                  "=== <pending> <lock#> (<file>): <lock type> <line num> "
                  "<function> <lock name> <lock addr> (times locked)\n"
                  "===\n",
-                 ast_get_version());
+                 cutil_get_version());
 
   if (!str) {
     return NULL;

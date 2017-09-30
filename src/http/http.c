@@ -17,7 +17,6 @@
 #include <sys/signal.h>
 #include <fcntl.h>
 
-
 #include "libcutil/cli.h"
 #include "libcutil/tcptls.h"
 #include "libcutil/http.h"
@@ -2271,7 +2270,7 @@ static int __ast_http_load(int reload) {
     ast_copy_string(server_name, http_server_instance->config->server_name,
                     sizeof(server_name));
   } else {
-    snprintf(server_name, sizeof(server_name), "cutil/%s", ast_get_version());
+    snprintf(server_name, sizeof(server_name), "cutil/%s", cutil_get_version());
   }
 
   if (!ast_strlen_zero(http_server_instance->config->redirect)) {

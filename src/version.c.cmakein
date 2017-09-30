@@ -13,25 +13,25 @@
 
 #include "libcutil.h"
 
-#include "libcutil/ast_version.h"
+#include "libcutil/version.h"
 
-static const char asterisk_version[] = "@CUTIL_CORE_VERSION@-@CUTIL_CORE_VERSION_EXTRA@";
+static const char version[] = "@CUTIL_CORE_VERSION@-@CUTIL_CORE_VERSION_EXTRA@";
 
-static const char asterisk_version_num[] = "@CUTIL_CORE_VERSION_NUM@";
+static const char version_num[] = "@CUTIL_CORE_VERSION_NUM@";
 
-static const char asterisk_build_opts[] = "";
+static const char build_opts[] = "";
 
-const char *ast_get_version(void)
+const char *cutil_get_version(void)
 {
-	return asterisk_version;
+	return version;
 }
 
-const char *ast_get_version_num(void)
+const char *cutil_get_version_num(void)
 {
-	return asterisk_version_num;
+	return version_num;
 }
 
-const char *ast_get_build_opts(void)
+const char *cutil_get_build_opts(void)
 {
-	return asterisk_build_opts;
+	return build_opts;
 }

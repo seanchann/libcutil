@@ -143,7 +143,7 @@ static int multi_thread_safe;
       "Created by seanchann.zhou <xqzhou@bj-jyd.cn>\n"                         \
       "======================================================================" \
       "===\n",                                                                 \
-      ast_get_version())
+      cutil_get_version())
 
 static int console_print(const char *s);
 
@@ -241,7 +241,7 @@ static void *netconsole(void *vconsole) {
     ast_copy_string(hostname, "<Unknown>", sizeof(hostname));
 
   snprintf(outbuf, sizeof(outbuf), "%s/%ld/%s\n", hostname, (long)mainpid(),
-           ast_get_version());
+           cutil_get_version());
   fdprint(con->fd, outbuf);
   ast_verb_console_register(&con->option_verbose);
 
@@ -1338,7 +1338,7 @@ int ast_all_zeros(const char *s) {
 }
 
 int show_version(void) {
-  printf("LibCutil CLI %s\n", ast_get_version());
+  printf("LibCutil CLI %s\n", cutil_get_version());
   return 0;
 }
 

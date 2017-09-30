@@ -554,6 +554,7 @@ long int ast_random(void);
  * as the argument to a function. Otherwise, astmm will cause seg faults.
  */
 #define ast_free free
+#define cutil_free free
 #define ast_free_ptr ast_free
 
 #if defined(AST_IN_CORE)
@@ -692,6 +693,8 @@ AST_INLINE_API(__attribute__((format(printf, 2, 0))) int __ast_vasprintf(
  */
 #define ast_malloc(len) \
   __ast_malloc((len), __FILE__, __LINE__, __PRETTY_FUNCTION__)
+#define cutil_malloc(len) \
+  __ast_malloc((len), __FILE__, __LINE__, __PRETTY_FUNCTION__)
 
 /*!
  * \brief A wrapper for calloc()
@@ -702,6 +705,8 @@ AST_INLINE_API(__attribute__((format(printf, 2, 0))) int __ast_vasprintf(
  * The arguments and return value are the same as calloc()
  */
 #define ast_calloc(num, len) \
+  __ast_calloc((num), (len), __FILE__, __LINE__, __PRETTY_FUNCTION__)
+#define cutil_calloc(num, len) \
   __ast_calloc((num), (len), __FILE__, __LINE__, __PRETTY_FUNCTION__)
 
 /*!
