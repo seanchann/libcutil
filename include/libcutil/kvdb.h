@@ -35,7 +35,8 @@ struct kvdb *cutil_kvdb_new(char *file);
 void cutil_kvdb_free(struct kvdb *handle);
 
 struct cutil_db_entry {
-  struct ast_db_entry *next;
+  struct cutil_db_entry *next;
+
   char *key;
   char data[0];
 };
@@ -59,7 +60,8 @@ int cutil_db_get_allocated(struct kvdb *handle, const char *family,
                            const char *key, char **out);
 
 /*! \brief Store value addressed by family/key */
-int cutil_db_put(const char *family, const char *key, const char *value);
+int cutil_db_put(struct kvdb *handle, const char *family, const char *key,
+                 const char *value);
 
 /*! \brief Delete entry in kvdb */
 int cutil_db_del(struct kvdb *handle, const char *family, const char *key);
@@ -92,7 +94,7 @@ int cutil_db_deltree(struct kvdb *handle, const char *family,
  * when usage is concluded.
  */
 struct cutil_db_entry *cutil_db_gettree(struct kvdb *handle, const char *family,
-                                        const char *keytree);
+                                        const char *keytree, int *tree_len);
 
 /*! \brief Free structure created by cutil_db_gettree() */
 void cutil_db_freetree(struct cutil_db_entry *entry);

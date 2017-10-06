@@ -197,8 +197,8 @@ static int ast_db_rollback_transaction(struct kvdb *handle) {
   return db_execute_sql(handle, "ROLLBACK", NULL, NULL);
 }
 
-int ast_db_put(struct kvdb *handle, const char *family, const char *key,
-               const char *value) {
+int cutil_db_put(struct kvdb *handle, const char *family, const char *key,
+                 const char *value) {
   char fullkey[MAX_DB_FIELD];
   size_t fullkey_len;
   int res = 0;
@@ -378,7 +378,7 @@ int cutil_db_deltree(struct kvdb *handle, const char *family,
 }
 
 struct cutil_db_entry *cutil_db_gettree(struct kvdb *handle, const char *family,
-                                        const char *keytree) {
+                                        const char *keytree, int *tree_len) {
   char prefix[MAX_DB_FIELD];
   sqlite3_stmt *stmt = gettree_stmt;
   struct cutil_db_entry *cur, *last = NULL, *ret = NULL;
@@ -422,6 +422,7 @@ struct cutil_db_entry *cutil_db_gettree(struct kvdb *handle, const char *family,
     cur->key = cur->data + strlen(value_s) + 1;
     strcpy(cur->data, value_s);
     strcpy(cur->key, key_s);
+    *tree_len += 1;
     if (last) {
       last->next = cur;
     } else {
