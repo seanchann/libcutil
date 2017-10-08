@@ -32,22 +32,22 @@ static void db_sync(struct kvdb *handle);
   const char stmt##_sql[] = sql;
 
 DEFINE_SQL_STATEMENT(put_stmt,
-                     "INSERT OR REPLACE INTO astdb (key, value) VALUES (?, ?)")
-DEFINE_SQL_STATEMENT(get_stmt, "SELECT value FROM astdb WHERE key=?")
-DEFINE_SQL_STATEMENT(del_stmt, "DELETE FROM astdb WHERE key=?")
+                     "INSERT OR REPLACE INTO kvdb (key, value) VALUES (?, ?)")
+DEFINE_SQL_STATEMENT(get_stmt, "SELECT value FROM kvdb WHERE key=?")
+DEFINE_SQL_STATEMENT(del_stmt, "DELETE FROM kvdb WHERE key=?")
 DEFINE_SQL_STATEMENT(deltree_stmt,
-                     "DELETE FROM astdb WHERE key || '/' LIKE ? || '/' || '%'")
-DEFINE_SQL_STATEMENT(deltree_all_stmt, "DELETE FROM astdb")
+                     "DELETE FROM kvdb WHERE key || '/' LIKE ? || '/' || '%'")
+DEFINE_SQL_STATEMENT(deltree_all_stmt, "DELETE FROM kvdb")
 DEFINE_SQL_STATEMENT(gettree_stmt,
-                     "SELECT key, value FROM astdb WHERE key || '/' LIKE ? || "
+                     "SELECT key, value FROM kvdb WHERE key || '/' LIKE ? || "
                      "'/' || '%' ORDER BY key")
 DEFINE_SQL_STATEMENT(gettree_all_stmt,
-                     "SELECT key, value FROM astdb ORDER BY key")
+                     "SELECT key, value FROM kvdb ORDER BY key")
 DEFINE_SQL_STATEMENT(
     showkey_stmt,
-    "SELECT key, value FROM astdb WHERE key LIKE '%' || '/' || ? ORDER BY key")
-DEFINE_SQL_STATEMENT(create_astdb_stmt,
-                     "CREATE TABLE IF NOT EXISTS astdb(key VARCHAR(256), value "
+    "SELECT key, value FROM kvdb WHERE key LIKE '%' || '/' || ? ORDER BY key")
+DEFINE_SQL_STATEMENT(create_kvdb_stmt,
+                     "CREATE TABLE IF NOT EXISTS kvdb(key VARCHAR(256), value "
                      "VARCHAR(256), PRIMARY KEY(key))")
 
 static int init_stmt(struct kvdb *handle, sqlite3_stmt **stmt, const char *sql,
@@ -93,7 +93,7 @@ static void clean_statements(struct kvdb *handle) {
   clean_stmt(handle, &gettree_all_stmt, gettree_all_stmt_sql);
   clean_stmt(handle, &showkey_stmt, showkey_stmt_sql);
   clean_stmt(handle, &put_stmt, put_stmt_sql);
-  clean_stmt(handle, &create_astdb_stmt, create_astdb_stmt_sql);
+  clean_stmt(handle, &create_kvdb_stmt, create_kvdb_stmt_sql);
 }
 
 static int init_statements(struct kvdb *handle) {
@@ -115,21 +115,21 @@ static int init_statements(struct kvdb *handle) {
          init_stmt(handle, &put_stmt, put_stmt_sql, sizeof(put_stmt_sql));
 }
 
-static int db_create_astdb(struct kvdb *handle) {
+static int db_create_kvdb(struct kvdb *handle) {
   int res = 0;
 
-  if (!create_astdb_stmt) {
-    init_stmt(handle, &create_astdb_stmt, create_astdb_stmt_sql,
-              sizeof(create_astdb_stmt_sql));
+  if (!create_kvdb_stmt) {
+    init_stmt(handle, &create_kvdb_stmt, create_kvdb_stmt_sql,
+              sizeof(create_kvdb_stmt_sql));
   }
 
   ast_mutex_lock(&handle->dblock);
-  if (sqlite3_step(create_astdb_stmt) != SQLITE_DONE) {
-    ast_log(LOG_WARNING, "Couldn't create astdb table: %s\n",
+  if (sqlite3_step(create_kvdb_stmt) != SQLITE_DONE) {
+    ast_log(LOG_WARNING, "Couldn't create kv table: %s\n",
             sqlite3_errmsg(handle->db));
     res = -1;
   }
-  sqlite3_reset(create_astdb_stmt);
+  sqlite3_reset(create_kvdb_stmt);
   db_sync(handle);
   ast_mutex_unlock(&handle->dblock);
 
@@ -143,7 +143,7 @@ static int db_open(struct kvdb *handle) {
   dbname = handle->dbfile;
   ast_mutex_lock(&handle->dblock);
   if (sqlite3_open(dbname, &handle->db) != SQLITE_OK) {
-    ast_log(LOG_WARNING, "Unable to open Asterisk database '%s': %s\n", dbname,
+    ast_log(LOG_WARNING, "Unable to open cutil database '%s': %s\n", dbname,
             sqlite3_errmsg(handle->db));
     sqlite3_close(handle->db);
     ast_mutex_unlock(&handle->dblock);
@@ -160,7 +160,7 @@ static int db_init(struct kvdb *handle) {
     return 0;
   }
 
-  if (db_open(handle) || db_create_astdb(handle) || init_statements(handle)) {
+  if (db_open(handle) || db_create_kvdb(handle) || init_statements(handle)) {
     return -1;
   }
 
@@ -520,7 +520,7 @@ void cutil_kvdb_free(struct kvdb *handle) {
 
 struct kvdb *cutil_kvdb_new(char *file) {
   struct kvdb *kv_handle = cutil_calloc(1, sizeof(struct kvdb));
-  size_t len = strlen(file);
+  size_t len = strlen(file) + 9;
 
   kv_handle->dbfile = cutil_calloc(len, sizeof(char));
   snprintf(kv_handle->dbfile, len, "%s.sqlite3", file);
