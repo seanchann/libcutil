@@ -1,15 +1,15 @@
 # libcutil
 
-提供一些基础的C语言库，来辅助C/C++类的开发，目前支持：
+a utility library derived from asterisk. support list:
 
 - console
 - cli
 - log
 - http mini server
 - restful mini framework
-- 公共基础库，例如：list以及系统函数的包装
+- common functions wrap. eg. list, string and so on.
 
-## 相关依赖库license说明
+## dependence 
 
 - libedit: BSD License `https://www.cs.utah.edu/~bigler/code/libedit.html` readline(NetBSD)
 - jansson: MIT license `http://www.digip.org/jansson/`

@@ -3,8 +3,7 @@
 .tags
 .tags1
 .build/
-*.pch
-.ycm_extra_conf.*
 build.h
 libcutil_autoconfig.h
 src/version.c
+.vscode/
