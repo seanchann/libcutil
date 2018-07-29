@@ -1,15 +1,14 @@
 /*
- * libcutil -- An utility toolkit.
- *
- * Copyright (C) 2016 - 2017, JYD, Inc.
  *
  * seanchann <xqzhou@bj-jyd.cn>
  *
- * See docs/ for more information about the libcutil project.
+ * See docs/ for more information about
+ * the  project.
  *
- * This program belongs to JYD, Inc. JYD, Inc reserves all rights
+ * This program is free software, distributed under the terms of
+ * the GNU General Public License Version 2. See the LICENSE file
+ * at the top of the source tree.
  */
-
 
 /*! \file
  * \brief Standard Command Line Interface
@@ -20,33 +19,31 @@
 
 #if defined(__cplusplus) || defined(c_plusplus)
 extern "C" {
-#endif // if defined(__cplusplus) || defined(c_plusplus)
+#endif  // if defined(__cplusplus) || defined(c_plusplus)
 
 #include "libcutil/linkedlists.h"
 #include "libcutil/strings.h"
 
-void ast_cli(int         fd,
-             const char *fmt,
-             ...)
-__attribute__((format(printf, 2, 3)));
+void ast_cli(int fd, const char *fmt, ...)
+    __attribute__((format(printf, 2, 3)));
 
 /* dont check permissions while passing this option as a 'uid'
  * to the cli_has_permissions() function. */
-#define CLI_NO_PERMS            -1
+#define CLI_NO_PERMS -1
 
-#define RESULT_SUCCESS          0
-#define RESULT_SHOWUSAGE        1
-#define RESULT_FAILURE          2
+#define RESULT_SUCCESS 0
+#define RESULT_SHOWUSAGE 1
+#define RESULT_FAILURE 2
 
-#define CLI_SUCCESS     (char *)RESULT_SUCCESS
-#define CLI_SHOWUSAGE   (char *)RESULT_SHOWUSAGE
-#define CLI_FAILURE     (char *)RESULT_FAILURE
+#define CLI_SUCCESS (char *)RESULT_SUCCESS
+#define CLI_SHOWUSAGE (char *)RESULT_SHOWUSAGE
+#define CLI_FAILURE (char *)RESULT_FAILURE
 
-#define AST_MAX_CMD_LEN         16
+#define AST_MAX_CMD_LEN 16
 
 #define AST_MAX_ARGS 64
 
-#define AST_CLI_COMPLETE_EOF    "_EOF_"
+#define AST_CLI_COMPLETE_EOF "_EOF_"
 
 /*!
  * In many cases we need to print singular or plural
@@ -148,21 +145,21 @@ __attribute__((format(printf, 2, 3)));
  * \arg \ref CLI_command_API
  */
 enum ast_cli_command {
-  CLI_INIT     = -2, /* return the usage string */
+  CLI_INIT = -2,     /* return the usage string */
   CLI_GENERATE = -3, /* behave as 'generator', remap argv to struct ast_cli_args
-                        */
-  CLI_HANDLER  = -4, /* run the normal handler */
+                      */
+  CLI_HANDLER = -4,  /* run the normal handler */
 };
 
 /* argument for new-style CLI handler */
 struct ast_cli_args {
-  const int          fd;
-  const int          argc;
+  const int fd;
+  const int argc;
   const char *const *argv;
-  const char        *line; /* the current input line */
-  const char        *word; /* the word we want to complete */
-  const int          pos;  /* position of the word to complete */
-  const int          n;    /* the iteration count (n-th entry we generate) */
+  const char *line; /* the current input line */
+  const char *word; /* the word we want to complete */
+  const int pos;    /* position of the word to complete */
+  const int n;      /* the iteration count (n-th entry we generate) */
 };
 
 /*! \brief descriptor for a cli entry.
@@ -174,39 +171,39 @@ struct ast_cli_entry {
                                             *new-style entry.
                                             */
 
-  const char *const summary;               /*!< Summary of the command (< 60
-                                              characters) */
-  const char       *usage;                 /*!< Detailed usage information */
+  const char *const summary; /*!< Summary of the command (< 60
+                                characters) */
+  const char *usage;         /*!< Detailed usage information */
 
-  int                inuse;                /*!< For keeping track of usage */
-  struct ast_module *module;               /*!< module this belongs to */
-  char              *_full_cmd;            /*!< built at load time from cmda[]
-                                              */
-  int                cmdlen;               /*!< len up to the first invalid char
-                                              [<{% */
+  int inuse;                 /*!< For keeping track of usage */
+  struct ast_module *module; /*!< module this belongs to */
+  char *_full_cmd;           /*!< built at load time from cmda[]
+                              */
+  int cmdlen;                /*!< len up to the first invalid char
+                                [<{% */
 
   /*! \brief This gets set in ast_cli_register()
    */
-  int    args;                             /*!< number of non-null entries in
-                                              cmda */
-  char  *command;                          /*!< command, non-null for new-style
-                                              entries */
-  char * (*handler)(struct ast_cli_entry *e,
-                    int                   cmd,
-                    struct ast_cli_args  *a);
+  int args;      /*!< number of non-null entries in
+                    cmda */
+  char *command; /*!< command, non-null for new-style
+                    entries */
+  char *(*handler)(struct ast_cli_entry *e, int cmd, struct ast_cli_args *a);
 
   /*! For linking */
   AST_LIST_ENTRY(ast_cli_entry) list;
 };
 
 #if defined(__cplusplus) || defined(c_plusplus)
-# define AST_CLI_DEFINE(fn, txt) { { "" }, txt, NULL, 0, NULL, NULL, 0, 0, NULL, fn }
-#else // if defined(__cplusplus) || defined(c_plusplus)
+#define AST_CLI_DEFINE(fn, txt) \
+  { {""}, txt, NULL, 0, NULL, NULL, 0, 0, NULL, fn }
+#else  // if defined(__cplusplus) || defined(c_plusplus)
 
 /* XXX the parser in gcc 2.95 gets confused if you don't put a space
  * between the last arg before VA_ARGS and the comma */
-# define AST_CLI_DEFINE(fn, txt, ...) { .handler = fn, .summary = txt, ## __VA_ARGS__ }
-#endif // if defined(__cplusplus) || defined(c_plusplus)
+#define AST_CLI_DEFINE(fn, txt, ...) \
+  { .handler = fn, .summary = txt, ##__VA_ARGS__ }
+#endif  // if defined(__cplusplus) || defined(c_plusplus)
 
 /*!
  * Helper function to generate cli entries from a NULL-terminated array.
@@ -224,9 +221,7 @@ struct ast_cli_entry {
     }
    \endcode
  */
-char* ast_cli_complete(const char       *word,
-                       const char *const choices[],
-                       int               pos);
+char *ast_cli_complete(const char *word, const char *const choices[], int pos);
 
 /*!
  * \brief Interprets a command
@@ -240,12 +235,10 @@ char* ast_cli_complete(const char       *word,
  * \retval 0 on success
  * \retval -1 on failure
  */
-int ast_cli_command_full(int         uid,
-                         int         gid,
-                         int         fd,
-                         const char *s);
+int ast_cli_command_full(int uid, int gid, int fd, const char *s);
 
-#define ast_cli_command(fd, s) ast_cli_command_full(CLI_NO_PERMS, CLI_NO_PERMS, fd, s)
+#define ast_cli_command(fd, s) \
+  ast_cli_command_full(CLI_NO_PERMS, CLI_NO_PERMS, fd, s)
 
 /*!
  * \brief Executes multiple CLI commands
@@ -261,13 +254,11 @@ int ast_cli_command_full(int         uid,
  * \param s incoming string
  * \retval number of commands executed
  */
-int ast_cli_command_multiple_full(int         uid,
-                                  int         gid,
-                                  int         fd,
-                                  size_t      size,
+int ast_cli_command_multiple_full(int uid, int gid, int fd, size_t size,
                                   const char *s);
 
-#define ast_cli_command_multiple(fd, size, s) ast_cli_command_multiple_full(CLI_NO_PERMS, CLI_NO_PERMS, fd, size, s)
+#define ast_cli_command_multiple(fd, size, s) \
+  ast_cli_command_multiple_full(CLI_NO_PERMS, CLI_NO_PERMS, fd, size, s)
 
 /*! \brief Registers a command or an array of commands
  * \param e which cli entry to register.
@@ -277,8 +268,7 @@ int ast_cli_command_multiple_full(int         uid,
  */
 #define ast_cli_register(e) __ast_cli_register(e, AST_MODULE_SELF)
 
-int __ast_cli_register(struct ast_cli_entry *e,
-                       struct ast_module    *mod);
+int __ast_cli_register(struct ast_cli_entry *e, struct ast_module *mod);
 
 /*!
  * \brief Register multiple commands
@@ -288,9 +278,8 @@ int __ast_cli_register(struct ast_cli_entry *e,
 #define ast_cli_register_multiple(e, len) \
   __ast_cli_register_multiple(e, len, AST_MODULE_SELF)
 
-int __ast_cli_register_multiple(struct ast_cli_entry *e,
-                                int                   len,
-                                struct ast_module    *mod);
+int __ast_cli_register_multiple(struct ast_cli_entry *e, int len,
+                                struct ast_module *mod);
 
 /*!
  * \brief Unregisters a command or an array of commands
@@ -306,8 +295,7 @@ int ast_cli_unregister(struct ast_cli_entry *e);
  * \param e pointer to first cli entry to unregister
  * \param len number of entries to unregister
  */
-int ast_cli_unregister_multiple(struct ast_cli_entry *e,
-                                int                   len);
+int ast_cli_unregister_multiple(struct ast_cli_entry *e, int len);
 
 /*!
  * \brief Readline madness
@@ -315,12 +303,9 @@ int ast_cli_unregister_multiple(struct ast_cli_entry *e,
  * \retval 0 on success
  * \retval -1 on failure
  */
-char* ast_cli_generator(const char *,
-                        const char *,
-                        int);
+char *ast_cli_generator(const char *, const char *, int);
 
-int ast_cli_generatornummatches(const char *,
-                                const char *);
+int ast_cli_generatornummatches(const char *, const char *);
 
 /*!
  * \brief Generates a NULL-terminated array of strings that
@@ -333,8 +318,7 @@ int ast_cli_generatornummatches(const char *,
  * All strings and the array itself are malloc'ed and must be freed
  * by the caller.
  */
-char** ast_cli_completion_matches(const char *,
-                                  const char *);
+char **ast_cli_completion_matches(const char *, const char *);
 
 /*!
  * \brief Command completion for the list of active channels.
@@ -344,11 +328,8 @@ char** ast_cli_completion_matches(const char *,
  * position in the command.  This function will return NULL immediately if
  * 'rpos' is not the same as the current position, 'pos'.
  */
-char* ast_complete_channels(const char *line,
-                            const char *word,
-                            int         pos,
-                            int         state,
-                            int         rpos);
+char *ast_complete_channels(const char *line, const char *word, int pos,
+                            int state, int rpos);
 
 /*!
  * \since 13.8
@@ -359,9 +340,7 @@ char* ast_complete_channels(const char *line,
  * \param duration The time (in seconds) to print
  * \param prefix A Prefix string to add before of duration formatted
  */
-void ast_cli_print_timestr_fromseconds(int         fd,
-                                       int         seconds,
-                                       const char *prefix);
+void ast_cli_print_timestr_fromseconds(int fd, int seconds, const char *prefix);
 
 /*
  * \brief Allow a CLI command to be executed while Asterisk is shutting down.
@@ -379,6 +358,6 @@ int ast_cli_allow_at_shutdown(struct ast_cli_entry *e);
 
 #if defined(__cplusplus) || defined(c_plusplus)
 }
-#endif // if defined(__cplusplus) || defined(c_plusplus)
+#endif  // if defined(__cplusplus) || defined(c_plusplus)
 
 #endif /* _CUTIL_CLI_H */

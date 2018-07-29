@@ -1,14 +1,13 @@
 /*
- * libcutil -- An utility toolkit.
- *
- * Copyright (C) 2016 - 2017, JYD, Inc.
  *
  * seanchann <xqzhou@bj-jyd.cn>
  *
  * See docs/ for more information about
- * the libcutil project.
+ * the  project.
  *
- * This program belongs to JYD, Inc. JYD, Inc reserves all rights
+ * This program is free software, distributed under the terms of
+ * the GNU General Public License Version 2. See the LICENSE file
+ * at the top of the source tree.
  */
 
 #include "libcutil.h"
@@ -157,7 +156,8 @@ unsigned int sig_need_quit_handler(void) { return sig_flags.need_quit_handler; }
 static void _null_sig_handler(int sig) {}
 
 static struct sigaction null_sig_handler = {
-    .sa_handler = _null_sig_handler, .sa_flags = SA_RESTART,
+    .sa_handler = _null_sig_handler,
+    .sa_flags = SA_RESTART,
 };
 
 /*!
@@ -1281,7 +1281,7 @@ int ast_safe_system(const char *s) {
   }
 
   ast_unreplace_sigchld();
-#else /* !defined(HAVE_WORKING_FORK) && !defined(HAVE_WORKING_VFORK) */
+#else  /* !defined(HAVE_WORKING_FORK) && !defined(HAVE_WORKING_VFORK) */
   res = -1;
 #endif /* if defined(HAVE_WORKING_FORK) || defined(HAVE_WORKING_VFORK) */
 
@@ -1599,7 +1599,8 @@ static void _hup_handler(int num) {
 }
 
 static struct sigaction hup_handler = {
-    .sa_handler = _hup_handler, .sa_flags = SA_RESTART,
+    .sa_handler = _hup_handler,
+    .sa_flags = SA_RESTART,
 };
 
 static void _child_handler(int sig) {
@@ -1618,7 +1619,8 @@ static void _child_handler(int sig) {
 }
 
 static struct sigaction child_handler = {
-    .sa_handler = _child_handler, .sa_flags = SA_RESTART,
+    .sa_handler = _child_handler,
+    .sa_flags = SA_RESTART,
 };
 
 static void __quit_handler(int num) {

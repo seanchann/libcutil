@@ -1,13 +1,14 @@
 /*
-* Copyright (C) 2016 - 2017, JYD, Inc.
-*
-* seanchann <xqzhou@bj-jyd.cn>
-*
-* See docs/ for more information about
-* the  project.
-*
-* This program belongs to JYD, Inc. JYD, Inc reserves all rights
-*/
+ *
+ * seanchann <xqzhou@bj-jyd.cn>
+ *
+ * See docs/ for more information about
+ * the  project.
+ *
+ * This program is free software, distributed under the terms of
+ * the GNU General Public License Version 2. See the LICENSE file
+ * at the top of the source tree.
+ */
 
 #include "libcutil.h"
 

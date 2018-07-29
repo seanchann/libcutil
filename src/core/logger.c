@@ -1,14 +1,13 @@
 /*
- * libcutil -- An utility toolkit.
  *
- * Copyright (C) 2016 - 2017, JYD, Inc.
- *
- * seanchann <seanchann@foxmail.com>
+ * seanchann <xqzhou@bj-jyd.cn>
  *
  * See docs/ for more information about
- * the libcutil project.
+ * the  project.
  *
- * This program belongs to JYD, Inc. JYD, Inc reserves all rights
+ * This program is free software, distributed under the terms of
+ * the GNU General Public License Version 2. See the LICENSE file
+ * at the top of the source tree.
  */
 
 #include "libcutil.h"
@@ -373,8 +372,9 @@ static int format_log_default(struct logchannel *chan, struct logmsg *msg,
       /* Turn the numeric line number into a string for colorization */
       snprintf(linestr, sizeof(linestr), "%d", msg->line);
 
-      snprintf(buf, size, "[%s] " COLORIZE_FMT "[%d]%s: " COLORIZE_FMT
-                          ":" COLORIZE_FMT " " COLORIZE_FMT ": %s",
+      snprintf(buf, size,
+               "[%s] " COLORIZE_FMT "[%d]%s: " COLORIZE_FMT ":" COLORIZE_FMT
+               " " COLORIZE_FMT ": %s",
                msg->date, COLORIZE(colors[msg->level], 0, msg->level_name),
                msg->lwp, call_identifier_str,
                COLORIZE(COLOR_BRWHITE, 0, msg->file),
@@ -388,7 +388,8 @@ static int format_log_default(struct logchannel *chan, struct logmsg *msg,
 }
 
 static struct logformatter logformatter_default = {
-    .name = "default", .format_log = format_log_default,
+    .name = "default",
+    .format_log = format_log_default,
 };
 
 static void make_components(struct logchannel *chan) {
@@ -1679,7 +1680,8 @@ static void _handle_SIGXFSZ(int sig) {
 }
 
 static struct sigaction handle_SIGXFSZ = {
-    .sa_handler = _handle_SIGXFSZ, .sa_flags = SA_RESTART,
+    .sa_handler = _handle_SIGXFSZ,
+    .sa_flags = SA_RESTART,
 };
 
 /*! \brief Print a normal log message to the channels */
